@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>Mediciones - Agro IoT</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        h2 {
+            margin-bottom: 10px;
+        }
+
+        .topbar {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+        }
+
+        .btn-recargar {
+            background-color: #28a745;
+            color: white;
+            padding: 8px 14px;
+            border-radius: 6px;
+            text-decoration: none;
+            font-weight: bold;
+        }
+
+        .btn-recargar:hover {
+            background-color: #218838;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #f2f2f2;
+            text-align: left;
+        }
+
+        tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+    </style>
+</head>
+<body>
+
+<div class="topbar">
+    <h2>Vista: vw_mediciones_detalle</h2>
+
+    <a th:href="@{/mediciones(limit=${limit})}" class="btn-recargar">
+        Recargar
+    </a>
+</div>
+
+<p>Mostrando últimos <b th:text="${limit}">20</b> registros</p>
+
+<table>
+    <thead>
+    <tr>
+        <th>ID</th>
+        <th>Fecha</th>
+        <th>Valor</th>
+        <th>Unidad</th>
+        <th>Tipo Sensor</th>
+        <th>Código Sensor</th>
+        <th>Modelo</th>
+        <th>Estación</th>
+        <th>Parcela</th>
+    </tr>
+    </thead>
+
+    <tbody>
+    <tr th:each="m : ${mediciones}">
+        <td th:text="${m.medicionId}"></td>
+        <td th:text="${m.fechaMedicion}"></td>
+        <td th:text="${m.valor}"></td>
+        <td th:text="${m.unidadMedida}"></td>
+        <td th:text="${m.tipoSensor}"></td>
+        <td th:text="${m.codigoSensor}"></td>
+        <td th:text="${m.modelo}"></td>
+        <td th:text="${m.estacionCodigo}"></td>
+        <td th:text="${m.parcelaNombre}"></td>
+    </tr>
+
+    <tr th:if="${#lists.isEmpty(mediciones)}">
+        <td colspan="9">No hay datos disponibles.</td>
+    </tr>
+    </tbody>
+</table>
+
+</body>
+</html>
