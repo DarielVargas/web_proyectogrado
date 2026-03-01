@@ -26,6 +26,18 @@
         .btn-recargar { background:#28a745; color:white; }
         .btn-recargar:hover { background:#218838; }
 
+        .logout-form {
+            margin-left: auto;
+        }
+
+        .btn-logout {
+            background:#343a40;
+            color:white;
+            cursor:pointer;
+        }
+
+        .btn-logout:hover { background:#23272b; }
+
         .btn-page {
             background: #ffffff;
             color: #333;
@@ -81,6 +93,11 @@
             <option value="50" th:selected="${limit == 50}">50</option>
             <option value="100" th:selected="${limit == 100}">100</option>
         </select>
+    </form>
+
+    <form method="post" th:action="@{/logout}" class="logout-form">
+        <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+        <button type="submit" class="btn btn-logout">Cerrar Sesión</button>
     </form>
 </div>
 

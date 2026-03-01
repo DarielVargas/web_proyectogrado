@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iniciar Sesión - Sistema Meteorológico</title>
+    <title>Iniciar Sesión - Plataforma de Análisis Agrícola</title>
     <link rel="stylesheet" th:href="@{/css/login.css}" href="/css/login.css">
 </head>
 <body>
@@ -17,14 +17,14 @@
             </div>
         </div>
 
-        <h1>Sistema Meteorológico</h1>
-        <p class="subtitle">Monitoreo de Estaciones en Tiempo Real</p>
+        <h1>Plataforma de Análisis Agrícola</h1>
+        <p class="subtitle">Monitoreo Inteligente de Cultivos de Banano</p>
 
         <div class="alert error" th:if="${param.error}">
             Usuario o contraseña incorrectos
         </div>
         <div class="alert logout" th:if="${param.logout}">
-            Sesión cerrada
+            Sesión cerrada correctamente
         </div>
 
         <form th:action="@{/login}" method="post" class="login-form">
