@@ -5,67 +5,89 @@
     <title>Mediciones - Agro IoT</title>
 
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            padding: 20px;
-        }
-
-        h2 {
-            margin-bottom: 10px;
-        }
+        body { font-family: Arial, sans-serif; padding: 20px; }
 
         .topbar {
             display: flex;
             align-items: center;
             gap: 15px;
-            margin-bottom: 10px;
+            margin-bottom: 15px;
         }
 
-        .btn-recargar {
-            background-color: #28a745;
-            color: white;
+        .btn {
+            display: inline-block;
             padding: 8px 14px;
             border-radius: 6px;
             text-decoration: none;
             font-weight: bold;
+            border: 1px solid transparent;
         }
 
-        .btn-recargar:hover {
-            background-color: #218838;
+        .btn-recargar { background:#28a745; color:white; }
+        .btn-recargar:hover { background:#218838; }
+
+        .btn-page {
+            background: #ffffff;
+            color: #333;
+            border-color: #ddd;
+        }
+        .btn-page:hover { background:#f2f2f2; }
+
+        .btn-active {
+            background:#333;
+            color:white;
+            border-color:#333;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
+        .btn-disabled {
+            opacity: 0.5;
+            pointer-events: none;
         }
 
-        th, td {
-            border: 1px solid #ddd;
-            padding: 8px;
-            font-size: 14px;
-        }
+        select { padding: 6px; font-size: 14px; }
 
-        th {
-            background-color: #f2f2f2;
-            text-align: left;
-        }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border: 1px solid #ddd; padding: 8px; font-size: 14px; }
+        th { background-color: #f2f2f2; text-align: left; }
+        tr:nth-child(even) { background-color: #fafafa; }
 
-        tr:nth-child(even) {
-            background-color: #fafafa;
+        .paginacion {
+            display:flex;
+            gap:8px;
+            align-items:center;
+            margin-top: 14px;
+            flex-wrap: wrap;
         }
     </style>
 </head>
 <body>
 
 <div class="topbar">
-    <h2>Vista: vw_mediciones_detalle</h2>
+    <h2 style="margin:0;">Vista: vw_mediciones_detalle</h2>
 
-    <a th:href="@{/mediciones(limit=${limit})}" class="btn-recargar">
+    <!-- Recargar mantiene page y limit -->
+    <a class="btn btn-recargar"
+       th:href="@{/mediciones(limit=${limit}, page=${page.number})}">
         Recargar
     </a>
+
+    <!-- Selector: al cambiar, vuelve a page=0 -->
+    <form method="get" action="/mediciones" style="display:flex; align-items:center; gap:8px;">
+        <input type="hidden" name="page" value="0" />
+        <label for="limit">Mostrar:</label>
+        <select name="limit" id="limit" onchange="this.form.submit()">
+            <option value="10" th:selected="${limit == 10}">10</option>
+            <option value="20" th:selected="${limit == 20}">20</option>
+            <option value="50" th:selected="${limit == 50}">50</option>
+            <option value="100" th:selected="${limit == 100}">100</option>
+        </select>
+    </form>
 </div>
 
-<p>Mostrando últimos <b th:text="${limit}">20</b> registros</p>
+<p>
+    Mostrando <b th:text="${mediciones.size()}">0</b> registros —
+    Página <b th:text="${page.number + 1}">1</b> de <b th:text="${page.totalPages}">1</b>
+</p>
 
 <table>
     <thead>
@@ -100,6 +122,35 @@
     </tr>
     </tbody>
 </table>
+
+<!-- PAGINACIÓN -->
+<div class="paginacion" th:if="${page.totalPages > 1}">
+
+    <!-- Anterior -->
+    <a class="btn btn-page"
+       th:classappend="${page.first} ? ' btn-disabled' : ''"
+       th:href="@{/mediciones(limit=${limit}, page=${page.number - 1})}">
+        ◀ Anterior
+    </a>
+
+    <!-- Botones (muestra 7 alrededor de la página actual) -->
+    <span th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
+          th:if="${i >= page.number - 3 and i <= page.number + 3}">
+        <a class="btn btn-page"
+           th:classappend="${i == page.number} ? ' btn-active' : ''"
+           th:href="@{/mediciones(limit=${limit}, page=${i})}"
+           th:text="${i + 1}">
+            1
+        </a>
+    </span>
+
+    <!-- Siguiente -->
+    <a class="btn btn-page"
+       th:classappend="${page.last} ? ' btn-disabled' : ''"
+       th:href="@{/mediciones(limit=${limit}, page=${page.number + 1})}">
+        Siguiente ▶
+    </a>
+</div>
 
 </body>
 </html>

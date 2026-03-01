@@ -19,16 +19,22 @@ public class MedicionesController {
     @GetMapping("/mediciones")
     public String verMediciones(
             @RequestParam(name = "limit", defaultValue = "20") int limit,
+            @RequestParam(name = "page", defaultValue = "0") int page,
             Model model
     ) {
 
+        // Seguridad básica
         if (limit < 1) limit = 1;
-        if (limit > 500) limit = 500;
+        if (limit > 100) limit = 100;
+        if (page < 0) page = 0;
 
-        var page = repo.findAllByOrderByFechaMedicionDesc(PageRequest.of(0, limit));
+        var pageResult = repo.findAllByOrderByFechaMedicionDesc(
+                PageRequest.of(page, limit)
+        );
 
         model.addAttribute("limit", limit);
-        model.addAttribute("mediciones", page.getContent());
+        model.addAttribute("page", pageResult); // importante para paginación
+        model.addAttribute("mediciones", pageResult.getContent());
 
         return "mediciones";
     }
