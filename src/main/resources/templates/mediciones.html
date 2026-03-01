@@ -126,29 +126,65 @@
 <!-- PAGINACIÓN -->
 <div class="paginacion" th:if="${page.totalPages > 1}">
 
-    <!-- Anterior -->
+    <!-- Ir al INICIO -->
+    <a class="btn btn-page"
+       th:classappend="${page.first} ? ' btn-disabled' : ''"
+       th:href="@{/mediciones(limit=${limit}, page=0)}"
+       title="Ir al inicio">
+        ⏮
+    </a>
+
+    <!-- Anterior (igual) -->
     <a class="btn btn-page"
        th:classappend="${page.first} ? ' btn-disabled' : ''"
        th:href="@{/mediciones(limit=${limit}, page=${page.number - 1})}">
         ◀ Anterior
     </a>
 
-    <!-- Botones (muestra 7 alrededor de la página actual) -->
-    <span th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}"
-          th:if="${i >= page.number - 3 and i <= page.number + 3}">
+    <!-- Página 1 siempre -->
+    <a class="btn btn-page"
+       th:classappend="${page.number == 0} ? ' btn-active' : ''"
+       th:href="@{/mediciones(limit=${limit}, page=0)}">
+        1
+    </a>
+
+    <!-- ... si hace falta -->
+    <span th:if="${page.number > 3}" style="padding: 0 6px;">...</span>
+
+    <!-- Ventana alrededor de la actual (una antes y una después) -->
+    <span th:each="i : ${#numbers.sequence(T(java.lang.Math).max(1, page.number - 1), T(java.lang.Math).min(page.totalPages - 2, page.number + 1))}">
         <a class="btn btn-page"
            th:classappend="${i == page.number} ? ' btn-active' : ''"
            th:href="@{/mediciones(limit=${limit}, page=${i})}"
            th:text="${i + 1}">
-            1
+            2
         </a>
     </span>
 
-    <!-- Siguiente -->
+    <!-- ... si hace falta -->
+    <span th:if="${page.number < page.totalPages - 4}" style="padding: 0 6px;">...</span>
+
+    <!-- Última página siempre -->
+    <a class="btn btn-page"
+       th:classappend="${page.number == page.totalPages - 1} ? ' btn-active' : ''"
+       th:href="@{/mediciones(limit=${limit}, page=${page.totalPages - 1})}"
+       th:text="${page.totalPages}">
+        999
+    </a>
+
+    <!-- Siguiente (igual) -->
     <a class="btn btn-page"
        th:classappend="${page.last} ? ' btn-disabled' : ''"
        th:href="@{/mediciones(limit=${limit}, page=${page.number + 1})}">
         Siguiente ▶
+    </a>
+
+    <!-- Ir al FINAL -->
+    <a class="btn btn-page"
+       th:classappend="${page.last} ? ' btn-disabled' : ''"
+       th:href="@{/mediciones(limit=${limit}, page=${page.totalPages - 1})}"
+       title="Ir al final">
+        ⏭
     </a>
 </div>
 
