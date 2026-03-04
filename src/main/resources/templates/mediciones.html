@@ -143,24 +143,6 @@
         }
         .btn-logout:hover{ filter: brightness(1.05); }
 
-        .select{
-            display:flex;
-            align-items:center;
-            gap:8px;
-            color:var(--muted);
-            font-size:13px;
-            font-weight:700;
-        }
-        select{
-            padding:8px 10px;
-            border-radius:12px;
-            border:1px solid var(--border);
-            background:#fff;
-            font-weight:800;
-            color:var(--text);
-            outline:none;
-        }
-
         .cards{
             display:grid;
             grid-template-columns: repeat(4, minmax(200px, 1fr));
@@ -201,68 +183,6 @@
             font-weight:700;
         }
 
-        .panel{
-            background:var(--card);
-            border:1px solid var(--border);
-            border-radius:var(--radius);
-            box-shadow: var(--shadow);
-            padding:14px;
-        }
-        .panel-meta{
-            margin: 0 0 10px;
-            color:var(--muted);
-            font-size:13px;
-            font-weight:700;
-        }
-
-        table{
-            width:100%;
-            border-collapse:collapse;
-            overflow:hidden;
-            border-radius:12px;
-            border:1px solid var(--border);
-            background:#fff;
-        }
-        th, td{
-            border-bottom:1px solid var(--border);
-            padding:10px 10px;
-            font-size:13px;
-            text-align:left;
-        }
-        th{
-            background:#f8fafc;
-            font-weight:900;
-            color:#111827;
-        }
-        tr:hover td{ background:#fafcff; }
-
-        .paginacion{
-            display:flex;
-            gap:8px;
-            align-items:center;
-            justify-content:flex-start;
-            margin-top: 14px;
-            flex-wrap: wrap;
-        }
-
-        .btn-page{
-            background:#ffffff;
-            color: #333;
-            border-color: #ddd;
-        }
-        .btn-page:hover { background:#f2f2f2; }
-
-        .btn-active{
-            background:#111827;
-            color:white;
-            border-color:#111827;
-        }
-
-        .btn-disabled{
-            opacity: 0.5;
-            pointer-events: none;
-        }
-
         @media (max-width: 980px){
             .layout{ grid-template-columns: 1fr; }
             .sidebar{ position:relative; height:auto; }
@@ -281,9 +201,9 @@
         <div class="brand">Agro IoT</div>
 
         <nav class="nav">
-            <a href="#" class="active">Dashboard</a>
+            <a th:href="@{/mediciones}" class="active">Dashboard</a>
             <a href="#">Sensores</a>
-            <a href="#">Historial</a>
+            <a th:href="@{/historial}">Historial</a>
             <a href="#">Estaciones</a>
             <a href="#">Alertas</a>
             <a href="#">Reportes</a>
@@ -316,17 +236,6 @@
                    th:href="@{/mediciones(limit=${limit}, page=${page.number})}">
                     Recargar
                 </a>
-
-                <form method="get" action="/mediciones" class="select">
-                    <input type="hidden" name="page" value="0" />
-                    <label for="limit">Mostrar:</label>
-                    <select name="limit" id="limit" onchange="this.form.submit()">
-                        <option value="10" th:selected="${limit == 10}">10</option>
-                        <option value="20" th:selected="${limit == 20}">20</option>
-                        <option value="50" th:selected="${limit == 50}">50</option>
-                        <option value="100" th:selected="${limit == 100}">100</option>
-                    </select>
-                </form>
             </div>
         </div>
 
@@ -361,102 +270,6 @@
                 </div>
                 <div class="card-value">--</div>
                 <div class="card-sub">Riego requerido</div>
-            </div>
-        </section>
-
-        <section class="panel">
-            <p class="panel-meta">
-                Mostrando <b th:text="${mediciones.size()}">0</b> registros —
-                Página <b th:text="${page.number + 1}">1</b> de <b th:text="${page.totalPages}">1</b>
-            </p>
-
-            <table>
-                <thead>
-                <tr>
-                    <th>ID</th>
-                    <th>Fecha</th>
-                    <th>Valor</th>
-                    <th>Unidad</th>
-                    <th>Tipo Sensor</th>
-                    <th>Código Sensor</th>
-                    <th>Modelo</th>
-                    <th>Estación</th>
-                    <th>Parcela</th>
-                </tr>
-                </thead>
-
-                <tbody>
-                <tr th:each="m : ${mediciones}">
-                    <td th:text="${m.medicionId}"></td>
-                    <td th:text="${m.fechaMedicion}"></td>
-                    <td th:text="${m.valor}"></td>
-                    <td th:text="${m.unidadMedida}"></td>
-                    <td th:text="${m.tipoSensor}"></td>
-                    <td th:text="${m.codigoSensor}"></td>
-                    <td th:text="${m.modelo}"></td>
-                    <td th:text="${m.estacionCodigo}"></td>
-                    <td th:text="${m.parcelaNombre}"></td>
-                </tr>
-
-                <tr th:if="${#lists.isEmpty(mediciones)}">
-                    <td colspan="9">No hay datos disponibles.</td>
-                </tr>
-                </tbody>
-            </table>
-
-            <div class="paginacion" th:if="${page.totalPages > 1}">
-
-                <a class="btn btn-page"
-                   th:classappend="${page.first} ? ' btn-disabled' : ''"
-                   th:href="@{/mediciones(limit=${limit}, page=0)}"
-                   title="Ir al inicio">
-                    Primero
-                </a>
-
-                <a class="btn btn-page"
-                   th:classappend="${page.first} ? ' btn-disabled' : ''"
-                   th:href="@{/mediciones(limit=${limit}, page=${page.number - 1})}">
-                    Anterior
-                </a>
-
-                <a class="btn btn-page"
-                   th:classappend="${page.number == 0} ? ' btn-active' : ''"
-                   th:href="@{/mediciones(limit=${limit}, page=0)}">
-                    1
-                </a>
-
-                <span th:if="${page.number > 3}" style="padding: 0 6px;">...</span>
-
-                <span th:each="i : ${#numbers.sequence(T(java.lang.Math).max(1, page.number - 1), T(java.lang.Math).min(page.totalPages - 2, page.number + 1))}">
-                    <a class="btn btn-page"
-                       th:classappend="${i == page.number} ? ' btn-active' : ''"
-                       th:href="@{/mediciones(limit=${limit}, page=${i})}"
-                       th:text="${i + 1}">
-                        2
-                    </a>
-                </span>
-
-                <span th:if="${page.number < page.totalPages - 4}" style="padding: 0 6px;">...</span>
-
-                <a class="btn btn-page"
-                   th:classappend="${page.number == page.totalPages - 1} ? ' btn-active' : ''"
-                   th:href="@{/mediciones(limit=${limit}, page=${page.totalPages - 1})}"
-                   th:text="${page.totalPages}">
-                    Ultima
-                </a>
-
-                <a class="btn btn-page"
-                   th:classappend="${page.last} ? ' btn-disabled' : ''"
-                   th:href="@{/mediciones(limit=${limit}, page=${page.number + 1})}">
-                    Siguiente
-                </a>
-
-                <a class="btn btn-page"
-                   th:classappend="${page.last} ? ' btn-disabled' : ''"
-                   th:href="@{/mediciones(limit=${limit}, page=${page.totalPages - 1})}"
-                   title="Ir al final">
-                    Final
-                </a>
             </div>
         </section>
 

@@ -26,6 +26,25 @@ public class MedicionesController {
             Model model
     ) {
 
+        cargarDatosPaginados(limit, page, model);
+
+        return "mediciones";
+    }
+
+    @GetMapping("/historial")
+    public String verHistorial(
+            @RequestParam(name = "limit", defaultValue = "20") int limit,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            Model model
+    ) {
+
+        cargarDatosPaginados(limit, page, model);
+
+        return "historial";
+    }
+
+    private void cargarDatosPaginados(int limit, int page, Model model) {
+
         // Seguridad básica
         if (limit < 1) limit = 1;
         if (limit > 100) limit = 100;
@@ -56,6 +75,5 @@ public class MedicionesController {
         model.addAttribute("page", pageResult);
         model.addAttribute("mediciones", pageResult.getContent());
 
-        return "mediciones";
     }
 }
