@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Iniciar Sesión - AgroSat IoT</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
     <link rel="stylesheet" th:href="@{/css/login.css}" href="/css/login.css">
 </head>
 <body>
@@ -21,10 +22,12 @@
         <p class="subtitle">Monitoreo inteligente de cultivos de banano</p>
 
         <div class="alert error" th:if="${param.error}">
-            Usuario o contraseña incorrectos
+            <span class="alert-icon" aria-hidden="true">⚠️</span>
+            <span>Usuario o contraseña incorrectos</span>
         </div>
         <div class="alert logout" th:if="${param.logout}">
-            Sesión cerrada correctamente
+            <span class="alert-icon" aria-hidden="true">✅</span>
+            <span>Sesión cerrada correctamente</span>
         </div>
 
         <form th:action="@{/login}" method="post" class="login-form">
