@@ -65,7 +65,13 @@
             <a href="#">Reportes</a>
         </nav>
         <div class="sidebar-footer">
-            <div class="user-box">Conectado como:<br><b>admin</b><br>Administrador</div>
+            <div class="user-box">
+                Conectado como:<br>
+                <b th:text="${#authentication.name}">admin</b><br>
+                <span th:each="authority, iter : ${#authentication.authorities}"
+                      th:if="${iter.first}"
+                      th:text="${#strings.replace(authority.authority, 'ROLE_', '')}">ADMIN</span>
+            </div>
             <form method="post" th:action="@{/logout}">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <button type="submit" class="btn btn-logout" style="width:100%;">Cerrar Sesión</button>
