@@ -186,67 +186,124 @@
         .estaciones-grid{
             display:grid;
             grid-template-columns: repeat(2, minmax(320px, 1fr));
-            gap:14px;
-            margin-top:10px;
+            gap:16px;
+            margin-top:12px;
         }
         .estacion-card{
-            background:var(--card);
-            border:1px solid var(--border);
-            border-radius:var(--radius);
-            box-shadow: var(--shadow);
-            padding:16px;
+            background:#fff;
+            border:1px solid #ebeff5;
+            border-radius:16px;
+            box-shadow: 0 10px 28px rgba(15, 23, 42, .08);
+            padding:18px;
+            transition: transform .2s ease, box-shadow .2s ease;
+        }
+        .estacion-card:hover{
+            transform: translateY(-3px);
+            box-shadow: 0 16px 32px rgba(15, 23, 42, .12);
         }
         .estacion-head{
             display:flex;
             justify-content:space-between;
             align-items:flex-start;
-            gap:10px;
-            margin-bottom:12px;
+            gap:12px;
+            margin-bottom:14px;
         }
         .estacion-title{
             margin:0;
-            font-size:17px;
+            font-size:24px;
             font-weight:900;
+            letter-spacing:.3px;
+            color:#0f172a;
         }
         .estacion-sub{
             margin:4px 0 0;
-            color:var(--muted);
-            font-size:12px;
+            color:#64748b;
+            font-size:13px;
             font-weight:700;
         }
         .estado-tag{
             font-size:11px;
             font-weight:800;
-            color:#166534;
-            background:#dcfce7;
-            border:1px solid #bbf7d0;
             border-radius:999px;
-            padding:5px 10px;
+            padding:6px 10px;
             white-space:nowrap;
+            border:1px solid transparent;
         }
+        .estado-ok{ color:#166534; background:#dcfce7; border-color:#bbf7d0; }
+        .estado-alerta{ color:#854d0e; background:#fef9c3; border-color:#fde68a; }
+        .estado-off{ color:#374151; background:#e5e7eb; border-color:#d1d5db; }
+
         .sensor-list{
             display:flex;
             flex-direction:column;
-            gap:6px;
+            gap:10px;
         }
         .sensor-row{
+            border:1px solid #eef2f7;
+            border-radius:12px;
+            padding:10px 12px;
+            background:#fcfdff;
+        }
+        .sensor-main{
             display:flex;
+            align-items:center;
             justify-content:space-between;
             gap:10px;
-            border-bottom:1px solid var(--border);
-            padding-bottom:6px;
-            font-size:13px;
         }
-        .sensor-row:last-child{
-            border-bottom:none;
-            padding-bottom:0;
+        .sensor-info{
+            display:flex;
+            align-items:center;
+            gap:10px;
+            min-width:0;
+        }
+        .sensor-icon{
+            width:28px;
+            height:28px;
+            border-radius:8px;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            background:#ecfdf3;
+            font-size:15px;
+            font-weight:900;
+            color:#0f766e;
+            flex-shrink:0;
         }
         .sensor-name{
-            color:var(--muted);
-            font-weight:700;
+            color:#475569;
+            font-weight:800;
+            font-size:13px;
+        }
+        .sensor-value-wrap{
+            display:flex;
+            align-items:baseline;
+            gap:6px;
+            flex-shrink:0;
         }
         .sensor-value{
             font-weight:900;
+            font-size:15px;
+            color:#111827;
+        }
+        .sensor-unit{
+            font-size:12px;
+            color:#64748b;
+            font-weight:700;
+        }
+        .progress-track{
+            margin-top:8px;
+            height:7px;
+            border-radius:999px;
+            background:#e8eef6;
+            overflow:hidden;
+        }
+        .progress-fill{
+            height:100%;
+            border-radius:999px;
+            background: linear-gradient(90deg, #22c55e, #16a34a);
+        }
+        .progress-fill.luz{
+            background: linear-gradient(90deg, #facc15, #f59e0b);
         }
 
         @media (max-width: 980px){
@@ -341,19 +398,56 @@
         </section>
 
         <section class="estaciones-grid">
-            <article class="estacion-card" th:each="estacion : ${estacionesDashboard}">
+            <article class="estacion-card"
+                     th:each="estacion : ${estacionesDashboard}"
+                     th:with="faltantes=${#lists.size(estacion.sensores.?[valor == '--'])}">
                 <div class="estacion-head">
                     <div>
                         <h2 class="estacion-title" th:text="${estacion.estacionCodigo}">EST-000</h2>
                         <p class="estacion-sub" th:text="${estacion.estacionDescripcion}">Nombre estación</p>
                     </div>
-                    <span class="estado-tag">Operativa</span>
+                    <span class="estado-tag"
+                          th:classappend="${faltantes == 0} ? ' estado-ok' : (${faltantes <= 2} ? ' estado-alerta' : ' estado-off')"
+                          th:text="${faltantes == 0 ? 'Operativa' : (faltantes <= 2 ? 'Alerta' : 'Inactiva')}">Operativa</span>
                 </div>
 
                 <div class="sensor-list">
-                    <div class="sensor-row" th:each="sensor : ${estacion.sensores}">
-                        <span class="sensor-name" th:text="${sensor.tipoSensor}">Tipo sensor</span>
-                        <span class="sensor-value" th:text="${sensor.valor}">--</span>
+                    <div class="sensor-row"
+                         th:each="sensor : ${estacion.sensores}"
+                         th:with="valorNumero=${sensor.valor != '--' ? #strings.substringBefore(sensor.valor, ' ') : '--'},
+                                  unidad=${sensor.valor != '--' and #strings.contains(sensor.valor, ' ') ? #strings.substringAfter(sensor.valor, ' ') : ''},
+                                  rawValor=${sensor.valor != '--' ? #strings.replace(valorNumero, ',', '.') : '0'},
+                                  baseNumero=${T(java.lang.Double).parseDouble(rawValor)},
+                                  progreso=${sensor.tipoSensor == 'Intensidad de Luz Solar' ? T(java.lang.Math).min(100d, T(java.lang.Math).max(0d, baseNumero / 10d)) : T(java.lang.Math).min(100d, T(java.lang.Math).max(0d, baseNumero))}">
+                        <div class="sensor-main">
+                            <div class="sensor-info">
+                                <span class="sensor-icon" th:switch="${sensor.tipoSensor}">
+                                    <span th:case="'Temperatura Ambiental'">🌡️</span>
+                                    <span th:case="'Humedad Ambiental'">💧</span>
+                                    <span th:case="'Humedad del Suelo'">🌱</span>
+                                    <span th:case="'Intensidad de Luz Solar'">☀️</span>
+                                    <span th:case="'pH del Suelo'">🧪</span>
+                                    <span th:case="'Conductividad Eléctrica'">⚡</span>
+                                    <span th:case="'Nitrógeno (N)'">N</span>
+                                    <span th:case="'Fósforo (P)'">P</span>
+                                    <span th:case="'Potasio (K)'">K</span>
+                                    <span th:case="*">•</span>
+                                </span>
+                                <span class="sensor-name" th:text="${sensor.tipoSensor}">Tipo sensor</span>
+                            </div>
+                            <div class="sensor-value-wrap">
+                                <span class="sensor-value" th:text="${valorNumero}">--</span>
+                                <span class="sensor-unit" th:if="${unidad != ''}" th:text="${unidad}">%</span>
+                            </div>
+                        </div>
+
+                        <div class="progress-track"
+                             th:if="${sensor.tipoSensor == 'Humedad del Suelo' or sensor.tipoSensor == 'Intensidad de Luz Solar'}">
+                            <div class="progress-fill"
+                                 th:classappend="${sensor.tipoSensor == 'Intensidad de Luz Solar'} ? ' luz' : ''"
+                                 th:style="|width:${#numbers.formatDecimal(progreso, 1, 0)}%|">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </article>
