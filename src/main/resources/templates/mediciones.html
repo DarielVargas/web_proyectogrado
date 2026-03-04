@@ -52,6 +52,31 @@
             background: rgba(255,255,255,.08);
             opacity:.95;
             font-weight:700;
+            position:relative;
+            overflow:hidden;
+            transition: transform .25s ease, background-color .25s ease, box-shadow .25s ease;
+        }
+        .nav a::after{
+            content:"";
+            position:absolute;
+            left:8px;
+            right:8px;
+            bottom:4px;
+            height:2px;
+            border-radius:999px;
+            background:rgba(255,255,255,.9);
+            transform:scaleX(0);
+            transform-origin:left;
+            transition:transform .25s ease;
+        }
+        .nav a:hover{
+            transform: translateX(4px);
+            background: rgba(255,255,255,.16);
+            box-shadow: 0 6px 14px rgba(0,0,0,.14);
+        }
+        .nav a:hover::after,
+        .nav a.active::after{
+            transform:scaleX(1);
         }
         .nav a.active{
             background: rgba(255,255,255,.18);
@@ -122,8 +147,13 @@
             color:#fff;
             border-color:#16a34a;
             box-shadow: 0 10px 24px rgba(22,163,74,.18);
+            transition: transform .22s ease, filter .22s ease, box-shadow .22s ease;
         }
-        .btn-recargar:hover{ filter: brightness(.97); }
+        .btn-recargar:hover{
+            filter: brightness(.97);
+            transform: translateY(-1px) scale(1.03);
+            box-shadow: 0 14px 26px rgba(22,163,74,.28);
+        }
 
         .btn-logout{
             background:#111827;
@@ -148,6 +178,11 @@
             display:flex;
             flex-direction:column;
             gap:8px;
+            transition: transform .28s ease, box-shadow .28s ease;
+        }
+        .card:hover{
+            transform: translateY(-6px);
+            box-shadow: 0 22px 34px rgba(31,41,55,.18);
         }
         .card-head{
             display:flex;
@@ -184,11 +219,11 @@
             border-radius:16px;
             box-shadow: 0 10px 28px rgba(15, 23, 42, .08);
             padding:18px;
-            transition: transform .2s ease, box-shadow .2s ease;
+            transition: transform .28s ease, box-shadow .28s ease;
         }
         .estacion-card:hover{
-            transform: translateY(-3px);
-            box-shadow: 0 16px 32px rgba(15, 23, 42, .12);
+            transform: translateY(-6px);
+            box-shadow: 0 20px 36px rgba(15, 23, 42, .16);
         }
         .estacion-head{
             display:flex;
@@ -232,6 +267,12 @@
             border-radius:12px;
             padding:10px 12px;
             background:#fcfdff;
+            transition: background-color .22s ease, transform .22s ease, border-color .22s ease;
+        }
+        .sensor-row:hover{
+            background:#f4f9ff;
+            transform: translateX(4px);
+            border-color:#dbe8f8;
         }
         .sensor-main{
             display:flex;
@@ -294,6 +335,20 @@
         .progress-fill.luz{
             background: linear-gradient(90deg, #facc15, #f59e0b);
         }
+        .progress-fill{
+            width:0;
+            transition: width 1.2s cubic-bezier(.22,1,.36,1);
+        }
+
+        .animate-item{
+            opacity:0;
+            transform: translateY(18px);
+            transition: opacity .55s ease, transform .55s ease;
+        }
+        .animate-item.is-visible{
+            opacity:1;
+            transform: translateY(0);
+        }
 
         @media (max-width: 980px){
             .layout{ grid-template-columns: 1fr; }
@@ -353,7 +408,7 @@
         </div>
 
         <section class="cards">
-            <div class="card">
+            <div class="card animate-item">
                 <div class="card-head">
                     <div class="card-title">Sensores Activos</div>
                 </div>
@@ -361,7 +416,7 @@
                 <div class="card-sub">En general (temporal)</div>
             </div>
 
-            <div class="card">
+            <div class="card animate-item">
                 <div class="card-head">
                     <div class="card-title">Temp. Promedio</div>
                 </div>
@@ -369,7 +424,7 @@
                 <div class="card-sub">Temperatura ambiental</div>
             </div>
 
-            <div class="card">
+            <div class="card animate-item">
                 <div class="card-head">
                     <div class="card-title">Humedad Promedio</div>
                 </div>
@@ -377,7 +432,7 @@
                 <div class="card-sub">Humedad ambiental</div>
             </div>
 
-            <div class="card">
+            <div class="card animate-item">
                 <div class="card-head">
                     <div class="card-title">Alertas Activas</div>
                 </div>
@@ -387,7 +442,7 @@
         </section>
 
         <section class="estaciones-grid">
-            <article class="estacion-card"
+            <article class="estacion-card animate-item"
                      th:each="estacion : ${estacionesDashboard}"
                      th:with="faltantes=${#lists.size(estacion.sensores.?[valor == '--'])}">
                 <div class="estacion-head">
@@ -434,7 +489,7 @@
                              th:if="${sensor.tipoSensor == 'Humedad del Suelo' or sensor.tipoSensor == 'Intensidad de Luz Solar'}">
                             <div class="progress-fill"
                                  th:classappend="${sensor.tipoSensor == 'Intensidad de Luz Solar'} ? ' luz' : ''"
-                                 th:style="|width:${#numbers.formatDecimal(progreso, 1, 0)}%|">
+                                 th:style="|--target-width:${#numbers.formatDecimal(progreso, 1, 0)}%|">
                             </div>
                         </div>
                     </div>
@@ -444,5 +499,61 @@
 
     </main>
 </div>
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const animatedItems = document.querySelectorAll('.animate-item');
+        animatedItems.forEach((el, index) => {
+            setTimeout(() => el.classList.add('is-visible'), 70 * index);
+        });
+
+        const progressBars = document.querySelectorAll('.progress-fill');
+        requestAnimationFrame(() => {
+            progressBars.forEach((bar) => {
+                const target = bar.style.getPropertyValue('--target-width') || '0%';
+                bar.style.width = target;
+            });
+        });
+
+        const countUpElements = document.querySelectorAll('.card-value, .sensor-value');
+        countUpElements.forEach((el) => {
+            const text = (el.textContent || '').trim();
+            if (!text || text === '--') return;
+
+            const match = text.match(/^(-?\d+(?:[.,]\d+)?)(.*)$/);
+            if (!match) return;
+
+            const finalValue = Number(match[1].replace(',', '.'));
+            if (!Number.isFinite(finalValue)) return;
+
+            const suffix = match[2] || '';
+            const hasDecimals = /[.,]\d+/.test(match[1]);
+            const duration = 900;
+            const startTime = performance.now();
+
+            const formatValue = (value) => {
+                if (hasDecimals) {
+                    return value.toFixed(1).replace('.', ',');
+                }
+                return Math.round(value).toString();
+            };
+
+            const step = (now) => {
+                const progress = Math.min((now - startTime) / duration, 1);
+                const eased = 1 - Math.pow(1 - progress, 3);
+                const current = finalValue * eased;
+                el.textContent = `${formatValue(current)}${suffix}`;
+
+                if (progress < 1) {
+                    requestAnimationFrame(step);
+                } else {
+                    el.textContent = `${formatValue(finalValue)}${suffix}`;
+                }
+            };
+
+            el.textContent = hasDecimals ? `0,0${suffix}` : `0${suffix}`;
+            requestAnimationFrame(step);
+        });
+    });
+</script>
 </body>
 </html>
