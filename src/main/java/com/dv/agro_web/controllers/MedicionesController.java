@@ -1,5 +1,6 @@
 package com.dv.agro_web.controllers;
 
+import com.dv.agro_web.entidades.VwMedicionDetalle;
 import com.dv.agro_web.repositorios.VwMedicionDetalleRepository;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
@@ -9,9 +10,25 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @Controller
 public class MedicionesController {
+
+    private static final List<String> TIPOS_SENSOR_DASHBOARD = List.of(
+            "Temperatura Ambiental",
+            "Humedad Ambiental",
+            "Humedad del Suelo",
+            "Intensidad de Luz Solar",
+            "pH del Suelo",
+            "Conductividad Eléctrica",
+            "Nitrógeno (N)",
+            "Fósforo (P)",
+            "Potasio (K)"
+    );
 
     private final VwMedicionDetalleRepository repo;
 
@@ -74,6 +91,65 @@ public class MedicionesController {
         model.addAttribute("limit", limit);
         model.addAttribute("page", pageResult);
         model.addAttribute("mediciones", pageResult.getContent());
+        model.addAttribute("estacionesDashboard", construirCardsPorEstacion());
 
     }
+
+    private List<EstacionDashboardDto> construirCardsPorEstacion() {
+        List<VwMedicionDetalleRepository.EstacionResumen> estaciones = repo.findEstacionesConDatos();
+        List<VwMedicionDetalle> ultimas = repo.findUltimasMedicionesPorEstacionYTipoSensor();
+
+        Map<String, Map<String, VwMedicionDetalle>> ultimasPorEstacion = new LinkedHashMap<>();
+        for (VwMedicionDetalle medicion : ultimas) {
+            ultimasPorEstacion
+                    .computeIfAbsent(medicion.getEstacionCodigo(), key -> new LinkedHashMap<>())
+                    .put(medicion.getTipoSensor(), medicion);
+        }
+
+        List<EstacionDashboardDto> cards = new ArrayList<>();
+
+        for (VwMedicionDetalleRepository.EstacionResumen estacion : estaciones) {
+            Map<String, VwMedicionDetalle> porTipo =
+                    ultimasPorEstacion.getOrDefault(estacion.getEstacionCodigo(), Map.of());
+
+            List<SensorValorDto> sensores = new ArrayList<>();
+            for (String tipoSensor : TIPOS_SENSOR_DASHBOARD) {
+                VwMedicionDetalle medicion = porTipo.get(tipoSensor);
+                sensores.add(new SensorValorDto(tipoSensor, formatearValor(medicion)));
+            }
+
+            cards.add(new EstacionDashboardDto(
+                    estacion.getEstacionCodigo(),
+                    estacion.getEstacionDescripcion(),
+                    sensores
+            ));
+        }
+
+        return cards;
+    }
+
+    private String formatearValor(VwMedicionDetalle medicion) {
+        if (medicion == null || medicion.getValor() == null) {
+            return "--";
+        }
+
+        String valor = medicion.getValor()
+                .stripTrailingZeros()
+                .toPlainString();
+
+        if (medicion.getUnidadMedida() == null || medicion.getUnidadMedida().isBlank()) {
+            return valor;
+        }
+
+        return valor + " " + medicion.getUnidadMedida();
+    }
+
+    public record SensorValorDto(String tipoSensor, String valor) {}
+
+    public record EstacionDashboardDto(
+            String estacionCodigo,
+            String estacionDescripcion,
+            List<SensorValorDto> sensores
+    ) {}
+
 }
