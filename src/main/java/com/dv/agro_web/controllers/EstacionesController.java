@@ -31,7 +31,7 @@ public class EstacionesController {
     }
 
     @GetMapping("/estaciones/{id}/configurar")
-    public String configurarEstacion(@PathVariable Integer id, Model model) {
+    public String configurarEstacion(@PathVariable Long id, Model model) {
         model.addAttribute("estacionId", id);
         return "estaciones-configurar";
     }

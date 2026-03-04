@@ -4,7 +4,8 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
+
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "estaciones")
@@ -12,21 +13,21 @@ public class Estacion {
 
     @Id
     @Column(name = "id")
-    private Integer id;
+    private Long id;
 
     @Column(name = "codigo")
     private String codigo;
 
+    @Column(name = "parcela_id")
+    private Long parcelaId;
+
     @Column(name = "descripcion")
     private String descripcion;
 
-    @Column(name = "ubicacion")
-    private String ubicacion;
+    @Column(name = "fecha_instalacion")
+    private LocalDate fechaInstalacion;
 
-    @Transient
-    private Boolean activa;
-
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
@@ -34,15 +35,15 @@ public class Estacion {
         return codigo;
     }
 
+    public Long getParcelaId() {
+        return parcelaId;
+    }
+
     public String getDescripcion() {
         return descripcion;
     }
 
-    public String getUbicacion() {
-        return ubicacion;
-    }
-
-    public Boolean getActiva() {
-        return activa;
+    public LocalDate getFechaInstalacion() {
+        return fechaInstalacion;
     }
 }

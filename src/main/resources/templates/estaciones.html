@@ -65,10 +65,10 @@
         <section class="estaciones-lista">
             <article class="estacion-fila" th:each="estacion : ${estaciones}">
                 <div class="estacion-info">
-                    <span class="estado-dot" th:classappend="${estacion.activa == null or estacion.activa} ? ' activa' : ' inactiva'"></span>
+                    <span class="estado-dot activa"></span>
                     <div>
                         <h2 class="estacion-nombre" th:text="${estacion.descripcion != null and !#strings.isEmpty(estacion.descripcion) ? estacion.descripcion : estacion.codigo}">EST-001 - Norte</h2>
-                        <p class="estacion-sub" th:text="${estacion.ubicacion != null and !#strings.isEmpty(estacion.ubicacion) ? estacion.ubicacion : estacion.codigo}">Zona Norte</p>
+                        <p class="estacion-sub" th:text="${estacion.descripcion != null and !#strings.isEmpty(estacion.descripcion) ? estacion.descripcion : estacion.codigo}">Zona Norte</p>
                     </div>
                 </div>
                 <a class="btn-config" th:href="@{/estaciones/{id}/configurar(id=${estacion.id})}">Configurar</a>
