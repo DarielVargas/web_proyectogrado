@@ -4,6 +4,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 
 @Entity
 @Table(name = "estaciones")
@@ -22,7 +23,7 @@ public class Estacion {
     @Column(name = "ubicacion")
     private String ubicacion;
 
-    @Column(name = "activa")
+    @Transient
     private Boolean activa;
 
     public Integer getId() {
