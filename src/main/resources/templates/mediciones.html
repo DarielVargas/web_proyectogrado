@@ -2,27 +2,16 @@
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
     <title>Mediciones - Agro IoT</title>
 
     <style>
-        :root{
-            --primary:#0aa53a;
-            --primary-2:#0bbd43;
-
-            --bg:#f4f7fb;
-            --card:#ffffff;
-            --text:#1e2a3a;
-            --muted:#6b7280;
-            --border:#e5e7eb;
-            --shadow: 0 16px 40px rgba(31,41,55,.10);
-            --radius: 16px;
-        }
         *{ box-sizing:border-box; }
         body{
             margin:0;
             font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
-            background:var(--bg);
-            color:var(--text);
+            background:var(--bg-soft);
+            color:var(--text-main);
         }
 
         .layout{
@@ -32,7 +21,7 @@
         }
 
         .sidebar{
-            background: linear-gradient(180deg, var(--primary-2), var(--primary));
+            background: linear-gradient(180deg, var(--primary-light), var(--primary));
             color:#fff;
             padding:18px 16px;
             height:100vh;
@@ -101,7 +90,7 @@
         }
         .title p{
             margin:6px 0 0;
-            color:var(--muted);
+            color:var(--text-soft);
             font-size:13px;
             font-weight:600;
         }
@@ -123,7 +112,7 @@
             font-weight:800;
             border:1px solid var(--border);
             background:#fff;
-            color:var(--text);
+            color:var(--text-main);
             cursor:pointer;
             white-space:nowrap;
         }
@@ -153,7 +142,7 @@
             background:var(--card);
             border:1px solid var(--border);
             border-radius:var(--radius);
-            box-shadow: var(--shadow);
+            box-shadow: var(--shadow-soft);
             padding:16px 16px;
             min-height:96px;
             display:flex;
@@ -167,7 +156,7 @@
             gap:10px;
         }
         .card-title{
-            color:var(--muted);
+            color:var(--text-soft);
             font-size:13px;
             font-weight:900;
         }
@@ -178,7 +167,7 @@
             color: var(--primary);
         }
         .card-sub{
-            color:var(--muted);
+            color:var(--text-soft);
             font-size:12px;
             font-weight:700;
         }

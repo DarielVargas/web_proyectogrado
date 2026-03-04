@@ -1,0 +1,22 @@
+:root {
+    --primary: #0aa53a;
+    --primary-dark: #087d2d;
+    --primary-light: #0bbd43;
+    --bg-soft: #f4f7fb;
+    --card: #ffffff;
+    --text-main: #1e2a3a;
+    --text-soft: #6b7280;
+    --border: #e5e7eb;
+    --shadow-soft: 0 16px 40px rgba(31, 41, 55, 0.1);
+    --radius: 16px;
+}
+
+* {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif;
+    color: var(--text-main);
+    background: var(--bg-soft);
+}
