@@ -23,4 +23,12 @@ public class EstacionService {
     public Optional<Estacion> obtenerEstacionPorId(Long id) {
         return estacionRepository.findById(id);
     }
+
+    public boolean existeCodigo(String codigo) {
+        return estacionRepository.existsByCodigoIgnoreCase(codigo);
+    }
+
+    public Estacion crearEstacion(Estacion estacion) {
+        return estacionRepository.save(estacion);
+    }
 }

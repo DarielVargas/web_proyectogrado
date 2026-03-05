@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
+    <title>Nueva Estación - Agro IoT</title>
+    <style>
+        body{ margin:0; font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif; background:var(--bg-soft); color:var(--text-main); }
+        .container{ max-width:760px; margin:32px auto; padding:0 16px 28px; }
+        .card{ background:#fff; border:1px solid #e5e7eb; border-radius:16px; box-shadow:0 10px 30px rgba(15,23,42,.08); padding:24px; }
+        h1{ margin:0 0 8px; font-size:24px; }
+        .subtitle{ margin:0 0 20px; color:#64748b; }
+        .form-group{ display:flex; flex-direction:column; gap:6px; margin-bottom:14px; }
+        label{ font-weight:700; }
+        input, textarea{ border:1px solid #d1d5db; border-radius:10px; padding:10px 12px; font:inherit; }
+        textarea{ min-height:100px; resize:vertical; }
+        .error{ color:#b91c1c; font-size:13px; font-weight:600; }
+        .input-error{ border-color:#dc2626; }
+        .actions{ display:flex; gap:10px; margin-top:20px; }
+        .btn{ border:1px solid #d1d5db; border-radius:10px; padding:10px 14px; font-weight:800; text-decoration:none; cursor:pointer; }
+        .btn-primary{ background:#16a34a; border-color:#15803d; color:#fff; }
+        .btn-link{ background:#fff; color:#111827; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="card">
+        <h1>Agregar estación</h1>
+        <p class="subtitle">Completa los datos para crear una nueva estación.</p>
+
+        <form method="post" th:action="@{/estaciones}" th:object="${estacionForm}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+
+            <div class="form-group">
+                <label for="codigo">Código *</label>
+                <input id="codigo" type="text" th:field="*{codigo}" placeholder="EST-003" maxlength="50"
+                       th:classappend="${#fields.hasErrors('codigo')} ? ' input-error' : ''">
+                <div class="error" th:if="${#fields.hasErrors('codigo')}" th:errors="*{codigo}">Error código</div>
+            </div>
+
+            <div class="form-group">
+                <label for="parcelaId">Parcela ID (opcional)</label>
+                <input id="parcelaId" type="number" th:field="*{parcelaId}" name="parcelaId" placeholder="1">
+            </div>
+
+            <div class="form-group">
+                <label for="descripcion">Descripción (opcional)</label>
+                <textarea id="descripcion" th:field="*{descripcion}" placeholder="Descripción de la estación"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="fechaInstalacion">Fecha de instalación (opcional)</label>
+                <input id="fechaInstalacion" type="date" th:field="*{fechaInstalacion}">
+            </div>
+
+            <div class="actions">
+                <button class="btn btn-primary" type="submit">Guardar estación</button>
+                <a class="btn btn-link" th:href="@{/estaciones}">Cancelar</a>
+            </div>
+        </form>
+    </div>
+</div>
+</body>
+</html>
