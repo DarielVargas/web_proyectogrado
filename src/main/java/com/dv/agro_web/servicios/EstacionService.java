@@ -23,4 +23,8 @@ public class EstacionService {
     public Optional<Estacion> obtenerEstacionPorId(Long id) {
         return estacionRepository.findById(id);
     }
+
+    public Optional<Estacion> obtenerEstacionPorCodigo(String codigo) {
+        return estacionRepository.findByCodigo(codigo);
+    }
 }

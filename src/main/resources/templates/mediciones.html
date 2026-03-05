@@ -274,6 +274,21 @@
             transform: translateX(4px);
             border-color:#dbe8f8;
         }
+        .sensor-row.sensor-disabled{
+            opacity:.58;
+            filter: grayscale(.25);
+            background:#f8fafc;
+        }
+        .sensor-row.sensor-disabled:hover{
+            transform:none;
+            background:#f8fafc;
+            border-color:#eef2f7;
+        }
+        .sensor-disabled-text{
+            color:#64748b;
+            font-size:12px;
+            font-weight:700;
+        }
         .sensor-main{
             display:flex;
             align-items:center;
@@ -456,12 +471,13 @@
 
                 <div class="sensor-list">
                     <div class="sensor-row"
+                         th:classappend="${!sensor.activo} ? ' sensor-disabled' : ''"
                          th:each="sensor : ${estacion.sensores}"
-                         th:with="valorNumero=${sensor.valor != '--' ? #strings.substringBefore(sensor.valor, ' ') : '--'},
-                                  unidad=${sensor.valor != '--' and #strings.contains(sensor.valor, ' ') ? #strings.substringAfter(sensor.valor, ' ') : ''},
-                                  rawValor=${sensor.valor != '--' ? #strings.replace(valorNumero, ',', '.') : '0'},
-                                  baseNumero=${T(java.lang.Double).parseDouble(rawValor)},
-                                  progreso=${sensor.tipoSensor == 'Intensidad de Luz Solar' ? T(java.lang.Math).min(100d, T(java.lang.Math).max(0d, baseNumero / 10d)) : T(java.lang.Math).min(100d, T(java.lang.Math).max(0d, baseNumero))}">
+                         th:with="valorNumero=${sensor.activo and sensor.valor != '--' ? #strings.substringBefore(sensor.valor, ' ') : '--'},
+                                  unidad=${sensor.activo and sensor.valor != '--' and #strings.contains(sensor.valor, ' ') ? #strings.substringAfter(sensor.valor, ' ') : ''},
+                                  rawValor=${sensor.activo and sensor.valor != '--' ? #strings.replace(valorNumero, ',', '.') : '0'},
+                                  baseNumero=${sensor.activo and sensor.valor != '--' ? T(java.lang.Double).parseDouble(rawValor) : 0d},
+                                  progreso=${sensor.activo ? (sensor.tipoSensor == 'Intensidad de Luz Solar' ? T(java.lang.Math).min(100d, T(java.lang.Math).max(0d, baseNumero / 10d)) : T(java.lang.Math).min(100d, T(java.lang.Math).max(0d, baseNumero))) : 0d}">
                         <div class="sensor-main">
                             <div class="sensor-info">
                                 <span class="sensor-icon" th:switch="${sensor.tipoSensor}">
@@ -478,14 +494,17 @@
                                 </span>
                                 <span class="sensor-name" th:text="${sensor.tipoSensor}">Tipo sensor</span>
                             </div>
-                            <div class="sensor-value-wrap">
+                            <div class="sensor-value-wrap" th:if="${sensor.activo}">
                                 <span class="sensor-value" th:text="${valorNumero}">--</span>
                                 <span class="sensor-unit" th:if="${unidad != ''}" th:text="${unidad}">%</span>
+                            </div>
+                            <div class="sensor-disabled-text" th:if="${!sensor.activo}">
+                                Sensor desactivado en configuración
                             </div>
                         </div>
 
                         <div class="progress-track"
-                             th:if="${sensor.tipoSensor == 'Humedad del Suelo' or sensor.tipoSensor == 'Intensidad de Luz Solar'}">
+                             th:if="${sensor.activo and (sensor.tipoSensor == 'Humedad del Suelo' or sensor.tipoSensor == 'Intensidad de Luz Solar')}">
                             <div class="progress-fill"
                                  th:classappend="${sensor.tipoSensor == 'Intensidad de Luz Solar'} ? ' luz' : ''"
                                  th:style="|--target-width:${#numbers.formatDecimal(progreso, 1, 0)}%|">

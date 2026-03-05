@@ -2,6 +2,7 @@ package com.dv.agro_web.controllers;
 
 import com.dv.agro_web.entidades.VwMedicionDetalle;
 import com.dv.agro_web.repositorios.VwMedicionDetalleRepository;
+import com.dv.agro_web.servicios.UiEstacionSensorService;
 import com.dv.agro_web.servicios.UiEstacionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -16,6 +17,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 @Controller
 public class MedicionesController {
@@ -34,10 +36,16 @@ public class MedicionesController {
 
     private final VwMedicionDetalleRepository repo;
     private final UiEstacionService uiEstacionService;
+    private final UiEstacionSensorService uiEstacionSensorService;
 
-    public MedicionesController(VwMedicionDetalleRepository repo, UiEstacionService uiEstacionService) {
+    public MedicionesController(
+            VwMedicionDetalleRepository repo,
+            UiEstacionService uiEstacionService,
+            UiEstacionSensorService uiEstacionSensorService
+    ) {
         this.repo = repo;
         this.uiEstacionService = uiEstacionService;
+        this.uiEstacionSensorService = uiEstacionSensorService;
     }
 
     @GetMapping("/mediciones")
@@ -69,15 +77,8 @@ public class MedicionesController {
         if (limit > 100) limit = 100;
         if (page < 0) page = 0;
 
-        List<String> codigosActivos = uiEstacionService.obtenerCodigosActivos();
-
-        BigDecimal tempAvg = codigosActivos.isEmpty()
-                ? null
-                : repo.avgUltimas40TempAmbientalSoloActivas(codigosActivos);
-
-        BigDecimal humAvg = codigosActivos.isEmpty()
-                ? null
-                : repo.avgUltimas40HumedadAmbientalSoloActivas(codigosActivos);
+        BigDecimal tempAvg = repo.avgUltimas40TempAmbientalSoloActivos();
+        BigDecimal humAvg = repo.avgUltimas40HumedadAmbientalSoloActivos();
 
         String tempPromedioTxt = (tempAvg == null)
                 ? "--"
@@ -100,11 +101,7 @@ public class MedicionesController {
         if (limit > 100) limit = 100;
         if (page < 0) page = 0;
 
-        List<String> codigosActivos = uiEstacionService.obtenerCodigosActivos();
-
-        Page<VwMedicionDetalle> pageResult = codigosActivos.isEmpty()
-                ? Page.empty(PageRequest.of(page, limit))
-                : repo.findByEstacionCodigoInOrderByFechaMedicionDesc(codigosActivos, PageRequest.of(page, limit));
+        Page<VwMedicionDetalle> pageResult = repo.findHistorialSoloActivos(PageRequest.of(page, limit));
 
         model.addAttribute("tempPromedioTxt", "--");
         model.addAttribute("humPromedioTxt", "--");
@@ -118,6 +115,7 @@ public class MedicionesController {
         List<VwMedicionDetalleRepository.EstacionResumen> estaciones = repo.findEstacionesConDatos();
         List<VwMedicionDetalle> ultimas = repo.findUltimasMedicionesPorEstacionYTipoSensor();
         Map<String, Boolean> estadosUi = uiEstacionService.obtenerEstadosPorCodigo();
+        Map<String, Set<String>> sensoresDesactivados = uiEstacionSensorService.sensoresDesactivadosPorEstacion();
 
         Map<String, Map<String, VwMedicionDetalle>> ultimasPorEstacion = new LinkedHashMap<>();
         for (VwMedicionDetalle medicion : ultimas) {
@@ -129,19 +127,25 @@ public class MedicionesController {
         List<EstacionDashboardDto> cards = new ArrayList<>();
 
         for (VwMedicionDetalleRepository.EstacionResumen estacion : estaciones) {
-            Map<String, VwMedicionDetalle> porTipo =
-                    ultimasPorEstacion.getOrDefault(estacion.getEstacionCodigo(), Map.of());
+            String codigo = estacion.getEstacionCodigo();
+            Map<String, VwMedicionDetalle> porTipo = ultimasPorEstacion.getOrDefault(codigo, Map.of());
+            Set<String> desactivadosEstacion = sensoresDesactivados.getOrDefault(codigo, Set.of());
 
             List<SensorValorDto> sensores = new ArrayList<>();
             for (String tipoSensor : TIPOS_SENSOR_DASHBOARD) {
+                boolean sensorActivo = !desactivadosEstacion.contains(tipoSensor);
                 VwMedicionDetalle medicion = porTipo.get(tipoSensor);
-                sensores.add(new SensorValorDto(tipoSensor, formatearValor(medicion)));
+                sensores.add(new SensorValorDto(
+                        tipoSensor,
+                        sensorActivo ? formatearValor(medicion) : "Sensor desactivado en configuración",
+                        sensorActivo
+                ));
             }
 
             cards.add(new EstacionDashboardDto(
-                    estacion.getEstacionCodigo(),
+                    codigo,
                     estacion.getEstacionDescripcion(),
-                    estadosUi.getOrDefault(estacion.getEstacionCodigo(), true),
+                    estadosUi.getOrDefault(codigo, true),
                     sensores
             ));
         }
@@ -165,7 +169,7 @@ public class MedicionesController {
         return valor + " " + medicion.getUnidadMedida();
     }
 
-    public record SensorValorDto(String tipoSensor, String valor) {}
+    public record SensorValorDto(String tipoSensor, String valor, Boolean activo) {}
 
     public record EstacionDashboardDto(
             String estacionCodigo,

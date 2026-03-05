@@ -1,7 +1,9 @@
 package com.dv.agro_web.controllers;
 
 import com.dv.agro_web.entidades.Estacion;
+import com.dv.agro_web.entidades.UiEstacionSensor;
 import com.dv.agro_web.servicios.EstacionService;
+import com.dv.agro_web.servicios.UiEstacionSensorService;
 import com.dv.agro_web.servicios.UiEstacionService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -18,10 +20,16 @@ public class EstacionesController {
 
     private final EstacionService estacionService;
     private final UiEstacionService uiEstacionService;
+    private final UiEstacionSensorService uiEstacionSensorService;
 
-    public EstacionesController(EstacionService estacionService, UiEstacionService uiEstacionService) {
+    public EstacionesController(
+            EstacionService estacionService,
+            UiEstacionService uiEstacionService,
+            UiEstacionSensorService uiEstacionSensorService
+    ) {
         this.estacionService = estacionService;
         this.uiEstacionService = uiEstacionService;
+        this.uiEstacionSensorService = uiEstacionSensorService;
     }
 
     @GetMapping("/estaciones")
@@ -49,11 +57,31 @@ public class EstacionesController {
         return "redirect:/estaciones";
     }
 
-    @GetMapping("/estaciones/{id}/configurar")
-    public String configurarEstacion(@PathVariable Long id, Model model) {
-        model.addAttribute("estacionId", id);
-        return "estaciones-configurar";
+    @GetMapping("/estaciones/{codigo}/config")
+    public String configurarEstacion(@PathVariable String codigo, Model model) {
+        List<SensorConfigDto> sensores = uiEstacionSensorService.listSensoresConfig(codigo)
+                .stream()
+                .map(sensor -> new SensorConfigDto(
+                        sensor.getId().getTipoSensor(),
+                        Boolean.TRUE.equals(sensor.getActivo())
+                ))
+                .toList();
+
+        model.addAttribute("estacionCodigo", codigo);
+        model.addAttribute("sensores", sensores);
+        return "estaciones/config";
+    }
+
+    @PostMapping("/estaciones/{codigo}/sensores/{tipoSensor}/toggle")
+    public String toggleSensor(
+            @PathVariable String codigo,
+            @PathVariable String tipoSensor
+    ) {
+        uiEstacionSensorService.toggleSensor(codigo, tipoSensor);
+        return "redirect:/estaciones/{codigo}/config";
     }
 
     public record EstacionItemDto(Estacion estacion, boolean activa) {}
+
+    public record SensorConfigDto(String tipoSensor, boolean activo) {}
 }

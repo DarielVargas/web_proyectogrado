@@ -16,59 +16,92 @@ public interface VwMedicionDetalleRepository extends JpaRepository<VwMedicionDet
         String getEstacionDescripcion();
     }
 
-    Page<VwMedicionDetalle> findAllByOrderByFechaMedicionDesc(Pageable pageable);
-
-    Page<VwMedicionDetalle> findByEstacionCodigoInOrderByFechaMedicionDesc(List<String> estacionesActivas, Pageable pageable);
+    @Query(value = """
+        SELECT *
+        FROM vw_mediciones_detalle v
+        WHERE EXISTS (
+            SELECT 1
+            FROM ui_estacion ue
+            WHERE ue.estacion_codigo = v.estacion_codigo
+              AND ue.activo = 1
+        )
+          AND EXISTS (
+            SELECT 1
+            FROM ui_estacion_sensor us
+            WHERE us.estacion_codigo = v.estacion_codigo
+              AND us.tipo_sensor = v.tipo_sensor
+              AND us.activo = 1
+        )
+        ORDER BY v.fecha_medicion DESC, v.medicion_id DESC
+        """,
+            countQuery = """
+        SELECT COUNT(*)
+        FROM vw_mediciones_detalle v
+        WHERE EXISTS (
+            SELECT 1
+            FROM ui_estacion ue
+            WHERE ue.estacion_codigo = v.estacion_codigo
+              AND ue.activo = 1
+        )
+          AND EXISTS (
+            SELECT 1
+            FROM ui_estacion_sensor us
+            WHERE us.estacion_codigo = v.estacion_codigo
+              AND us.tipo_sensor = v.tipo_sensor
+              AND us.activo = 1
+        )
+        """, nativeQuery = true)
+    Page<VwMedicionDetalle> findHistorialSoloActivos(Pageable pageable);
 
     @Query(value = """
         SELECT AVG(t.valor)
         FROM (
-            SELECT valor
-            FROM vw_mediciones_detalle
-            WHERE tipo_sensor = 'Temperatura Ambiental'
-            ORDER BY fecha_medicion DESC, medicion_id DESC
+            SELECT v.valor
+            FROM vw_mediciones_detalle v
+            WHERE v.tipo_sensor = 'Temperatura Ambiental'
+              AND EXISTS (
+                  SELECT 1
+                  FROM ui_estacion ue
+                  WHERE ue.estacion_codigo = v.estacion_codigo
+                    AND ue.activo = 1
+              )
+              AND EXISTS (
+                  SELECT 1
+                  FROM ui_estacion_sensor us
+                  WHERE us.estacion_codigo = v.estacion_codigo
+                    AND us.tipo_sensor = v.tipo_sensor
+                    AND us.activo = 1
+              )
+            ORDER BY v.fecha_medicion DESC, v.medicion_id DESC
             LIMIT 40
         ) t
         """, nativeQuery = true)
-    BigDecimal avgUltimas40TempAmbiental();
-
-    @Query(value = """
-        SELECT AVG(t.valor)
-        FROM (
-            SELECT valor
-            FROM vw_mediciones_detalle
-            WHERE tipo_sensor = 'Temperatura Ambiental'
-              AND estacion_codigo IN (:estacionesActivas)
-            ORDER BY fecha_medicion DESC, medicion_id DESC
-            LIMIT 40
-        ) t
-        """, nativeQuery = true)
-    BigDecimal avgUltimas40TempAmbientalSoloActivas(List<String> estacionesActivas);
+    BigDecimal avgUltimas40TempAmbientalSoloActivos();
 
     @Query(value = """
         SELECT AVG(h.valor)
         FROM (
-            SELECT valor
-            FROM vw_mediciones_detalle
-            WHERE tipo_sensor = 'Humedad Ambiental'
-            ORDER BY fecha_medicion DESC, medicion_id DESC
+            SELECT v.valor
+            FROM vw_mediciones_detalle v
+            WHERE v.tipo_sensor = 'Humedad Ambiental'
+              AND EXISTS (
+                  SELECT 1
+                  FROM ui_estacion ue
+                  WHERE ue.estacion_codigo = v.estacion_codigo
+                    AND ue.activo = 1
+              )
+              AND EXISTS (
+                  SELECT 1
+                  FROM ui_estacion_sensor us
+                  WHERE us.estacion_codigo = v.estacion_codigo
+                    AND us.tipo_sensor = v.tipo_sensor
+                    AND us.activo = 1
+              )
+            ORDER BY v.fecha_medicion DESC, v.medicion_id DESC
             LIMIT 40
         ) h
         """, nativeQuery = true)
-    BigDecimal avgUltimas40HumedadAmbiental();
-
-    @Query(value = """
-        SELECT AVG(h.valor)
-        FROM (
-            SELECT valor
-            FROM vw_mediciones_detalle
-            WHERE tipo_sensor = 'Humedad Ambiental'
-              AND estacion_codigo IN (:estacionesActivas)
-            ORDER BY fecha_medicion DESC, medicion_id DESC
-            LIMIT 40
-        ) h
-        """, nativeQuery = true)
-    BigDecimal avgUltimas40HumedadAmbientalSoloActivas(List<String> estacionesActivas);
+    BigDecimal avgUltimas40HumedadAmbientalSoloActivos();
 
     @Query(value = """
         SELECT codigo AS estacionCodigo,

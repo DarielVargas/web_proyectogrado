@@ -15,7 +15,7 @@ public class Estacion {
     @Column(name = "id")
     private Long id;
 
-    @Column(name = "codigo")
+    @Column(name = "codigo_estacion")
     private String codigo;
 
     @Column(name = "parcela_id")
