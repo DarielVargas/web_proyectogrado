@@ -1,49 +1,30 @@
-package com.dv.agro_web.entidades;
+package com.dv.agro_web.controllers.forms;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Size;
+import org.springframework.format.annotation.DateTimeFormat;
 
 import java.time.LocalDate;
 
-@Entity
-@Table(name = "estaciones")
-public class Estacion {
+public class EstacionForm {
 
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "id")
-    private Long id;
-
-    @Column(name = "codigo")
+    @NotBlank(message = "El código es obligatorio")
+    @Size(max = 50, message = "El código no puede superar los 50 caracteres")
     private String codigo;
 
-    @Column(name = "parcela_id")
     private Long parcelaId;
 
-    @Column(name = "descripcion")
     private String descripcion;
 
-    @Column(name = "fecha_instalacion")
+    @DateTimeFormat(iso = DateTimeFormat.ISO.DATE)
     private LocalDate fechaInstalacion;
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
 
     public String getCodigo() {
         return codigo;
     }
 
     public void setCodigo(String codigo) {
-        this.codigo = codigo;
+        this.codigo = codigo != null ? codigo.trim() : null;
     }
 
     public Long getParcelaId() {

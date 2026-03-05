@@ -1,13 +1,18 @@
 package com.dv.agro_web.controllers;
 
+import com.dv.agro_web.controllers.forms.EstacionForm;
 import com.dv.agro_web.entidades.Estacion;
 import com.dv.agro_web.servicios.EstacionService;
 import com.dv.agro_web.servicios.UiEstacionService;
+import jakarta.validation.Valid;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.util.Comparator;
 import java.util.List;
@@ -39,6 +44,37 @@ public class EstacionesController {
 
         model.addAttribute("estaciones", estaciones);
         return "estaciones";
+    }
+
+    @GetMapping("/estaciones/nueva")
+    public String verFormularioNuevaEstacion(Model model) {
+        if (!model.containsAttribute("estacionForm")) {
+            model.addAttribute("estacionForm", new EstacionForm());
+        }
+        return "estaciones-nueva";
+    }
+
+    @PostMapping("/estaciones")
+    public String crearEstacion(@Valid @ModelAttribute("estacionForm") EstacionForm estacionForm,
+                                BindingResult bindingResult,
+                                RedirectAttributes redirectAttributes) {
+        if (!bindingResult.hasFieldErrors("codigo") && estacionService.existeCodigo(estacionForm.getCodigo())) {
+            bindingResult.rejectValue("codigo", "duplicado", "Ese código ya existe");
+        }
+
+        if (bindingResult.hasErrors()) {
+            return "estaciones-nueva";
+        }
+
+        Estacion estacion = new Estacion();
+        estacion.setCodigo(estacionForm.getCodigo());
+        estacion.setParcelaId(estacionForm.getParcelaId());
+        estacion.setDescripcion(estacionForm.getDescripcion());
+        estacion.setFechaInstalacion(estacionForm.getFechaInstalacion());
+        estacionService.crearEstacion(estacion);
+
+        redirectAttributes.addFlashAttribute("mensajeExito", "Estación creada correctamente");
+        return "redirect:/estaciones";
     }
 
     @PostMapping("/estaciones/{id}/toggle")
