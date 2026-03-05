@@ -8,4 +8,6 @@ import java.util.List;
 public interface UiEstacionRepository extends JpaRepository<UiEstacion, String> {
 
     List<UiEstacion> findByActivoTrue();
+
+    long countByActivoTrue();
 }
