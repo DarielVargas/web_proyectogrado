@@ -34,6 +34,10 @@ public class UiEstacionService {
                 .toList();
     }
 
+    public long contarEstacionesActivas() {
+        return uiEstacionRepository.countByActivoTrue();
+    }
+
     @Transactional
     public void alternarEstado(String estacionCodigo) {
         UiEstacion estado = uiEstacionRepository.findById(estacionCodigo)

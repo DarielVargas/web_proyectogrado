@@ -20,6 +20,8 @@ import java.util.Map;
 @Controller
 public class MedicionesController {
 
+    private static final int SENSORES_POR_ESTACION = 9;
+
     private static final List<String> TIPOS_SENSOR_DASHBOARD = List.of(
             "Temperatura Ambiental",
             "Humedad Ambiental",
@@ -87,6 +89,10 @@ public class MedicionesController {
                 ? "--"
                 : humAvg.setScale(1, RoundingMode.HALF_UP).toPlainString() + "%";
 
+        long estacionesActivas = uiEstacionService.contarEstacionesActivas();
+        long sensoresActivosTotal = estacionesActivas * SENSORES_POR_ESTACION;
+
+        model.addAttribute("sensoresActivosTotal", sensoresActivosTotal);
         model.addAttribute("tempPromedioTxt", tempPromedioTxt);
         model.addAttribute("humPromedioTxt", humPromedioTxt);
         model.addAttribute("limit", limit);
