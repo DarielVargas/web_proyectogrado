@@ -2,6 +2,8 @@ package com.dv.agro_web.controllers;
 
 import com.dv.agro_web.entidades.VwMedicionDetalle;
 import com.dv.agro_web.repositorios.VwMedicionDetalleRepository;
+import com.dv.agro_web.servicios.UiEstacionService;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -31,9 +33,11 @@ public class MedicionesController {
     );
 
     private final VwMedicionDetalleRepository repo;
+    private final UiEstacionService uiEstacionService;
 
-    public MedicionesController(VwMedicionDetalleRepository repo) {
+    public MedicionesController(VwMedicionDetalleRepository repo, UiEstacionService uiEstacionService) {
         this.repo = repo;
+        this.uiEstacionService = uiEstacionService;
     }
 
     @GetMapping("/mediciones")
@@ -43,7 +47,7 @@ public class MedicionesController {
             Model model
     ) {
 
-        cargarDatosPaginados(limit, page, model);
+        cargarDashboard(limit, page, model);
 
         return "mediciones";
     }
@@ -55,27 +59,25 @@ public class MedicionesController {
             Model model
     ) {
 
-        cargarDatosPaginados(limit, page, model);
+        cargarHistorial(limit, page, model);
 
         return "historial";
     }
 
-    private void cargarDatosPaginados(int limit, int page, Model model) {
-
-        // Seguridad básica
+    private void cargarDashboard(int limit, int page, Model model) {
         if (limit < 1) limit = 1;
         if (limit > 100) limit = 100;
         if (page < 0) page = 0;
 
-        var pageResult = repo.findAllByOrderByFechaMedicionDesc(
-                PageRequest.of(page, limit)
-        );
+        List<String> codigosActivos = uiEstacionService.obtenerCodigosActivos();
 
-        // ================================
-        // PROMEDIOS ÚLTIMAS 40 MEDICIONES
-        // ================================
-        BigDecimal tempAvg = repo.avgUltimas40TempAmbiental();
-        BigDecimal humAvg  = repo.avgUltimas40HumedadAmbiental();
+        BigDecimal tempAvg = codigosActivos.isEmpty()
+                ? null
+                : repo.avgUltimas40TempAmbientalSoloActivas(codigosActivos);
+
+        BigDecimal humAvg = codigosActivos.isEmpty()
+                ? null
+                : repo.avgUltimas40HumedadAmbientalSoloActivas(codigosActivos);
 
         String tempPromedioTxt = (tempAvg == null)
                 ? "--"
@@ -87,17 +89,35 @@ public class MedicionesController {
 
         model.addAttribute("tempPromedioTxt", tempPromedioTxt);
         model.addAttribute("humPromedioTxt", humPromedioTxt);
+        model.addAttribute("limit", limit);
+        model.addAttribute("page", Page.empty(PageRequest.of(page, limit)));
+        model.addAttribute("mediciones", List.of());
+        model.addAttribute("estacionesDashboard", construirCardsPorEstacion());
+    }
 
+    private void cargarHistorial(int limit, int page, Model model) {
+        if (limit < 1) limit = 1;
+        if (limit > 100) limit = 100;
+        if (page < 0) page = 0;
+
+        List<String> codigosActivos = uiEstacionService.obtenerCodigosActivos();
+
+        Page<VwMedicionDetalle> pageResult = codigosActivos.isEmpty()
+                ? Page.empty(PageRequest.of(page, limit))
+                : repo.findByEstacionCodigoInOrderByFechaMedicionDesc(codigosActivos, PageRequest.of(page, limit));
+
+        model.addAttribute("tempPromedioTxt", "--");
+        model.addAttribute("humPromedioTxt", "--");
         model.addAttribute("limit", limit);
         model.addAttribute("page", pageResult);
         model.addAttribute("mediciones", pageResult.getContent());
-        model.addAttribute("estacionesDashboard", construirCardsPorEstacion());
-
+        model.addAttribute("estacionesDashboard", List.of());
     }
 
     private List<EstacionDashboardDto> construirCardsPorEstacion() {
         List<VwMedicionDetalleRepository.EstacionResumen> estaciones = repo.findEstacionesConDatos();
         List<VwMedicionDetalle> ultimas = repo.findUltimasMedicionesPorEstacionYTipoSensor();
+        Map<String, Boolean> estadosUi = uiEstacionService.obtenerEstadosPorCodigo();
 
         Map<String, Map<String, VwMedicionDetalle>> ultimasPorEstacion = new LinkedHashMap<>();
         for (VwMedicionDetalle medicion : ultimas) {
@@ -121,6 +141,7 @@ public class MedicionesController {
             cards.add(new EstacionDashboardDto(
                     estacion.getEstacionCodigo(),
                     estacion.getEstacionDescripcion(),
+                    estadosUi.getOrDefault(estacion.getEstacionCodigo(), true),
                     sensores
             ));
         }
@@ -149,7 +170,7 @@ public class MedicionesController {
     public record EstacionDashboardDto(
             String estacionCodigo,
             String estacionDescripcion,
+            Boolean activa,
             List<SensorValorDto> sensores
     ) {}
-
 }

@@ -16,13 +16,10 @@ public interface VwMedicionDetalleRepository extends JpaRepository<VwMedicionDet
         String getEstacionDescripcion();
     }
 
-    // Paginación normal (la tabla)
     Page<VwMedicionDetalle> findAllByOrderByFechaMedicionDesc(Pageable pageable);
 
+    Page<VwMedicionDetalle> findByEstacionCodigoInOrderByFechaMedicionDesc(List<String> estacionesActivas, Pageable pageable);
 
-    // =========================================
-    // PROMEDIO ÚLTIMAS 40 TEMPERATURAS AMBIENTALES
-    // =========================================
     @Query(value = """
         SELECT AVG(t.valor)
         FROM (
@@ -35,10 +32,19 @@ public interface VwMedicionDetalleRepository extends JpaRepository<VwMedicionDet
         """, nativeQuery = true)
     BigDecimal avgUltimas40TempAmbiental();
 
+    @Query(value = """
+        SELECT AVG(t.valor)
+        FROM (
+            SELECT valor
+            FROM vw_mediciones_detalle
+            WHERE tipo_sensor = 'Temperatura Ambiental'
+              AND estacion_codigo IN (:estacionesActivas)
+            ORDER BY fecha_medicion DESC, medicion_id DESC
+            LIMIT 40
+        ) t
+        """, nativeQuery = true)
+    BigDecimal avgUltimas40TempAmbientalSoloActivas(List<String> estacionesActivas);
 
-    // =========================================
-    // PROMEDIO ÚLTIMAS 40 HUMEDADES AMBIENTALES
-    // =========================================
     @Query(value = """
         SELECT AVG(h.valor)
         FROM (
@@ -50,6 +56,19 @@ public interface VwMedicionDetalleRepository extends JpaRepository<VwMedicionDet
         ) h
         """, nativeQuery = true)
     BigDecimal avgUltimas40HumedadAmbiental();
+
+    @Query(value = """
+        SELECT AVG(h.valor)
+        FROM (
+            SELECT valor
+            FROM vw_mediciones_detalle
+            WHERE tipo_sensor = 'Humedad Ambiental'
+              AND estacion_codigo IN (:estacionesActivas)
+            ORDER BY fecha_medicion DESC, medicion_id DESC
+            LIMIT 40
+        ) h
+        """, nativeQuery = true)
+    BigDecimal avgUltimas40HumedadAmbientalSoloActivas(List<String> estacionesActivas);
 
     @Query(value = """
         SELECT codigo AS estacionCodigo,

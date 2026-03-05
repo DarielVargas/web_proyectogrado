@@ -5,6 +5,7 @@ import com.dv.agro_web.repositorios.EstacionRepository;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class EstacionService {
@@ -17,5 +18,9 @@ public class EstacionService {
 
     public List<Estacion> obtenerEstaciones() {
         return estacionRepository.findAll();
+    }
+
+    public Optional<Estacion> obtenerEstacionPorId(Long id) {
+        return estacionRepository.findById(id);
     }
 }
