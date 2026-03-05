@@ -443,16 +443,15 @@
 
         <section class="estaciones-grid">
             <article class="estacion-card animate-item"
-                     th:each="estacion : ${estacionesDashboard}"
-                     th:with="faltantes=${#lists.size(estacion.sensores.?[valor == '--'])}">
+                     th:each="estacion : ${estacionesDashboard}">
                 <div class="estacion-head">
                     <div>
                         <h2 class="estacion-title" th:text="${estacion.estacionCodigo}">EST-000</h2>
                         <p class="estacion-sub" th:text="${estacion.estacionDescripcion}">Nombre estación</p>
                     </div>
                     <span class="estado-tag"
-                          th:classappend="${faltantes == 0} ? ' estado-ok' : (${faltantes <= 2} ? ' estado-alerta' : ' estado-off')"
-                          th:text="${faltantes == 0 ? 'Operativa' : (faltantes <= 2 ? 'Alerta' : 'Inactiva')}">Operativa</span>
+                          th:classappend="${estacion.activa} ? ' estado-ok' : ' estado-off'"
+                          th:text="${estacion.activa} ? 'Operativa' : 'Inactiva'">Operativa</span>
                 </div>
 
                 <div class="sensor-list">
