@@ -372,18 +372,6 @@
                                   progreso=${sensor.tipoSensor == 'Intensidad de Luz Solar' ? T(java.lang.Math).min(100d, T(java.lang.Math).max(0d, baseNumero / 10d)) : T(java.lang.Math).min(100d, T(java.lang.Math).max(0d, baseNumero))}">
                     <div class="sensor-main">
                         <div class="sensor-info">
-                            <span class="sensor-icon" th:switch="${sensor.tipoSensor}">
-                                <span th:case="'Temperatura Ambiental'">🌡️</span>
-                                <span th:case="'Humedad Ambiental'">💧</span>
-                                <span th:case="'Humedad del Suelo'">🌱</span>
-                                <span th:case="'Intensidad de Luz Solar'">☀️</span>
-                                <span th:case="'pH del Suelo'">🧪</span>
-                                <span th:case="'Conductividad Eléctrica'">⚡</span>
-                                <span th:case="'Nitrógeno (N)'">N</span>
-                                <span th:case="'Fósforo (P)'">P</span>
-                                <span th:case="'Potasio (K)'">K</span>
-                                <span th:case="*">•</span>
-                            </span>
                             <span class="sensor-name" th:text="${sensor.tipoSensor}">Tipo sensor</span>
                         </div>
                         <div class="sensor-actions">
