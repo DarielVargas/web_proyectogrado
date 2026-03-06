@@ -15,6 +15,18 @@ import java.util.Map;
 @Service
 public class UiEstacionSensorService {
 
+    private static final List<String> TIPOS_SENSOR = List.of(
+            "Temperatura Ambiental",
+            "Humedad Ambiental",
+            "Humedad del Suelo",
+            "Intensidad de Luz Solar",
+            "pH del Suelo",
+            "Conductividad Eléctrica",
+            "Nitrógeno (N)",
+            "Fósforo (P)",
+            "Potasio (K)"
+    );
+
     private final UiEstacionSensorRepository uiEstacionSensorRepository;
 
     public UiEstacionSensorService(UiEstacionSensorRepository uiEstacionSensorRepository) {
@@ -38,6 +50,27 @@ public class UiEstacionSensorService {
         return estados;
     }
 
+
+
+    @Transactional
+    public void asegurarSensoresRegistrados(Collection<String> codigosEstacion) {
+        LocalDateTime ahora = LocalDateTime.now();
+        for (String codigo : codigosEstacion) {
+            for (String tipoSensor : TIPOS_SENSOR) {
+                UiEstacionSensorId id = new UiEstacionSensorId(codigo, tipoSensor);
+                if (uiEstacionSensorRepository.existsById(id)) {
+                    continue;
+                }
+
+                UiEstacionSensor nuevo = new UiEstacionSensor();
+                nuevo.setEstacionCodigo(codigo);
+                nuevo.setTipoSensor(tipoSensor);
+                nuevo.setActivo(true);
+                nuevo.setUpdatedAt(ahora);
+                uiEstacionSensorRepository.save(nuevo);
+            }
+        }
+    }
 
     public long contarSensoresActivos() {
         return uiEstacionSensorRepository.countByActivoTrue();

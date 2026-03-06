@@ -75,6 +75,10 @@ public class MedicionesController {
         if (page < 0) page = 0;
 
         List<String> codigosActivos = uiEstacionService.obtenerCodigosActivos();
+        List<String> codigosConDatos = repo.findEstacionesConDatos().stream()
+                .map(VwMedicionDetalleRepository.EstacionResumen::getEstacionCodigo)
+                .toList();
+        uiEstacionSensorService.asegurarSensoresRegistrados(codigosConDatos);
 
         BigDecimal tempAvg = codigosActivos.isEmpty()
                 ? null

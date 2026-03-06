@@ -101,6 +101,7 @@ public class EstacionesController {
         estacion.setDescripcion(estacionForm.getDescripcion());
         estacion.setFechaInstalacion(estacionForm.getFechaInstalacion());
         estacionService.crearEstacion(estacion);
+        uiEstacionSensorService.asegurarSensoresRegistrados(List.of(estacion.getCodigo()));
 
         redirectAttributes.addFlashAttribute("mensajeExito", "Estación creada correctamente");
         return "redirect:/estaciones";
@@ -118,6 +119,7 @@ public class EstacionesController {
     public String configurarEstacion(@PathVariable Long id, Model model) {
         Estacion estacion = estacionService.obtenerEstacionPorId(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Estación no encontrada"));
+        uiEstacionSensorService.asegurarSensoresRegistrados(List.of(estacion.getCodigo()));
 
         Map<String, Map<String, VwMedicionDetalle>> ultimasPorEstacion = new LinkedHashMap<>();
         for (VwMedicionDetalle medicion : medicionDetalleRepository.findUltimasMedicionesPorEstacionYTipoSensor()) {
