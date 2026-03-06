@@ -427,8 +427,8 @@
                 <div class="card-head">
                     <div class="card-title">Sensores Activos</div>
                 </div>
-                <div class="card-value" th:text="${sensoresActivosTotal}">0</div>
-                <div class="card-sub">Estaciones activas × 9 sensores</div>
+                <div class="card-value" th:text="${sensoresActivos}">0</div>
+                <div class="card-sub" th:text="|${sensoresActivos} sensores activos de ${sensoresRegistrados} sensores|">0 sensores activos de 0 sensores</div>
             </div>
 
             <div class="card animate-item">

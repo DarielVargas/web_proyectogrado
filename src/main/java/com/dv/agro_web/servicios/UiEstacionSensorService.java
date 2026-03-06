@@ -38,6 +38,15 @@ public class UiEstacionSensorService {
         return estados;
     }
 
+
+    public long contarSensoresActivos() {
+        return uiEstacionSensorRepository.countByActivoTrue();
+    }
+
+    public long contarSensoresRegistrados() {
+        return uiEstacionSensorRepository.count();
+    }
+
     @Transactional
     public void actualizarEstado(String estacionCodigo, String tipoSensor, boolean activo) {
         UiEstacionSensor estado = uiEstacionSensorRepository
