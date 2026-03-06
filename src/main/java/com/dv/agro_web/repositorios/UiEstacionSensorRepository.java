@@ -9,6 +9,8 @@ import java.util.List;
 
 public interface UiEstacionSensorRepository extends JpaRepository<UiEstacionSensor, UiEstacionSensorId> {
 
+    long countByActivoTrue();
+
     List<UiEstacionSensor> findByEstacionCodigo(String estacionCodigo);
 
     List<UiEstacionSensor> findByEstacionCodigoIn(Collection<String> estacionCodigos);
