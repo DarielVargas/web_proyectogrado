@@ -18,15 +18,42 @@ public interface VwMedicionDetalleRepository extends JpaRepository<VwMedicionDet
 
     Page<VwMedicionDetalle> findAllByOrderByFechaMedicionDesc(Pageable pageable);
 
-    Page<VwMedicionDetalle> findByEstacionCodigoInOrderByFechaMedicionDesc(List<String> estacionesActivas, Pageable pageable);
+    @Query(
+            value = """
+        SELECT v.*
+        FROM vw_mediciones_detalle v
+        LEFT JOIN ui_estacion_sensor s
+            ON s.estacion_codigo = v.estacion_codigo
+           AND s.tipo_sensor = v.tipo_sensor
+        WHERE v.estacion_codigo IN (:estacionesActivas)
+          AND (s.activo = 1 OR s.activo IS NULL)
+        ORDER BY v.fecha_medicion DESC
+        """,
+            countQuery = """
+        SELECT COUNT(*)
+        FROM vw_mediciones_detalle v
+        LEFT JOIN ui_estacion_sensor s
+            ON s.estacion_codigo = v.estacion_codigo
+           AND s.tipo_sensor = v.tipo_sensor
+        WHERE v.estacion_codigo IN (:estacionesActivas)
+          AND (s.activo = 1 OR s.activo IS NULL)
+        """,
+            nativeQuery = true)
+    Page<VwMedicionDetalle> findByEstacionCodigoInAndSensoresActivosOrderByFechaMedicionDesc(
+            List<String> estacionesActivas,
+            Pageable pageable
+    );
 
     @Query(value = """
         SELECT AVG(t.valor)
         FROM (
-            SELECT valor
-            FROM vw_mediciones_detalle
-            WHERE tipo_sensor = 'Temperatura Ambiental'
-            ORDER BY fecha_medicion DESC, medicion_id DESC
+            SELECT v.valor
+            FROM vw_mediciones_detalle v
+            LEFT JOIN ui_estacion_sensor s
+                ON s.estacion_codigo = v.estacion_codigo
+               AND s.tipo_sensor = v.tipo_sensor
+            WHERE v.tipo_sensor = 'Temperatura Ambiental'
+            ORDER BY v.fecha_medicion DESC, v.medicion_id DESC
             LIMIT 40
         ) t
         """, nativeQuery = true)
@@ -35,11 +62,15 @@ public interface VwMedicionDetalleRepository extends JpaRepository<VwMedicionDet
     @Query(value = """
         SELECT AVG(t.valor)
         FROM (
-            SELECT valor
-            FROM vw_mediciones_detalle
-            WHERE tipo_sensor = 'Temperatura Ambiental'
-              AND estacion_codigo IN (:estacionesActivas)
-            ORDER BY fecha_medicion DESC, medicion_id DESC
+            SELECT v.valor
+            FROM vw_mediciones_detalle v
+            LEFT JOIN ui_estacion_sensor s
+                ON s.estacion_codigo = v.estacion_codigo
+               AND s.tipo_sensor = v.tipo_sensor
+            WHERE v.tipo_sensor = 'Temperatura Ambiental'
+              AND v.estacion_codigo IN (:estacionesActivas)
+              AND (s.activo = 1 OR s.activo IS NULL)
+            ORDER BY v.fecha_medicion DESC, v.medicion_id DESC
             LIMIT 40
         ) t
         """, nativeQuery = true)
@@ -48,10 +79,13 @@ public interface VwMedicionDetalleRepository extends JpaRepository<VwMedicionDet
     @Query(value = """
         SELECT AVG(h.valor)
         FROM (
-            SELECT valor
-            FROM vw_mediciones_detalle
-            WHERE tipo_sensor = 'Humedad Ambiental'
-            ORDER BY fecha_medicion DESC, medicion_id DESC
+            SELECT v.valor
+            FROM vw_mediciones_detalle v
+            LEFT JOIN ui_estacion_sensor s
+                ON s.estacion_codigo = v.estacion_codigo
+               AND s.tipo_sensor = v.tipo_sensor
+            WHERE v.tipo_sensor = 'Humedad Ambiental'
+            ORDER BY v.fecha_medicion DESC, v.medicion_id DESC
             LIMIT 40
         ) h
         """, nativeQuery = true)
@@ -60,11 +94,15 @@ public interface VwMedicionDetalleRepository extends JpaRepository<VwMedicionDet
     @Query(value = """
         SELECT AVG(h.valor)
         FROM (
-            SELECT valor
-            FROM vw_mediciones_detalle
-            WHERE tipo_sensor = 'Humedad Ambiental'
-              AND estacion_codigo IN (:estacionesActivas)
-            ORDER BY fecha_medicion DESC, medicion_id DESC
+            SELECT v.valor
+            FROM vw_mediciones_detalle v
+            LEFT JOIN ui_estacion_sensor s
+                ON s.estacion_codigo = v.estacion_codigo
+               AND s.tipo_sensor = v.tipo_sensor
+            WHERE v.tipo_sensor = 'Humedad Ambiental'
+              AND v.estacion_codigo IN (:estacionesActivas)
+              AND (s.activo = 1 OR s.activo IS NULL)
+            ORDER BY v.fecha_medicion DESC, v.medicion_id DESC
             LIMIT 40
         ) h
         """, nativeQuery = true)

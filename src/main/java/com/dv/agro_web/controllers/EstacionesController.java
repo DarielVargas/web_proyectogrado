@@ -5,6 +5,7 @@ import com.dv.agro_web.entidades.Estacion;
 import com.dv.agro_web.entidades.VwMedicionDetalle;
 import com.dv.agro_web.repositorios.VwMedicionDetalleRepository;
 import com.dv.agro_web.servicios.EstacionService;
+import com.dv.agro_web.servicios.UiEstacionSensorService;
 import com.dv.agro_web.servicios.UiEstacionService;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -15,6 +16,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.server.ResponseStatusException;
 
@@ -43,13 +45,16 @@ public class EstacionesController {
 
     private final EstacionService estacionService;
     private final UiEstacionService uiEstacionService;
+    private final UiEstacionSensorService uiEstacionSensorService;
     private final VwMedicionDetalleRepository medicionDetalleRepository;
 
     public EstacionesController(EstacionService estacionService,
                                 UiEstacionService uiEstacionService,
+                                UiEstacionSensorService uiEstacionSensorService,
                                 VwMedicionDetalleRepository medicionDetalleRepository) {
         this.estacionService = estacionService;
         this.uiEstacionService = uiEstacionService;
+        this.uiEstacionSensorService = uiEstacionSensorService;
         this.medicionDetalleRepository = medicionDetalleRepository;
     }
 
@@ -122,14 +127,31 @@ public class EstacionesController {
         }
 
         Map<String, VwMedicionDetalle> porTipo = ultimasPorEstacion.getOrDefault(estacion.getCodigo(), Map.of());
+        Map<String, Boolean> estadosSensores = uiEstacionSensorService.obtenerEstadosPorEstacion(estacion.getCodigo());
+
         List<SensorValorConfigDto> sensores = new ArrayList<>();
         for (String tipoSensor : TIPOS_SENSOR_DASHBOARD) {
-            sensores.add(new SensorValorConfigDto(tipoSensor, formatearValor(porTipo.get(tipoSensor))));
+            sensores.add(new SensorValorConfigDto(
+                    tipoSensor,
+                    formatearValor(porTipo.get(tipoSensor)),
+                    estadosSensores.getOrDefault(tipoSensor, true)
+            ));
         }
 
         model.addAttribute("estacion", estacion);
         model.addAttribute("sensores", sensores);
         return "estaciones-configurar";
+    }
+
+    @PostMapping("/estaciones/{id}/configurar/sensores")
+    public String actualizarEstadoSensor(@PathVariable Long id,
+                                         @RequestParam("tipoSensor") String tipoSensor,
+                                         @RequestParam("activo") boolean activo) {
+        Estacion estacion = estacionService.obtenerEstacionPorId(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Estación no encontrada"));
+
+        uiEstacionSensorService.actualizarEstado(estacion.getCodigo(), tipoSensor, activo);
+        return "redirect:/estaciones/{id}/configurar";
     }
 
 
@@ -164,5 +186,5 @@ public class EstacionesController {
 
     public record EstacionItemDto(Estacion estacion, boolean activa) {}
 
-    public record SensorValorConfigDto(String tipoSensor, String valor) {}
+    public record SensorValorConfigDto(String tipoSensor, String valor, boolean activo) {}
 }
