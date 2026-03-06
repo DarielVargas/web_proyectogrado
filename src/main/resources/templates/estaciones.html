@@ -98,7 +98,7 @@
                 </div>
                 <div class="fila-actions">
                     <a class="btn-info" th:href="@{/estaciones/{codigo}/info(codigo=${item.estacion.codigo})}">Información</a>
-                    <a class="btn-config" th:href="@{/estaciones/{id}/configurar(id=${item.estacion.id})}">Configurar</a>
+                    <a class="btn-config" th:href="@{/estaciones/{codigo}/configurar(codigo=${item.estacion.codigo})}">Configurar</a>
                     <form method="post" th:action="@{/estaciones/{id}/toggle(id=${item.estacion.id})}">
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                         <button type="submit"

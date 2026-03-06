@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -97,4 +98,21 @@ public interface VwMedicionDetalleRepository extends JpaRepository<VwMedicionDet
         ORDER BY ultimas.estacion_codigo, ultimas.tipo_sensor
         """, nativeQuery = true)
     List<VwMedicionDetalle> findUltimasMedicionesPorEstacionYTipoSensor();
+
+    @Query(value = """
+        SELECT *
+        FROM (
+            SELECT v.*,
+                   ROW_NUMBER() OVER (
+                       PARTITION BY v.tipo_sensor
+                       ORDER BY v.fecha_medicion DESC, v.medicion_id DESC
+                   ) AS rn
+            FROM vw_mediciones_detalle v
+            WHERE v.estacion_codigo = :codigoEstacion
+        ) ultimas
+        WHERE ultimas.rn = 1
+        ORDER BY ultimas.tipo_sensor
+        """, nativeQuery = true)
+    List<VwMedicionDetalle> findUltimasMedicionesPorCodigoEstacionYTipoSensor(@Param("codigoEstacion") String codigoEstacion);
+
 }
