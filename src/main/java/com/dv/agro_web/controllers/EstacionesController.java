@@ -2,6 +2,8 @@ package com.dv.agro_web.controllers;
 
 import com.dv.agro_web.controllers.forms.EstacionForm;
 import com.dv.agro_web.entidades.Estacion;
+import com.dv.agro_web.entidades.VwMedicionDetalle;
+import com.dv.agro_web.repositorios.VwMedicionDetalleRepository;
 import com.dv.agro_web.servicios.EstacionService;
 import com.dv.agro_web.servicios.UiEstacionService;
 import jakarta.validation.Valid;
@@ -17,7 +19,9 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import org.springframework.web.server.ResponseStatusException;
 
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -25,12 +29,28 @@ import java.util.Map;
 @Controller
 public class EstacionesController {
 
+    private static final List<String> TIPOS_SENSOR_DASHBOARD = List.of(
+            "Temperatura Ambiental",
+            "Humedad Ambiental",
+            "Humedad del Suelo",
+            "Intensidad de Luz Solar",
+            "pH del Suelo",
+            "Conductividad Eléctrica",
+            "Nitrógeno (N)",
+            "Fósforo (P)",
+            "Potasio (K)"
+    );
+
     private final EstacionService estacionService;
     private final UiEstacionService uiEstacionService;
+    private final VwMedicionDetalleRepository medicionDetalleRepository;
 
-    public EstacionesController(EstacionService estacionService, UiEstacionService uiEstacionService) {
+    public EstacionesController(EstacionService estacionService,
+                                UiEstacionService uiEstacionService,
+                                VwMedicionDetalleRepository medicionDetalleRepository) {
         this.estacionService = estacionService;
         this.uiEstacionService = uiEstacionService;
+        this.medicionDetalleRepository = medicionDetalleRepository;
     }
 
     @GetMapping("/estaciones")
@@ -91,7 +111,24 @@ public class EstacionesController {
 
     @GetMapping("/estaciones/{id}/configurar")
     public String configurarEstacion(@PathVariable Long id, Model model) {
-        model.addAttribute("estacionId", id);
+        Estacion estacion = estacionService.obtenerEstacionPorId(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Estación no encontrada"));
+
+        Map<String, Map<String, VwMedicionDetalle>> ultimasPorEstacion = new LinkedHashMap<>();
+        for (VwMedicionDetalle medicion : medicionDetalleRepository.findUltimasMedicionesPorEstacionYTipoSensor()) {
+            ultimasPorEstacion
+                    .computeIfAbsent(medicion.getEstacionCodigo(), key -> new LinkedHashMap<>())
+                    .put(medicion.getTipoSensor(), medicion);
+        }
+
+        Map<String, VwMedicionDetalle> porTipo = ultimasPorEstacion.getOrDefault(estacion.getCodigo(), Map.of());
+        List<SensorValorConfigDto> sensores = new ArrayList<>();
+        for (String tipoSensor : TIPOS_SENSOR_DASHBOARD) {
+            sensores.add(new SensorValorConfigDto(tipoSensor, formatearValor(porTipo.get(tipoSensor))));
+        }
+
+        model.addAttribute("estacion", estacion);
+        model.addAttribute("sensores", sensores);
         return "estaciones-configurar";
     }
 
@@ -112,5 +149,20 @@ public class EstacionesController {
         return "estacion-info";
     }
 
+    private String formatearValor(VwMedicionDetalle medicion) {
+        if (medicion == null || medicion.getValor() == null) {
+            return "--";
+        }
+
+        String valor = medicion.getValor().stripTrailingZeros().toPlainString();
+        if (medicion.getUnidadMedida() == null || medicion.getUnidadMedida().isBlank()) {
+            return valor;
+        }
+
+        return valor + " " + medicion.getUnidadMedida();
+    }
+
     public record EstacionItemDto(Estacion estacion, boolean activa) {}
+
+    public record SensorValorConfigDto(String tipoSensor, String valor) {}
 }
