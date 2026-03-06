@@ -24,6 +24,10 @@ public class EstacionService {
         return estacionRepository.findById(id);
     }
 
+    public Optional<Estacion> obtenerEstacionPorCodigo(String codigo) {
+        return estacionRepository.findByCodigoIgnoreCase(codigo);
+    }
+
     public boolean existeCodigo(String codigo) {
         return estacionRepository.existsByCodigoIgnoreCase(codigo);
     }
