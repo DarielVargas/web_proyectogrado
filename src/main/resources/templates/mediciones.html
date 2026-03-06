@@ -274,6 +274,21 @@
             transform: translateX(4px);
             border-color:#dbe8f8;
         }
+        .sensor-row.inactivo{
+            opacity:.55;
+            background:#f8fafc;
+        }
+        .sensor-badge-off{
+            margin-left:8px;
+            font-size:10px;
+            font-weight:800;
+            color:#92400e;
+            background:#fef3c7;
+            border:1px solid #fde68a;
+            border-radius:999px;
+            padding:3px 7px;
+            white-space:nowrap;
+        }
         .sensor-main{
             display:flex;
             align-items:center;
@@ -457,6 +472,7 @@
                 <div class="sensor-list">
                     <div class="sensor-row"
                          th:each="sensor : ${estacion.sensores}"
+                         th:classappend="${sensor.activo} ? '' : ' inactivo'"
                          th:with="valorNumero=${sensor.valor != '--' ? #strings.substringBefore(sensor.valor, ' ') : '--'},
                                   unidad=${sensor.valor != '--' and #strings.contains(sensor.valor, ' ') ? #strings.substringAfter(sensor.valor, ' ') : ''},
                                   rawValor=${sensor.valor != '--' ? #strings.replace(valorNumero, ',', '.') : '0'},
@@ -477,6 +493,7 @@
                                     <span th:case="*">•</span>
                                 </span>
                                 <span class="sensor-name" th:text="${sensor.tipoSensor}">Tipo sensor</span>
+                                <span class="sensor-badge-off" th:if="${!sensor.activo}">Sensor desactivado</span>
                             </div>
                             <div class="sensor-value-wrap">
                                 <span class="sensor-value" th:text="${valorNumero}">--</span>

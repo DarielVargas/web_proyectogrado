@@ -2,6 +2,7 @@ package com.dv.agro_web.controllers;
 
 import com.dv.agro_web.entidades.VwMedicionDetalle;
 import com.dv.agro_web.repositorios.VwMedicionDetalleRepository;
+import com.dv.agro_web.servicios.UiEstacionSensorService;
 import com.dv.agro_web.servicios.UiEstacionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -36,10 +37,14 @@ public class MedicionesController {
 
     private final VwMedicionDetalleRepository repo;
     private final UiEstacionService uiEstacionService;
+    private final UiEstacionSensorService uiEstacionSensorService;
 
-    public MedicionesController(VwMedicionDetalleRepository repo, UiEstacionService uiEstacionService) {
+    public MedicionesController(VwMedicionDetalleRepository repo,
+                                UiEstacionService uiEstacionService,
+                                UiEstacionSensorService uiEstacionSensorService) {
         this.repo = repo;
         this.uiEstacionService = uiEstacionService;
+        this.uiEstacionSensorService = uiEstacionSensorService;
     }
 
     @GetMapping("/mediciones")
@@ -110,7 +115,7 @@ public class MedicionesController {
 
         Page<VwMedicionDetalle> pageResult = codigosActivos.isEmpty()
                 ? Page.empty(PageRequest.of(page, limit))
-                : repo.findByEstacionCodigoInOrderByFechaMedicionDesc(codigosActivos, PageRequest.of(page, limit));
+                : repo.findByEstacionCodigoInAndSensoresActivosOrderByFechaMedicionDesc(codigosActivos, PageRequest.of(page, limit));
 
         model.addAttribute("tempPromedioTxt", "--");
         model.addAttribute("humPromedioTxt", "--");
@@ -125,6 +130,12 @@ public class MedicionesController {
         List<VwMedicionDetalle> ultimas = repo.findUltimasMedicionesPorEstacionYTipoSensor();
         Map<String, Boolean> estadosUi = uiEstacionService.obtenerEstadosPorCodigo();
 
+        List<String> codigosEstaciones = estaciones.stream()
+                .map(VwMedicionDetalleRepository.EstacionResumen::getEstacionCodigo)
+                .toList();
+        Map<String, Map<String, Boolean>> estadosSensoresPorEstacion =
+                uiEstacionSensorService.obtenerEstadosPorEstaciones(codigosEstaciones);
+
         Map<String, Map<String, VwMedicionDetalle>> ultimasPorEstacion = new LinkedHashMap<>();
         for (VwMedicionDetalle medicion : ultimas) {
             ultimasPorEstacion
@@ -137,11 +148,14 @@ public class MedicionesController {
         for (VwMedicionDetalleRepository.EstacionResumen estacion : estaciones) {
             Map<String, VwMedicionDetalle> porTipo =
                     ultimasPorEstacion.getOrDefault(estacion.getEstacionCodigo(), Map.of());
+            Map<String, Boolean> estadosSensores =
+                    estadosSensoresPorEstacion.getOrDefault(estacion.getEstacionCodigo(), Map.of());
 
             List<SensorValorDto> sensores = new ArrayList<>();
             for (String tipoSensor : TIPOS_SENSOR_DASHBOARD) {
                 VwMedicionDetalle medicion = porTipo.get(tipoSensor);
-                sensores.add(new SensorValorDto(tipoSensor, formatearValor(medicion)));
+                boolean activo = estadosSensores.getOrDefault(tipoSensor, true);
+                sensores.add(new SensorValorDto(tipoSensor, formatearValor(medicion), activo));
             }
 
             cards.add(new EstacionDashboardDto(
@@ -171,7 +185,7 @@ public class MedicionesController {
         return valor + " " + medicion.getUnidadMedida();
     }
 
-    public record SensorValorDto(String tipoSensor, String valor) {}
+    public record SensorValorDto(String tipoSensor, String valor, boolean activo) {}
 
     public record EstacionDashboardDto(
             String estacionCodigo,
