@@ -5,6 +5,7 @@ import com.dv.agro_web.entidades.Estacion;
 import com.dv.agro_web.servicios.EstacionService;
 import com.dv.agro_web.servicios.UiEstacionService;
 import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
@@ -13,9 +14,12 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.server.ResponseStatusException;
 
+import java.time.format.DateTimeFormatter;
 import java.util.Comparator;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 
 @Controller
@@ -89,6 +93,23 @@ public class EstacionesController {
     public String configurarEstacion(@PathVariable Long id, Model model) {
         model.addAttribute("estacionId", id);
         return "estaciones-configurar";
+    }
+
+
+    @GetMapping("/estaciones/{codigo}/info")
+    public String verInformacionEstacion(@PathVariable String codigo, Model model) {
+        Estacion estacion = estacionService.obtenerEstacionPorCodigo(codigo)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Estación no encontrada"));
+
+        boolean activa = uiEstacionService.obtenerEstadosPorCodigo().getOrDefault(estacion.getCodigo(), true);
+        String fechaInstalacion = estacion.getFechaInstalacion() != null
+                ? estacion.getFechaInstalacion().format(DateTimeFormatter.ofPattern("d 'de' MMMM 'de' yyyy", new Locale("es", "ES")))
+                : "Sin fecha registrada";
+
+        model.addAttribute("estacion", estacion);
+        model.addAttribute("estadoEstacion", activa ? "Operativa" : "Inactiva");
+        model.addAttribute("fechaInstalacionFormateada", fechaInstalacion);
+        return "estacion-info";
     }
 
     public record EstacionItemDto(Estacion estacion, boolean activa) {}

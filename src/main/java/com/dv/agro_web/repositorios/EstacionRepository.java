@@ -5,4 +5,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 public interface EstacionRepository extends JpaRepository<Estacion, Long> {
     boolean existsByCodigoIgnoreCase(String codigo);
+
+    java.util.Optional<Estacion> findByCodigoIgnoreCase(String codigo);
 }
