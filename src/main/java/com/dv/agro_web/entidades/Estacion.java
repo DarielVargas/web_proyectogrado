@@ -30,6 +30,9 @@ public class Estacion {
     @Column(name = "fecha_instalacion")
     private LocalDate fechaInstalacion;
 
+    @Column(name = "activa")
+    private Boolean activa = true;
+
     public Long getId() {
         return id;
     }
@@ -68,5 +71,13 @@ public class Estacion {
 
     public void setFechaInstalacion(LocalDate fechaInstalacion) {
         this.fechaInstalacion = fechaInstalacion;
+    }
+
+    public Boolean getActiva() {
+        return activa;
+    }
+
+    public void setActiva(Boolean activa) {
+        this.activa = activa;
     }
 }
