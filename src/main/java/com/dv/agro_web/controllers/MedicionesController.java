@@ -2,6 +2,7 @@ package com.dv.agro_web.controllers;
 
 import com.dv.agro_web.entidades.Estacion;
 import com.dv.agro_web.entidades.VwMedicionDetalle;
+import com.dv.agro_web.repositorios.SensorRepository;
 import com.dv.agro_web.repositorios.VwMedicionDetalleRepository;
 import com.dv.agro_web.servicios.EstacionService;
 import com.dv.agro_web.servicios.UiEstacionSensorService;
@@ -36,15 +37,18 @@ public class MedicionesController {
     );
 
     private final VwMedicionDetalleRepository repo;
+    private final SensorRepository sensorRepository;
     private final EstacionService estacionService;
     private final UiEstacionService uiEstacionService;
     private final UiEstacionSensorService uiEstacionSensorService;
 
     public MedicionesController(VwMedicionDetalleRepository repo,
+                                SensorRepository sensorRepository,
                                 EstacionService estacionService,
                                 UiEstacionService uiEstacionService,
                                 UiEstacionSensorService uiEstacionSensorService) {
         this.repo = repo;
+        this.sensorRepository = sensorRepository;
         this.estacionService = estacionService;
         this.uiEstacionService = uiEstacionService;
         this.uiEstacionSensorService = uiEstacionSensorService;
@@ -104,8 +108,8 @@ public class MedicionesController {
                 ? "--"
                 : humAvg.setScale(1, RoundingMode.HALF_UP).toPlainString() + "%";
 
-        long sensoresActivos = uiEstacionSensorService.contarSensoresActivos();
-        long sensoresRegistrados = uiEstacionSensorService.contarSensoresRegistrados();
+        long sensoresActivos = sensorRepository.contarSensoresActivosDeEstacionesActivas();
+        long sensoresRegistrados = sensorRepository.contarSensoresRegistradosDeEstacionesActivas();
 
         model.addAttribute("sensoresActivos", sensoresActivos);
         model.addAttribute("sensoresRegistrados", sensoresRegistrados);
