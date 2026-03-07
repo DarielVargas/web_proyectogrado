@@ -26,6 +26,7 @@
         .btn-add{ background:#16a34a; color:#fff; border-color:#15803d; border-radius:999px; box-shadow:0 10px 24px rgba(21,128,61,.24); transition: transform .22s ease, box-shadow .22s ease, filter .22s ease; }
         .btn-add:hover{ transform: translateY(-1px); box-shadow:0 14px 26px rgba(21,128,61,.32); filter:brightness(1.03); }
         .alert-exito{ margin-top:14px; background:#dcfce7; border:1px solid #86efac; color:#166534; padding:12px 14px; border-radius:12px; font-weight:700; }
+        .alert-error{ margin-top:10px; background:#fee2e2; border:1px solid #fecaca; color:#991b1b; padding:12px 14px; border-radius:12px; font-weight:700; }
         .btn{ display:inline-flex; align-items:center; justify-content:center; padding:10px 14px; border-radius:12px; text-decoration:none; font-weight:800; border:1px solid var(--border); background:#fff; color:var(--text-main); cursor:pointer; white-space:nowrap; }
         .btn-logout{ background:#111827; color:#fff; border-color:#111827; }
         .estaciones-lista{ margin-top:18px; display:flex; flex-direction:column; gap:14px; }
@@ -84,6 +85,7 @@
         </div>
 
         <div class="alert-exito" th:if="${mensajeExito}" th:text="${mensajeExito}">Estación creada correctamente</div>
+        <div class="alert-error" th:if="${mensajeError}" th:text="${mensajeError}">Error</div>
 
         <section class="estaciones-lista">
             <article class="estacion-fila animate-item" th:each="item : ${estaciones}">
