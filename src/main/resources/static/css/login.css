@@ -1,8 +1,11 @@
 body {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --primary-light: #3b82f6;
     margin: 0;
     background:
-        radial-gradient(circle at 20% 20%, rgba(11, 189, 67, 0.14), transparent 45%),
-        radial-gradient(circle at 80% 0%, rgba(10, 165, 58, 0.1), transparent 35%),
+        radial-gradient(circle at 20% 20%, rgba(59, 130, 246, 0.18), transparent 45%),
+        radial-gradient(circle at 80% 0%, rgba(37, 99, 235, 0.12), transparent 35%),
         var(--bg-soft);
 }
 
@@ -47,7 +50,7 @@ body {
     background: linear-gradient(135deg, var(--primary-light), var(--primary));
     display: grid;
     place-items: center;
-    box-shadow: 0 8px 20px rgba(10, 165, 58, 0.25);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.25);
 }
 
 .logo-circle svg {
@@ -120,7 +123,7 @@ label {
 
 .input-group:focus-within {
     border-color: var(--primary);
-    box-shadow: 0 0 0 4px rgba(10, 165, 58, 0.14);
+    box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.2);
 }
 
 .icon {
@@ -156,18 +159,18 @@ button {
     font-weight: 800;
     cursor: pointer;
     transition: transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease;
-    box-shadow: 0 12px 24px rgba(10, 165, 58, 0.2);
+    box-shadow: 0 12px 24px rgba(37, 99, 235, 0.28);
 }
 
 button:hover {
     transform: translateY(-2px);
-    box-shadow: 0 16px 26px rgba(10, 165, 58, 0.28);
+    box-shadow: 0 16px 26px rgba(37, 99, 235, 0.36);
     filter: brightness(1.01);
 }
 
 button:active {
     transform: translateY(0);
-    box-shadow: 0 8px 16px rgba(10, 165, 58, 0.2);
+    box-shadow: 0 8px 16px rgba(37, 99, 235, 0.28);
 }
 
 @media (max-width: 480px) {
