@@ -1,5 +1,6 @@
 package com.dv.agro_web.controllers;
 
+import com.dv.agro_web.entidades.Estacion;
 import com.dv.agro_web.entidades.VwMedicionDetalle;
 import com.dv.agro_web.repositorios.VwMedicionDetalleRepository;
 import com.dv.agro_web.servicios.EstacionService;
@@ -85,10 +86,7 @@ public class MedicionesController {
         List<String> codigosActivos = uiEstacionService.obtenerCodigosActivos().stream()
                 .filter(codigosEstacionesActivas::contains)
                 .toList();
-        List<String> codigosConDatos = repo.findEstacionesConDatos().stream()
-                .map(VwMedicionDetalleRepository.EstacionResumen::getEstacionCodigo)
-                .toList();
-        uiEstacionSensorService.asegurarSensoresRegistrados(codigosConDatos);
+        uiEstacionSensorService.asegurarSensoresRegistrados(codigosEstacionesActivas);
 
         BigDecimal tempAvg = codigosActivos.isEmpty()
                 ? null
@@ -145,21 +143,15 @@ public class MedicionesController {
     }
 
     private List<EstacionDashboardDto> construirCardsPorEstacion() {
-        List<String> codigosEstacionesActivas = estacionService.obtenerEstacionesActivas().stream()
-                .map(estacion -> estacion.getCodigo())
+        List<Estacion> estacionesActivas = estacionService.obtenerEstacionesActivas();
+        List<String> codigosEstacionesActivas = estacionesActivas.stream()
+                .map(Estacion::getCodigo)
                 .toList();
 
-        List<VwMedicionDetalleRepository.EstacionResumen> estaciones = repo.findEstacionesConDatos().stream()
-                .filter(estacion -> codigosEstacionesActivas.contains(estacion.getEstacionCodigo()))
-                .toList();
         List<VwMedicionDetalle> ultimas = repo.findUltimasMedicionesPorEstacionYTipoSensor();
         Map<String, Boolean> estadosUi = uiEstacionService.obtenerEstadosPorCodigo();
-
-        List<String> codigosEstaciones = estaciones.stream()
-                .map(VwMedicionDetalleRepository.EstacionResumen::getEstacionCodigo)
-                .toList();
         Map<String, Map<String, Boolean>> estadosSensoresPorEstacion =
-                uiEstacionSensorService.obtenerEstadosPorEstaciones(codigosEstaciones);
+                uiEstacionSensorService.obtenerEstadosPorEstaciones(codigosEstacionesActivas);
 
         Map<String, Map<String, VwMedicionDetalle>> ultimasPorEstacion = new LinkedHashMap<>();
         for (VwMedicionDetalle medicion : ultimas) {
@@ -170,11 +162,12 @@ public class MedicionesController {
 
         List<EstacionDashboardDto> cards = new ArrayList<>();
 
-        for (VwMedicionDetalleRepository.EstacionResumen estacion : estaciones) {
+        for (Estacion estacion : estacionesActivas) {
+            String codigoEstacion = estacion.getCodigo();
             Map<String, VwMedicionDetalle> porTipo =
-                    ultimasPorEstacion.getOrDefault(estacion.getEstacionCodigo(), Map.of());
+                    ultimasPorEstacion.getOrDefault(codigoEstacion, Map.of());
             Map<String, Boolean> estadosSensores =
-                    estadosSensoresPorEstacion.getOrDefault(estacion.getEstacionCodigo(), Map.of());
+                    estadosSensoresPorEstacion.getOrDefault(codigoEstacion, Map.of());
 
             List<SensorValorDto> sensores = new ArrayList<>();
             for (String tipoSensor : TIPOS_SENSOR_DASHBOARD) {
@@ -183,10 +176,14 @@ public class MedicionesController {
                 sensores.add(new SensorValorDto(tipoSensor, formatearValor(medicion), activo));
             }
 
+            String descripcion = (estacion.getDescripcion() == null || estacion.getDescripcion().isBlank())
+                    ? codigoEstacion
+                    : estacion.getDescripcion();
+
             cards.add(new EstacionDashboardDto(
-                    estacion.getEstacionCodigo(),
-                    estacion.getEstacionDescripcion(),
-                    estadosUi.getOrDefault(estacion.getEstacionCodigo(), true),
+                    codigoEstacion,
+                    descripcion,
+                    estadosUi.getOrDefault(codigoEstacion, true),
                     sensores
             ));
         }
