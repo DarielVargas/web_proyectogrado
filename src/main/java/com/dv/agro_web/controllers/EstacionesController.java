@@ -62,7 +62,7 @@ public class EstacionesController {
     public String verEstaciones(Model model) {
         Map<String, Boolean> estadosUi = uiEstacionService.obtenerEstadosPorCodigo();
 
-        List<EstacionItemDto> estaciones = estacionService.obtenerEstaciones()
+        List<EstacionItemDto> estaciones = estacionService.obtenerEstacionesActivas()
                 .stream()
                 .sorted(Comparator.comparing(Estacion::getId))
                 .map(estacion -> new EstacionItemDto(
@@ -87,7 +87,7 @@ public class EstacionesController {
     public String crearEstacion(@Valid @ModelAttribute("estacionForm") EstacionForm estacionForm,
                                 BindingResult bindingResult,
                                 RedirectAttributes redirectAttributes) {
-        if (!bindingResult.hasFieldErrors("codigo") && estacionService.existeCodigo(estacionForm.getCodigo())) {
+        if (!bindingResult.hasFieldErrors("codigo") && estacionService.existeCodigoActivo(estacionForm.getCodigo())) {
             bindingResult.rejectValue("codigo", "duplicado", "Ese código ya existe");
         }
 
@@ -109,7 +109,7 @@ public class EstacionesController {
 
     @PostMapping("/estaciones/{id}/toggle")
     public String alternarEstado(@PathVariable Long id) {
-        estacionService.obtenerEstacionPorId(id)
+        estacionService.obtenerEstacionActivaPorId(id)
                 .ifPresent(estacion -> uiEstacionService.alternarEstado(estacion.getCodigo()));
 
         return "redirect:/estaciones";
@@ -117,7 +117,7 @@ public class EstacionesController {
 
     @GetMapping("/estaciones/{id}/configurar")
     public String configurarEstacion(@PathVariable Long id, Model model) {
-        Estacion estacion = estacionService.obtenerEstacionPorId(id)
+        Estacion estacion = estacionService.obtenerEstacionActivaPorId(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Estación no encontrada"));
         uiEstacionSensorService.asegurarSensoresRegistrados(List.of(estacion.getCodigo()));
 
@@ -149,7 +149,7 @@ public class EstacionesController {
     public String actualizarEstadoSensor(@PathVariable Long id,
                                          @RequestParam("tipoSensor") String tipoSensor,
                                          @RequestParam("activo") boolean activo) {
-        Estacion estacion = estacionService.obtenerEstacionPorId(id)
+        Estacion estacion = estacionService.obtenerEstacionActivaPorId(id)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Estación no encontrada"));
 
         uiEstacionSensorService.actualizarEstado(estacion.getCodigo(), tipoSensor, activo);
@@ -157,9 +157,34 @@ public class EstacionesController {
     }
 
 
+    @PostMapping("/estaciones/{id}/desactivar")
+    public String desactivarEstacion(@PathVariable Long id,
+                                     @RequestParam("confirmacion") String confirmacion,
+                                     RedirectAttributes redirectAttributes) {
+        if (!"ADMIN".equals(confirmacion)) {
+            redirectAttributes.addFlashAttribute("mensajeError", "Confirmación inválida. Debe escribir ADMIN.");
+            return "redirect:/estaciones/{id}/configurar";
+        }
+
+        if (estacionService.obtenerEstacionActivaPorId(id).isEmpty()) {
+            redirectAttributes.addFlashAttribute("mensajeError", "La estación no existe o ya está desactivada.");
+            return "redirect:/estaciones";
+        }
+
+        boolean desactivada = estacionService.desactivarEstacion(id);
+        if (!desactivada) {
+            redirectAttributes.addFlashAttribute("mensajeError", "La estación no existe o ya está desactivada.");
+            return "redirect:/estaciones";
+        }
+
+        redirectAttributes.addFlashAttribute("mensajeExito", "La estación fue desactivada correctamente.");
+        return "redirect:/estaciones";
+    }
+
+
     @GetMapping("/estaciones/{codigo}/info")
     public String verInformacionEstacion(@PathVariable String codigo, Model model) {
-        Estacion estacion = estacionService.obtenerEstacionPorCodigo(codigo)
+        Estacion estacion = estacionService.obtenerEstacionActivaPorCodigo(codigo)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Estación no encontrada"));
 
         boolean activa = uiEstacionService.obtenerEstadosPorCodigo().getOrDefault(estacion.getCodigo(), true);

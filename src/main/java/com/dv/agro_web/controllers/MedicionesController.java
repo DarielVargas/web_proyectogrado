@@ -2,6 +2,7 @@ package com.dv.agro_web.controllers;
 
 import com.dv.agro_web.entidades.VwMedicionDetalle;
 import com.dv.agro_web.repositorios.VwMedicionDetalleRepository;
+import com.dv.agro_web.servicios.EstacionService;
 import com.dv.agro_web.servicios.UiEstacionSensorService;
 import com.dv.agro_web.servicios.UiEstacionService;
 import org.springframework.data.domain.Page;
@@ -34,13 +35,16 @@ public class MedicionesController {
     );
 
     private final VwMedicionDetalleRepository repo;
+    private final EstacionService estacionService;
     private final UiEstacionService uiEstacionService;
     private final UiEstacionSensorService uiEstacionSensorService;
 
     public MedicionesController(VwMedicionDetalleRepository repo,
+                                EstacionService estacionService,
                                 UiEstacionService uiEstacionService,
                                 UiEstacionSensorService uiEstacionSensorService) {
         this.repo = repo;
+        this.estacionService = estacionService;
         this.uiEstacionService = uiEstacionService;
         this.uiEstacionSensorService = uiEstacionSensorService;
     }
@@ -74,7 +78,13 @@ public class MedicionesController {
         if (limit > 100) limit = 100;
         if (page < 0) page = 0;
 
-        List<String> codigosActivos = uiEstacionService.obtenerCodigosActivos();
+        List<String> codigosEstacionesActivas = estacionService.obtenerEstacionesActivas().stream()
+                .map(estacion -> estacion.getCodigo())
+                .toList();
+
+        List<String> codigosActivos = uiEstacionService.obtenerCodigosActivos().stream()
+                .filter(codigosEstacionesActivas::contains)
+                .toList();
         List<String> codigosConDatos = repo.findEstacionesConDatos().stream()
                 .map(VwMedicionDetalleRepository.EstacionResumen::getEstacionCodigo)
                 .toList();
@@ -114,7 +124,13 @@ public class MedicionesController {
         if (limit > 100) limit = 100;
         if (page < 0) page = 0;
 
-        List<String> codigosActivos = uiEstacionService.obtenerCodigosActivos();
+        List<String> codigosEstacionesActivas = estacionService.obtenerEstacionesActivas().stream()
+                .map(estacion -> estacion.getCodigo())
+                .toList();
+
+        List<String> codigosActivos = uiEstacionService.obtenerCodigosActivos().stream()
+                .filter(codigosEstacionesActivas::contains)
+                .toList();
 
         Page<VwMedicionDetalle> pageResult = codigosActivos.isEmpty()
                 ? Page.empty(PageRequest.of(page, limit))
@@ -129,7 +145,13 @@ public class MedicionesController {
     }
 
     private List<EstacionDashboardDto> construirCardsPorEstacion() {
-        List<VwMedicionDetalleRepository.EstacionResumen> estaciones = repo.findEstacionesConDatos();
+        List<String> codigosEstacionesActivas = estacionService.obtenerEstacionesActivas().stream()
+                .map(estacion -> estacion.getCodigo())
+                .toList();
+
+        List<VwMedicionDetalleRepository.EstacionResumen> estaciones = repo.findEstacionesConDatos().stream()
+                .filter(estacion -> codigosEstacionesActivas.contains(estacion.getEstacionCodigo()))
+                .toList();
         List<VwMedicionDetalle> ultimas = repo.findUltimasMedicionesPorEstacionYTipoSensor();
         Map<String, Boolean> estadosUi = uiEstacionService.obtenerEstadosPorCodigo();
 
