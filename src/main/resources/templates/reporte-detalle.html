@@ -87,10 +87,6 @@
                     <p class="meta-label">Rango de fechas</p>
                     <p class="meta-value" th:text="|${reporteSeleccionado.fechaInicio} a ${reporteSeleccionado.fechaFin}|">2026-01-01 a 2026-01-02</p>
                 </div>
-                <div class="meta-item">
-                    <p class="meta-label">Tipo de reporte</p>
-                    <p class="meta-value" th:text="${reporteSeleccionado.tipoReporte}">DIARIO</p>
-                </div>
             </div>
 
             <div class="empty" th:if="${detalleReportePage == null or #lists.isEmpty(detalleReportePage.content)}" style="margin-top:12px;">No hay mediciones para este reporte.</div>
