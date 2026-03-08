@@ -38,6 +38,7 @@
         .btn{ display:inline-flex; align-items:center; justify-content:center; padding:11px 18px; border-radius:12px; border:1px solid transparent; font-weight:900; cursor:pointer; text-decoration:none; }
         .btn-generate{ margin-top:14px; width:100%; background:#2563eb; border-color:#1d4ed8; color:#fff; font-size:15px; box-shadow:0 14px 30px rgba(37,99,235,.3); transition:transform .2s ease, filter .2s ease; }
         .btn-generate:hover{ transform:translateY(-1px); filter:brightness(.96); }
+        .btn-preview{ background:#eef2ff; border-color:#c7d2fe; color:#3730a3; padding:8px 12px; font-size:12px; }
         .btn-download{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; padding:8px 12px; font-size:12px; }
         .btn-delete{ background:#fef2f2; border-color:#fecaca; color:#b91c1c; padding:8px 12px; font-size:12px; }
         .btn-logout{ background:#111827; color:#fff; border-color:#111827; width:100%; }
@@ -146,6 +147,7 @@
                         </p>
                     </a>
                     <div class="recent-actions">
+                        <a class="btn btn-preview" th:href="@{/reportes/{id}(id=${r.idReporte})}">Ver</a>
                         <a class="btn btn-download" th:href="@{/reportes/{id}/descargar(id=${r.idReporte})}">Descargar</a>
                         <form class="inline-form"
                               method="post"
