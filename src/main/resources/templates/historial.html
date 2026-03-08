@@ -29,7 +29,7 @@
         .card-title{ margin:0 0 6px; font-size:20px; font-weight:900; color:#0f172a; }
         .card-sub{ margin:0 0 14px; color:#64748b; font-size:13px; font-weight:600; }
 
-        .report-grid{ display:grid; grid-template-columns: repeat(3, minmax(180px, 1fr)); gap:12px; }
+        .report-grid{ display:grid; grid-template-columns: repeat(2, minmax(180px, 1fr)); gap:12px; }
         .field{ display:flex; flex-direction:column; gap:6px; }
         .field label{ font-size:12px; font-weight:800; color:#334155; }
         .field input, .field select{ padding:10px 12px; border:1px solid #dbe3ee; border-radius:10px; font-weight:700; color:#0f172a; background:#fff; }
@@ -103,7 +103,7 @@
 
         <section class="card animate-item">
             <h2 class="card-title">Generador de Reportes Meteorológicos</h2>
-            <p class="card-sub">Seleccione fecha, estación activa y tipo de reporte para generar análisis basados en mediciones reales.</p>
+            <p class="card-sub">Seleccione fecha (o rango) y estación activa para generar análisis basados en mediciones reales.</p>
 
             <div class="alert ok" th:if="${mensajeExito}" th:text="${mensajeExito}">Reporte generado correctamente.</div>
             <div class="alert warn" th:if="${mensajeReporte}" th:text="${mensajeReporte}">No existen mediciones para los filtros seleccionados.</div>
@@ -126,16 +126,6 @@
                                     th:text="|${est.codigo} - ${est.descripcion}|">EST-001 - Estación</option>
                         </select>
                     </div>
-
-                    <div class="field">
-                        <label for="tipoReporte">Tipo de Reporte</label>
-                        <select id="tipoReporte" name="tipoReporte" required>
-                            <option value="">Seleccione...</option>
-                            <option value="DIARIO">Diario</option>
-                            <option value="SEMANAL">Semanal</option>
-                            <option value="MENSUAL">Mensual</option>
-                        </select>
-                    </div>
                 </div>
 
                 <button class="btn btn-generate" type="submit">Generar Reporte</button>
@@ -156,7 +146,7 @@
                         </p>
                     </a>
                     <div class="recent-actions">
-                        <button type="button" class="btn btn-download">Descargar</button>
+                        <a class="btn btn-download" th:href="@{/reportes/{id}/descargar(id=${r.idReporte})}">Descargar</a>
                         <form class="inline-form"
                               method="post"
                               th:action="@{/reportes/{id}/eliminar(id=${r.idReporte})}"
