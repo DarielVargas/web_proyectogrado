@@ -31,6 +31,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -266,11 +267,20 @@ public class MedicionesController {
                     }
                     List<VwMedicionDetalle> medicionesSensor = entry.getValue();
                     if (inicioPorSensor >= medicionesSensor.size()) {
-                        return new DetalleSensorDto(tipoMostrar, List.of());
+                        return new DetalleSensorDto(tipoMostrar, List.of(), "--", "--", "--", "--");
                     }
 
                     int finPorSensor = Math.min(inicioPorSensor + limiteNormalizado, medicionesSensor.size());
-                    return new DetalleSensorDto(tipoMostrar, medicionesSensor.subList(inicioPorSensor, finPorSensor));
+                    List<VwMedicionDetalle> medicionesPaginaSensor = medicionesSensor.subList(inicioPorSensor, finPorSensor);
+                    ResumenSensorDto resumen = calcularResumenSensor(medicionesPaginaSensor);
+                    return new DetalleSensorDto(
+                            tipoMostrar,
+                            medicionesPaginaSensor,
+                            resumen.promedio(),
+                            resumen.minimo(),
+                            resumen.maximo(),
+                            resumen.ultimaMedicion()
+                    );
                 })
                 .filter(detalle -> !detalle.mediciones().isEmpty())
                 .toList();
@@ -299,6 +309,85 @@ public class MedicionesController {
             return "sin_tipo_de_sensor";
         }
         return tipoSensor.trim().toLowerCase();
+    }
+
+    private ResumenSensorDto calcularResumenSensor(List<VwMedicionDetalle> medicionesPaginaSensor) {
+        List<VwMedicionDetalle> medicionesConValor = medicionesPaginaSensor.stream()
+                .filter(m -> m.getValor() != null)
+                .toList();
+
+        if (medicionesConValor.isEmpty()) {
+            return new ResumenSensorDto("--", "--", "--", "--");
+        }
+
+        BigDecimal suma = medicionesConValor.stream()
+                .map(VwMedicionDetalle::getValor)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal promedio = suma.divide(
+                BigDecimal.valueOf(medicionesConValor.size()),
+                2,
+                RoundingMode.HALF_UP
+        );
+
+        BigDecimal minimo = medicionesConValor.stream()
+                .map(VwMedicionDetalle::getValor)
+                .min(BigDecimal::compareTo)
+                .orElse(null);
+
+        BigDecimal maximo = medicionesConValor.stream()
+                .map(VwMedicionDetalle::getValor)
+                .max(BigDecimal::compareTo)
+                .orElse(null);
+
+        VwMedicionDetalle ultima = medicionesConValor.stream()
+                .filter(m -> m.getFechaMedicion() != null)
+                .max((a, b) -> a.getFechaMedicion().compareTo(b.getFechaMedicion()))
+                .orElse(medicionesConValor.get(medicionesConValor.size() - 1));
+
+        String unidad = medicionesPaginaSensor.stream()
+                .map(VwMedicionDetalle::getUnidadMedida)
+                .filter(u -> u != null && !u.isBlank())
+                .findFirst()
+                .orElse("");
+
+        return new ResumenSensorDto(
+                formatearValorResumen(promedio, unidad),
+                formatearValorResumen(minimo, unidad),
+                formatearValorResumen(maximo, unidad),
+                formatearUltimaMedicion(ultima, unidad)
+        );
+    }
+
+    private String formatearValorResumen(BigDecimal valor, String unidad) {
+        if (valor == null) {
+            return "--";
+        }
+
+        String valorTxt = valor.stripTrailingZeros().toPlainString();
+        if (unidad == null || unidad.isBlank()) {
+            return valorTxt;
+        }
+
+        return valorTxt + " " + unidad;
+    }
+
+    private String formatearUltimaMedicion(VwMedicionDetalle medicion, String unidadPorDefecto) {
+        if (medicion == null || medicion.getValor() == null) {
+            return "--";
+        }
+
+        String unidad = (medicion.getUnidadMedida() != null && !medicion.getUnidadMedida().isBlank())
+                ? medicion.getUnidadMedida()
+                : unidadPorDefecto;
+
+        String valorTxt = formatearValorResumen(medicion.getValor(), unidad);
+        Timestamp fecha = medicion.getFechaMedicion();
+        if (fecha == null) {
+            return valorTxt;
+        }
+
+        return valorTxt + " · " + fecha;
     }
 
     private void cargarDashboard(int limit, int page, Model model) {
@@ -415,7 +504,9 @@ public class MedicionesController {
 
     public record EstacionOpcionDto(Long id, String codigo, String descripcion) {}
 
-    public record DetalleSensorDto(String tipoSensor, List<VwMedicionDetalle> mediciones) {}
+    public record DetalleSensorDto(String tipoSensor, List<VwMedicionDetalle> mediciones, String promedio, String minimo, String maximo, String ultimaMedicion) {}
+
+    public record ResumenSensorDto(String promedio, String minimo, String maximo, String ultimaMedicion) {}
 
     public record EstacionDashboardDto(
             String estacionCodigo,
