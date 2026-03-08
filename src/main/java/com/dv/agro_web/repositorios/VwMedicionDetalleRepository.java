@@ -177,4 +177,36 @@ public interface VwMedicionDetalleRepository extends JpaRepository<VwMedicionDet
         """, nativeQuery = true)
     List<VwMedicionDetalle> findReportePorRangoByEstacionCodigo(@Param("estacionCodigo") String estacionCodigo, @Param("fechaInicio") java.time.LocalDate fechaInicio, @Param("fechaFin") java.time.LocalDate fechaFin);
 
+
+    @Query(
+            value = """
+        SELECT v.*
+        FROM vw_mediciones_detalle v
+        LEFT JOIN ui_estacion_sensor s
+            ON s.estacion_codigo = v.estacion_codigo
+           AND s.tipo_sensor = v.tipo_sensor
+        WHERE v.estacion_codigo = :estacionCodigo
+          AND DATE(v.fecha_medicion) BETWEEN :fechaInicio AND :fechaFin
+          AND (s.activo = 1 OR s.activo IS NULL)
+        ORDER BY v.fecha_medicion DESC, v.medicion_id DESC
+        """,
+            countQuery = """
+        SELECT COUNT(*)
+        FROM vw_mediciones_detalle v
+        LEFT JOIN ui_estacion_sensor s
+            ON s.estacion_codigo = v.estacion_codigo
+           AND s.tipo_sensor = v.tipo_sensor
+        WHERE v.estacion_codigo = :estacionCodigo
+          AND DATE(v.fecha_medicion) BETWEEN :fechaInicio AND :fechaFin
+          AND (s.activo = 1 OR s.activo IS NULL)
+        """,
+            nativeQuery = true)
+    Page<VwMedicionDetalle> findReportePorRangoPaginadoByEstacionCodigo(
+            @Param("estacionCodigo") String estacionCodigo,
+            @Param("fechaInicio") java.time.LocalDate fechaInicio,
+            @Param("fechaFin") java.time.LocalDate fechaFin,
+            Pageable pageable
+    );
+
+
 }

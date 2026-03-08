@@ -48,6 +48,13 @@
         .results-table{ width:100%; border-collapse:collapse; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; margin-top:12px; }
         .results-table th, .results-table td{ padding:9px 10px; border-bottom:1px solid #e2e8f0; font-size:12px; text-align:left; }
         .results-table th{ background:#f8fafc; font-weight:900; color:#0f172a; }
+        .paginacion{ display:flex; gap:8px; align-items:center; justify-content:flex-start; margin-top: 14px; flex-wrap: wrap; }
+        .btn-page{ background:#ffffff; color: #333; border:1px solid #ddd; border-radius:10px; padding:8px 12px; font-weight:800; transition: transform .2s ease, background-color .2s ease, box-shadow .2s ease; text-decoration:none; }
+        .btn-page:hover { background:#f2f2f2; transform: translateY(-1px); box-shadow: 0 8px 16px rgba(15,23,42,.1); }
+        .btn-active{ background:#111827; color:white; border-color:#111827; }
+        .btn-disabled{ opacity: 0.5; pointer-events: none; }
+        .select{ display:flex; align-items:center; gap:8px; color:var(--text-soft); font-size:13px; font-weight:700; }
+        .select select{ padding:8px 10px; border-radius:12px; border:1px solid var(--border); background:#fff; font-weight:800; color:var(--text-main); outline:none; }
 
         .recent-list{ display:flex; flex-direction:column; gap:10px; }
         .recent-item{ border:1px solid #e2e8f0; border-radius:12px; background:#f8fafc; padding:12px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
@@ -173,26 +180,9 @@
                     <button type="button" class="btn btn-close" id="closePreviewModal">Cerrar</button>
                 </div>
 
-                <div class="empty" th:if="${#lists.isEmpty(detalleReporte)}">No hay mediciones para este reporte.</div>
-                <table class="results-table" th:if="${!#lists.isEmpty(detalleReporte)}">
-                    <thead>
-                    <tr>
-                        <th>ID</th><th>Fecha</th><th>Valor</th><th>Unidad</th><th>Tipo Sensor</th><th>Código Sensor</th><th>Modelo</th><th>Estación</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="m : ${detalleReporte}">
-                        <td th:text="${m.medicionId}">1</td>
-                        <td th:text="${m.fechaMedicion}">2026-01-01</td>
-                        <td th:text="${m.valor}">0</td>
-                        <td th:text="${m.unidadMedida}">%</td>
-                        <td th:text="${m.tipoSensor}">Temperatura</td>
-                        <td th:text="${m.codigoSensor}">EST-001_T1</td>
-                        <td th:text="${m.modelo}">Modelo</td>
-                        <td th:text="${m.estacionCodigo}">EST-001</td>
-                    </tr>
-                    </tbody>
-                </table>
+                <div id="modalReportDetailContainer"
+                     th:replace="fragments/reporte-modal-detalle :: detalleReporteModal">
+                </div>
             </div>
         </div>
 
@@ -233,6 +223,41 @@
                     closeModal();
                 }
             });
+
+            const detalleContainer = document.getElementById('modalReportDetailContainer');
+            const reporteIdParam = new URLSearchParams(window.location.search).get('reporteId');
+
+            const cargarDetallePaginado = async (page, limit) => {
+                if (!detalleContainer || !reporteIdParam) return;
+                const params = new URLSearchParams({ reporteId: reporteIdParam, page: String(page), limit: String(limit) });
+                const response = await fetch(`/historial/reporte-detalle?${params.toString()}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+                if (!response.ok) return;
+                detalleContainer.innerHTML = await response.text();
+                registrarEventosPaginacion();
+            };
+
+            const registrarEventosPaginacion = () => {
+                if (!detalleContainer) return;
+
+                detalleContainer.querySelectorAll('.js-report-page').forEach((link) => {
+                    link.addEventListener('click', (event) => {
+                        event.preventDefault();
+                        const page = Number(link.dataset.page || '0');
+                        const limit = Number(link.dataset.limit || '10');
+                        cargarDetallePaginado(page, limit);
+                    });
+                });
+
+                const limitSelect = detalleContainer.querySelector('#detalleLimitSelect');
+                if (limitSelect) {
+                    limitSelect.addEventListener('change', () => {
+                        const limit = Number(limitSelect.value || '10');
+                        cargarDetallePaginado(0, limit);
+                    });
+                }
+            };
+
+            registrarEventosPaginacion();
         }
     });
 </script>

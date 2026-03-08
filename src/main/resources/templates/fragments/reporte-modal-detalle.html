@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+<div th:fragment="detalleReporteModal">
+    <div class="empty" th:if="${detalleReportePage == null or #lists.isEmpty(detalleReportePage.content)}">No hay mediciones para este reporte.</div>
+
+    <div th:if="${detalleReportePage != null and !#lists.isEmpty(detalleReportePage.content)}">
+        <div class="select" style="margin-bottom:10px;">
+            <label for="detalleLimitSelect">Mostrar:</label>
+            <select id="detalleLimitSelect">
+                <option value="10" th:selected="${detalleLimit == 10}">10</option>
+                <option value="20" th:selected="${detalleLimit == 20}">20</option>
+                <option value="40" th:selected="${detalleLimit == 40}">40</option>
+                <option value="50" th:selected="${detalleLimit == 50}">50</option>
+                <option value="100" th:selected="${detalleLimit == 100}">100</option>
+            </select>
+        </div>
+
+        <table class="results-table">
+            <thead>
+            <tr>
+                <th>ID</th><th>Fecha</th><th>Valor</th><th>Unidad</th><th>Tipo Sensor</th><th>Código Sensor</th><th>Modelo</th><th>Estación</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:each="m : ${detalleReportePage.content}">
+                <td th:text="${m.medicionId}">1</td>
+                <td th:text="${m.fechaMedicion}">2026-01-01</td>
+                <td th:text="${m.valor}">0</td>
+                <td th:text="${m.unidadMedida}">%</td>
+                <td th:text="${m.tipoSensor}">Temperatura</td>
+                <td th:text="${m.codigoSensor}">EST-001_T1</td>
+                <td th:text="${m.modelo}">Modelo</td>
+                <td th:text="${m.estacionCodigo}">EST-001</td>
+            </tr>
+            </tbody>
+        </table>
+
+        <div class="paginacion" th:if="${detalleReportePage.totalPages > 1}">
+            <a href="#" class="btn-page js-report-page"
+               th:classappend="${detalleReportePage.first} ? ' btn-disabled' : ''"
+               th:attr="data-page=0,data-limit=${detalleLimit}">Primero</a>
+
+            <a href="#" class="btn-page js-report-page"
+               th:classappend="${detalleReportePage.first} ? ' btn-disabled' : ''"
+               th:attr="data-page=${detalleReportePage.number - 1},data-limit=${detalleLimit}">Anterior</a>
+
+            <a href="#" class="btn-page js-report-page"
+               th:classappend="${detalleReportePage.number == 0} ? ' btn-active' : ''"
+               th:attr="data-page=0,data-limit=${detalleLimit}">1</a>
+
+            <span th:if="${detalleReportePage.number > 3}" style="padding: 0 6px;">...</span>
+
+            <span th:each="i : ${#numbers.sequence(T(java.lang.Math).max(1, detalleReportePage.number - 1), T(java.lang.Math).min(detalleReportePage.totalPages - 2, detalleReportePage.number + 1))}">
+                <a href="#" class="btn-page js-report-page"
+                   th:classappend="${i == detalleReportePage.number} ? ' btn-active' : ''"
+                   th:attr="data-page=${i},data-limit=${detalleLimit}"
+                   th:text="${i + 1}">2</a>
+            </span>
+
+            <span th:if="${detalleReportePage.number < detalleReportePage.totalPages - 4}" style="padding: 0 6px;">...</span>
+
+            <a href="#" class="btn-page js-report-page"
+               th:classappend="${detalleReportePage.number == detalleReportePage.totalPages - 1} ? ' btn-active' : ''"
+               th:attr="data-page=${detalleReportePage.totalPages - 1},data-limit=${detalleLimit}"
+               th:text="${detalleReportePage.totalPages}">Última</a>
+
+            <a href="#" class="btn-page js-report-page"
+               th:classappend="${detalleReportePage.last} ? ' btn-disabled' : ''"
+               th:attr="data-page=${detalleReportePage.number + 1},data-limit=${detalleLimit}">Siguiente</a>
+
+            <a href="#" class="btn-page js-report-page"
+               th:classappend="${detalleReportePage.last} ? ' btn-disabled' : ''"
+               th:attr="data-page=${detalleReportePage.totalPages - 1},data-limit=${detalleLimit}">Final</a>
+        </div>
+    </div>
+</div>
+</body>
+</html>
