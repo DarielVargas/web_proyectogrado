@@ -34,6 +34,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 public class MedicionesController {
@@ -237,9 +238,22 @@ public class MedicionesController {
                 PageRequest.of(paginaNormalizada, limiteNormalizado)
         );
 
+        List<DetalleSensorDto> detalleAgrupadoPorSensor = detallePage.getContent().stream()
+                .collect(Collectors.groupingBy(
+                        medicion -> (medicion.getTipoSensor() == null || medicion.getTipoSensor().isBlank())
+                                ? "Sin tipo de sensor"
+                                : medicion.getTipoSensor()
+                ))
+                .entrySet()
+                .stream()
+                .sorted(Map.Entry.comparingByKey(String.CASE_INSENSITIVE_ORDER))
+                .map(entry -> new DetalleSensorDto(entry.getKey(), entry.getValue()))
+                .toList();
+
         model.addAttribute("reporteSeleccionado", reporte);
         model.addAttribute("detalleReportePage", detallePage);
         model.addAttribute("detalleReporte", detallePage.getContent());
+        model.addAttribute("detalleAgrupadoPorSensor", detalleAgrupadoPorSensor);
         model.addAttribute("detalleLimit", limiteNormalizado);
     }
 
@@ -356,6 +370,8 @@ public class MedicionesController {
     public record SensorValorDto(String tipoSensor, String valor, boolean activo) {}
 
     public record EstacionOpcionDto(Long id, String codigo, String descripcion) {}
+
+    public record DetalleSensorDto(String tipoSensor, List<VwMedicionDetalle> mediciones) {}
 
     public record EstacionDashboardDto(
             String estacionCodigo,
