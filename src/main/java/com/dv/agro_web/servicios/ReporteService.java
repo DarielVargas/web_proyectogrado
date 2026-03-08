@@ -44,6 +44,16 @@ public class ReporteService {
         return reporteRepository.findDetalleById(idReporte);
     }
 
+
+    @Transactional
+    public boolean eliminarReportePorId(Long idReporte) {
+        if (!reporteRepository.existsById(idReporte)) {
+            return false;
+        }
+        reporteRepository.deleteById(idReporte);
+        return true;
+    }
+
     private String generarNombreReporte(String tipoReporte, LocalDate fechaInicio, LocalDate fechaFin) {
         return switch (tipoReporte) {
             case "DIARIO" -> "Reporte Diario - " + fechaInicio;

@@ -94,6 +94,20 @@ public class MedicionesController {
         return "reporte-detalle";
     }
 
+    @PostMapping("/reportes/{reporteId}/eliminar")
+    public String eliminarReporte(@PathVariable("reporteId") Long reporteId,
+                                  RedirectAttributes redirectAttributes) {
+        boolean eliminado = reporteService.eliminarReportePorId(reporteId);
+
+        if (!eliminado) {
+            redirectAttributes.addFlashAttribute("mensajeReporte", "El reporte ya no existe o no pudo eliminarse.");
+            return "redirect:/historial";
+        }
+
+        redirectAttributes.addFlashAttribute("mensajeExito", "Reporte eliminado correctamente.");
+        return "redirect:/historial";
+    }
+
     @PostMapping("/historial")
     public String generarReporte(@RequestParam("estacionId") Long estacionId,
                                  @RequestParam("tipoReporte") String tipoReporte,
