@@ -111,16 +111,14 @@
                     <table class="results-table">
                         <thead>
                         <tr>
-                            <th>ID</th><th>Fecha</th><th>Valor</th><th>Unidad</th><th>Tipo Sensor</th><th>Código Sensor</th><th>Modelo</th><th>Estación</th>
+                            <th>Fecha</th><th>Valor</th><th>Unidad</th><th>Código Sensor</th><th>Modelo</th><th>Estación</th>
                         </tr>
                         </thead>
                         <tbody>
                         <tr th:each="m : ${grupo.mediciones}">
-                            <td th:text="${m.medicionId}">1</td>
                             <td th:text="${m.fechaMedicion}">2026-01-01</td>
                             <td th:text="${m.valor}">0</td>
                             <td th:text="${m.unidadMedida}">%</td>
-                            <td th:text="${m.tipoSensor}">Temperatura</td>
                             <td th:text="${m.codigoSensor}">EST-001_T1</td>
                             <td th:text="${m.modelo}">Modelo</td>
                             <td th:text="${m.estacionCodigo}">EST-001</td>
