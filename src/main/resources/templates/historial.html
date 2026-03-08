@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
     <title>Reportes - Agro IoT</title>
 
     <style>
@@ -32,8 +33,6 @@
         .field{ display:flex; flex-direction:column; gap:6px; }
         .field label{ font-size:12px; font-weight:800; color:#334155; }
         .field input, .field select{ padding:10px 12px; border:1px solid #dbe3ee; border-radius:10px; font-weight:700; color:#0f172a; background:#fff; }
-
-        .date-range{ display:grid; grid-template-columns: repeat(2, minmax(160px, 1fr)); gap:10px; }
         .date-help{ margin:8px 0 0; font-size:12px; color:#64748b; font-weight:600; }
 
         .btn{ display:inline-flex; align-items:center; justify-content:center; padding:11px 18px; border-radius:12px; border:1px solid transparent; font-weight:900; cursor:pointer; text-decoration:none; }
@@ -52,6 +51,8 @@
 
         .recent-list{ display:flex; flex-direction:column; gap:10px; }
         .recent-item{ border:1px solid #e2e8f0; border-radius:12px; background:#f8fafc; padding:12px; display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
+        .recent-link{ text-decoration:none; color:inherit; flex:1; min-width:220px; }
+        .recent-link:hover .recent-name{ text-decoration:underline; }
         .recent-name{ margin:0; font-weight:900; font-size:14px; color:#0f172a; }
         .recent-meta{ margin:4px 0 0; font-size:12px; color:#475569; }
 
@@ -60,7 +61,7 @@
         .animate-item.is-visible{ opacity:1; transform: translateY(0); }
 
         @media (max-width: 980px){ .layout{ grid-template-columns:1fr; } .sidebar{ position:relative; height:auto; } }
-        @media (max-width: 850px){ .report-grid{ grid-template-columns:1fr; } .date-range{ grid-template-columns:1fr; } }
+        @media (max-width: 850px){ .report-grid{ grid-template-columns:1fr; } }
     </style>
 </head>
 <body>
@@ -99,12 +100,9 @@
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <div class="report-grid">
                     <div class="field">
-                        <label>Fecha</label>
-                        <div class="date-range">
-                            <input type="date" name="fechaInicio" id="fechaInicio" th:value="${fechaInicioSeleccionada}" required>
-                            <input type="date" name="fechaFin" id="fechaFin" th:value="${fechaFinSeleccionada}">
-                        </div>
-                        <p class="date-help">Seleccione una sola fecha o un rango (inicio y fin).</p>
+                        <label for="fechaSeleccion">Fecha</label>
+                        <input type="text" name="fechaSeleccion" id="fechaSeleccion" placeholder="Seleccione día o rango" required>
+                        <p class="date-help">Use el mismo calendario para elegir un solo día o un rango de fechas.</p>
                     </div>
 
                     <div class="field">
@@ -113,7 +111,6 @@
                             <option value="">Seleccione...</option>
                             <option th:each="est : ${estacionesReporte}"
                                     th:value="${est.id}"
-                                    th:selected="${est.id == estacionIdSeleccionada}"
                                     th:text="|${est.codigo} - ${est.descripcion}|">EST-001 - Estación</option>
                         </select>
                     </div>
@@ -122,24 +119,52 @@
                         <label for="tipoReporte">Tipo de Reporte</label>
                         <select id="tipoReporte" name="tipoReporte" required>
                             <option value="">Seleccione...</option>
-                            <option value="DIARIO" th:selected="${tipoReporteSeleccionado == 'DIARIO'}">Diario</option>
-                            <option value="SEMANAL" th:selected="${tipoReporteSeleccionado == 'SEMANAL'}">Semanal</option>
-                            <option value="MENSUAL" th:selected="${tipoReporteSeleccionado == 'MENSUAL'}">Mensual</option>
+                            <option value="DIARIO">Diario</option>
+                            <option value="SEMANAL">Semanal</option>
+                            <option value="MENSUAL">Mensual</option>
                         </select>
                     </div>
                 </div>
 
                 <button class="btn btn-generate" type="submit">Generar Reporte</button>
             </form>
+        </section>
 
-            <table class="results-table" th:if="${filtroAplicado and !#lists.isEmpty(mediciones)}">
+        <section class="card animate-item">
+            <h2 class="card-title">Reportes Recientes</h2>
+            <p class="card-sub">Últimos reportes guardados en el sistema. Haga clic en un reporte para ver su vista previa.</p>
+
+            <div class="recent-list" th:if="${!#lists.isEmpty(reportesRecientes)}">
+                <article class="recent-item" th:each="r : ${reportesRecientes}">
+                    <a class="recent-link" th:href="@{/historial(reporteId=${r.idReporte})}">
+                        <p class="recent-name" th:text="${r.nombreReporte}">Reporte Diario - 2026-03-07</p>
+                        <p class="recent-meta"
+                           th:text="|Estación: ${r.estacionCodigo != null ? r.estacionCodigo : 'N/A'}${r.estacionDescripcion != null ? ' - ' + r.estacionDescripcion : ''} · Rango: ${r.fechaInicio} a ${r.fechaFin} · Generado: ${r.fechaGenerado}|">
+                            Estación y fechas
+                        </p>
+                    </a>
+                    <button type="button" class="btn btn-download">Descargar</button>
+                </article>
+            </div>
+            <div class="empty" th:if="${#lists.isEmpty(reportesRecientes)}">No hay reportes recientes registrados.</div>
+        </section>
+
+        <section class="card animate-item" th:if="${reporteSeleccionado}">
+            <h2 class="card-title">Vista previa del reporte</h2>
+            <p class="card-sub"
+               th:text="|${reporteSeleccionado.nombreReporte} · ${reporteSeleccionado.fechaInicio} a ${reporteSeleccionado.fechaFin}|">
+                Resumen del reporte seleccionado
+            </p>
+
+            <div class="empty" th:if="${#lists.isEmpty(detalleReporte)}">No hay mediciones para este reporte.</div>
+            <table class="results-table" th:if="${!#lists.isEmpty(detalleReporte)}">
                 <thead>
                 <tr>
                     <th>ID</th><th>Fecha</th><th>Valor</th><th>Unidad</th><th>Tipo Sensor</th><th>Código Sensor</th><th>Modelo</th><th>Estación</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="m : ${mediciones}">
+                <tr th:each="m : ${detalleReporte}">
                     <td th:text="${m.medicionId}">1</td>
                     <td th:text="${m.fechaMedicion}">2026-01-01</td>
                     <td th:text="${m.valor}">0</td>
@@ -151,29 +176,10 @@
                 </tr>
                 </tbody>
             </table>
-            <div class="empty" th:if="${!filtroAplicado}">Configure los filtros y pulse <b>Generar Reporte</b> para ver resultados.</div>
-        </section>
-
-        <section class="card animate-item">
-            <h2 class="card-title">Reportes Recientes</h2>
-            <p class="card-sub">Últimos reportes guardados en el sistema.</p>
-
-            <div class="recent-list" th:if="${!#lists.isEmpty(reportesRecientes)}">
-                <article class="recent-item" th:each="r : ${reportesRecientes}">
-                    <div>
-                        <p class="recent-name" th:text="${r.nombreReporte}">Reporte Diario - 2026-03-07</p>
-                        <p class="recent-meta"
-                           th:text="|Estación: ${r.estacionCodigo != null ? r.estacionCodigo : 'N/A'}${r.estacionDescripcion != null ? ' - ' + r.estacionDescripcion : ''} · Rango: ${r.fechaInicio} a ${r.fechaFin} · Generado: ${r.fechaGenerado}|">
-                            Estación y fechas
-                        </p>
-                    </div>
-                    <button type="button" class="btn btn-download">Descargar</button>
-                </article>
-            </div>
-            <div class="empty" th:if="${#lists.isEmpty(reportesRecientes)}">No hay reportes recientes registrados.</div>
         </section>
     </main>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const animatedItems = document.querySelectorAll('.animate-item');
@@ -181,19 +187,12 @@
             setTimeout(() => el.classList.add('is-visible'), 90 * index);
         });
 
-        const fechaInicio = document.getElementById('fechaInicio');
-        const fechaFin = document.getElementById('fechaFin');
-        if (fechaInicio && fechaFin) {
-            fechaInicio.addEventListener('change', () => {
-                if (fechaFin.value && fechaFin.value < fechaInicio.value) {
-                    fechaFin.value = fechaInicio.value;
-                }
-                fechaFin.min = fechaInicio.value;
-            });
-            if (fechaInicio.value) {
-                fechaFin.min = fechaInicio.value;
-            }
-        }
+        flatpickr('#fechaSeleccion', {
+            mode: 'range',
+            dateFormat: 'Y-m-d',
+            locale: { firstDayOfWeek: 1 },
+            allowInput: false
+        });
     });
 </script>
 </body>

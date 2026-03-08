@@ -10,6 +10,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Locale;
+import java.util.Optional;
 
 @Service
 public class ReporteService {
@@ -37,6 +38,10 @@ public class ReporteService {
 
     public List<ReporteRepository.ReporteRecienteView> listarReportesRecientes() {
         return reporteRepository.findTop10Recientes();
+    }
+
+    public Optional<ReporteRepository.ReporteRecienteView> obtenerDetalleReporte(Long idReporte) {
+        return reporteRepository.findDetalleById(idReporte);
     }
 
     private String generarNombreReporte(String tipoReporte, LocalDate fechaInicio, LocalDate fechaFin) {
