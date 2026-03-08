@@ -70,7 +70,7 @@
     <main class="main">
         <div class="actions">
             <a class="btn btn-back" th:href="@{/historial}">Volver</a>
-            <button type="button" class="btn btn-download">Descargar</button>
+            <a class="btn btn-download" th:if="${reporteSeleccionado != null}" th:href="@{/reportes/{id}/descargar(id=${reporteSeleccionado.idReporte})}">Descargar</a>
         </div>
 
         <section class="card" th:if="${reporteSeleccionado != null}">

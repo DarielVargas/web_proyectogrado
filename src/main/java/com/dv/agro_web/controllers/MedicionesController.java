@@ -12,6 +12,11 @@ import com.dv.agro_web.servicios.UiEstacionSensorService;
 import com.dv.agro_web.servicios.UiEstacionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -19,10 +24,12 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -94,6 +101,24 @@ public class MedicionesController {
         return "reporte-detalle";
     }
 
+    @GetMapping("/reportes/{reporteId}/descargar")
+    public ResponseEntity<byte[]> descargarReportePdf(@PathVariable("reporteId") Long reporteId) {
+        try {
+            byte[] pdf = reporteService.generarReportePdf(reporteId);
+
+            ContentDisposition contentDisposition = ContentDisposition.attachment()
+                    .filename("reporte-" + reporteId + ".pdf")
+                    .build();
+
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_PDF)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, contentDisposition.toString())
+                    .body(pdf);
+        } catch (IllegalArgumentException ex) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND, ex.getMessage(), ex);
+        }
+    }
+
     @PostMapping("/reportes/{reporteId}/eliminar")
     public String eliminarReporte(@PathVariable("reporteId") Long reporteId,
                                   RedirectAttributes redirectAttributes) {
@@ -110,23 +135,12 @@ public class MedicionesController {
 
     @PostMapping("/historial")
     public String generarReporte(@RequestParam("estacionId") Long estacionId,
-                                 @RequestParam("tipoReporte") String tipoReporte,
                                  @RequestParam("fechaSeleccion") String fechaSeleccion,
                                  RedirectAttributes redirectAttributes) {
 
         Estacion estacion = estacionService.obtenerEstacionActivaPorId(estacionId).orElse(null);
         if (estacion == null) {
             redirectAttributes.addFlashAttribute("mensajeReporte", "Seleccione una estación activa válida.");
-            return "redirect:/historial";
-        }
-
-        String tipoNormalizado = switch (tipoReporte) {
-            case "DIARIO", "SEMANAL", "MENSUAL" -> tipoReporte;
-            default -> null;
-        };
-
-        if (tipoNormalizado == null) {
-            redirectAttributes.addFlashAttribute("mensajeReporte", "Seleccione un tipo de reporte válido.");
             return "redirect:/historial";
         }
 
@@ -142,9 +156,18 @@ public class MedicionesController {
             return "redirect:/historial";
         }
 
+        String tipoNormalizado = inferirTipoReporte(rango.fechaInicio(), rango.fechaFin());
         Reporte reporte = reporteService.guardarReporteGenerado(estacion.getId(), rango.fechaInicio(), rango.fechaFin(), tipoNormalizado);
         redirectAttributes.addFlashAttribute("mensajeExito", "Reporte generado correctamente.");
         return "redirect:/reportes/" + reporte.getIdReporte();
+    }
+
+    private String inferirTipoReporte(LocalDate fechaInicio, LocalDate fechaFin) {
+        long dias = ChronoUnit.DAYS.between(fechaInicio, fechaFin) + 1;
+
+        if (dias <= 1) return "DIARIO";
+        if (dias <= 7) return "SEMANAL";
+        return "MENSUAL";
     }
 
     private RangoFechaSeleccionado parsearFechaSeleccion(String fechaSeleccion) {
