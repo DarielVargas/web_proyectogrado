@@ -39,6 +39,7 @@
         .btn-generate{ margin-top:14px; width:100%; background:#2563eb; border-color:#1d4ed8; color:#fff; font-size:15px; box-shadow:0 14px 30px rgba(37,99,235,.3); transition:transform .2s ease, filter .2s ease; }
         .btn-generate:hover{ transform:translateY(-1px); filter:brightness(.96); }
         .btn-download{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; padding:8px 12px; font-size:12px; }
+        .btn-delete{ background:#fef2f2; border-color:#fecaca; color:#b91c1c; padding:8px 12px; font-size:12px; }
         .btn-logout{ background:#111827; color:#fff; border-color:#111827; width:100%; }
 
         .alert{ border-radius:12px; padding:11px 12px; font-weight:700; font-size:13px; margin-bottom:10px; }
@@ -62,6 +63,8 @@
         .recent-link:hover .recent-name{ text-decoration:underline; }
         .recent-name{ margin:0; font-weight:900; font-size:14px; color:#0f172a; }
         .recent-meta{ margin:4px 0 0; font-size:12px; color:#475569; }
+        .recent-actions{ display:flex; gap:8px; align-items:center; }
+        .inline-form{ margin:0; }
 
         .empty{ border:1px dashed #cbd5e1; border-radius:12px; padding:14px; color:#64748b; font-weight:700; background:#f8fafc; }
         .animate-item{ opacity:0; transform: translateY(16px); transition: opacity .55s ease, transform .55s ease; }
@@ -152,7 +155,16 @@
                             Estación y fechas
                         </p>
                     </a>
-                    <button type="button" class="btn btn-download">Descargar</button>
+                    <div class="recent-actions">
+                        <button type="button" class="btn btn-download">Descargar</button>
+                        <form class="inline-form"
+                              method="post"
+                              th:action="@{/reportes/{id}/eliminar(id=${r.idReporte})}"
+                              onsubmit="return confirm('Esta acción eliminará el reporte permanentemente. ¿Desea continuar?');">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <button type="submit" class="btn btn-delete">Eliminar</button>
+                        </form>
+                    </div>
                 </article>
             </div>
             <div class="empty" th:if="${#lists.isEmpty(reportesRecientes)}">No hay reportes recientes registrados.</div>
