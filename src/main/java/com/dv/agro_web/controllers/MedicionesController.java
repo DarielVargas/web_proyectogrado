@@ -11,6 +11,7 @@ import com.dv.agro_web.servicios.ReporteService;
 import com.dv.agro_web.servicios.UiEstacionSensorService;
 import com.dv.agro_web.servicios.UiEstacionService;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.http.ContentDisposition;
 import org.springframework.http.HttpHeaders;
@@ -34,6 +35,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 public class MedicionesController {
@@ -230,17 +232,73 @@ public class MedicionesController {
         int limiteNormalizado = Math.max(1, Math.min(100, limit));
         int paginaNormalizada = Math.max(0, page);
 
-        Page<VwMedicionDetalle> detallePage = repo.findReportePorRangoPaginadoByEstacionCodigo(
+        List<VwMedicionDetalle> detalleCompleto = repo.findReportePorRangoByEstacionCodigo(
                 reporte.getEstacionCodigo(),
                 reporte.getFechaInicio(),
-                reporte.getFechaFin(),
-                PageRequest.of(paginaNormalizada, limiteNormalizado)
+                reporte.getFechaFin()
+        );
+
+        Map<String, List<VwMedicionDetalle>> agrupadoPorClave = detalleCompleto.stream()
+                .collect(Collectors.groupingBy(
+                        medicion -> normalizarTipoSensor(medicion.getTipoSensor()),
+                        LinkedHashMap::new,
+                        Collectors.toList()
+                ));
+
+        int inicioPorSensor = paginaNormalizada * limiteNormalizado;
+
+        List<DetalleSensorDto> detalleAgrupadoPorSensor = agrupadoPorClave.entrySet().stream()
+                .sorted((a, b) -> {
+                    int idxA = TIPOS_SENSOR_DASHBOARD.indexOf(a.getValue().get(0).getTipoSensor());
+                    int idxB = TIPOS_SENSOR_DASHBOARD.indexOf(b.getValue().get(0).getTipoSensor());
+
+                    if (idxA == -1 && idxB == -1) {
+                        return a.getKey().compareToIgnoreCase(b.getKey());
+                    }
+                    if (idxA == -1) return 1;
+                    if (idxB == -1) return -1;
+                    return Integer.compare(idxA, idxB);
+                })
+                .map(entry -> {
+                    String tipoMostrar = entry.getValue().get(0).getTipoSensor();
+                    if (tipoMostrar == null || tipoMostrar.isBlank()) {
+                        tipoMostrar = "Sin tipo de sensor";
+                    }
+                    List<VwMedicionDetalle> medicionesSensor = entry.getValue();
+                    if (inicioPorSensor >= medicionesSensor.size()) {
+                        return new DetalleSensorDto(tipoMostrar, List.of());
+                    }
+
+                    int finPorSensor = Math.min(inicioPorSensor + limiteNormalizado, medicionesSensor.size());
+                    return new DetalleSensorDto(tipoMostrar, medicionesSensor.subList(inicioPorSensor, finPorSensor));
+                })
+                .filter(detalle -> !detalle.mediciones().isEmpty())
+                .toList();
+
+        int totalPaginas = agrupadoPorClave.values().stream()
+                .mapToInt(medicionesSensor -> (int) Math.ceil((double) medicionesSensor.size() / limiteNormalizado))
+                .max()
+                .orElse(0);
+
+        int totalElementosPaginacion = totalPaginas <= 0 ? 0 : totalPaginas * limiteNormalizado;
+        Page<VwMedicionDetalle> detallePage = new PageImpl<>(
+                List.of(),
+                PageRequest.of(paginaNormalizada, limiteNormalizado),
+                totalElementosPaginacion
         );
 
         model.addAttribute("reporteSeleccionado", reporte);
         model.addAttribute("detalleReportePage", detallePage);
-        model.addAttribute("detalleReporte", detallePage.getContent());
+        model.addAttribute("detalleAgrupadoPorSensor", detalleAgrupadoPorSensor);
         model.addAttribute("detalleLimit", limiteNormalizado);
+    }
+
+
+    private String normalizarTipoSensor(String tipoSensor) {
+        if (tipoSensor == null || tipoSensor.isBlank()) {
+            return "sin_tipo_de_sensor";
+        }
+        return tipoSensor.trim().toLowerCase();
     }
 
     private void cargarDashboard(int limit, int page, Model model) {
@@ -356,6 +414,8 @@ public class MedicionesController {
     public record SensorValorDto(String tipoSensor, String valor, boolean activo) {}
 
     public record EstacionOpcionDto(Long id, String codigo, String descripcion) {}
+
+    public record DetalleSensorDto(String tipoSensor, List<VwMedicionDetalle> mediciones) {}
 
     public record EstacionDashboardDto(
             String estacionCodigo,

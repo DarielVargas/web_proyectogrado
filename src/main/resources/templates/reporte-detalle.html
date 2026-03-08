@@ -43,6 +43,8 @@
         .btn-disabled{ opacity: 0.5; pointer-events: none; }
         .select{ display:flex; align-items:center; gap:8px; color:var(--text-soft); font-size:13px; font-weight:700; margin-top:10px; }
         .select select{ padding:8px 10px; border-radius:12px; border:1px solid var(--border); background:#fff; font-weight:800; color:var(--text-main); outline:none; }
+        .sensor-block{ margin-top:14px; }
+        .sensor-title{ margin:0 0 8px; font-size:16px; font-weight:900; color:#0f172a; }
 
         @media (max-width: 980px){ .layout{ grid-template-columns:1fr; } .sidebar{ position:relative; height:auto; } }
         @media (max-width: 720px){ .meta-grid{ grid-template-columns:1fr; } }
@@ -89,9 +91,9 @@
                 </div>
             </div>
 
-            <div class="empty" th:if="${detalleReportePage == null or #lists.isEmpty(detalleReportePage.content)}" style="margin-top:12px;">No hay mediciones para este reporte.</div>
+            <div class="empty" th:if="${#lists.isEmpty(detalleAgrupadoPorSensor)}" style="margin-top:12px;">No hay mediciones para este reporte.</div>
 
-            <div th:if="${detalleReportePage != null and !#lists.isEmpty(detalleReportePage.content)}">
+            <div th:if="${!#lists.isEmpty(detalleAgrupadoPorSensor)}">
                 <div class="select">
                     <label for="detalleLimitSelect">Mostrar:</label>
                     <select id="detalleLimitSelect">
@@ -103,25 +105,27 @@
                     </select>
                 </div>
 
-                <table class="results-table">
-                    <thead>
-                    <tr>
-                        <th>ID</th><th>Fecha</th><th>Valor</th><th>Unidad</th><th>Tipo Sensor</th><th>Código Sensor</th><th>Modelo</th><th>Estación</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    <tr th:each="m : ${detalleReportePage.content}">
-                        <td th:text="${m.medicionId}">1</td>
-                        <td th:text="${m.fechaMedicion}">2026-01-01</td>
-                        <td th:text="${m.valor}">0</td>
-                        <td th:text="${m.unidadMedida}">%</td>
-                        <td th:text="${m.tipoSensor}">Temperatura</td>
-                        <td th:text="${m.codigoSensor}">EST-001_T1</td>
-                        <td th:text="${m.modelo}">Modelo</td>
-                        <td th:text="${m.estacionCodigo}">EST-001</td>
-                    </tr>
-                    </tbody>
-                </table>
+                <section class="sensor-block" th:each="grupo : ${detalleAgrupadoPorSensor}">
+                    <h3 class="sensor-title" th:text="${grupo.tipoSensor}">Temperatura Ambiental</h3>
+
+                    <table class="results-table">
+                        <thead>
+                        <tr>
+                            <th>Fecha</th><th>Valor</th><th>Unidad</th><th>Código Sensor</th><th>Modelo</th><th>Estación</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:each="m : ${grupo.mediciones}">
+                            <td th:text="${m.fechaMedicion}">2026-01-01</td>
+                            <td th:text="${m.valor}">0</td>
+                            <td th:text="${m.unidadMedida}">%</td>
+                            <td th:text="${m.codigoSensor}">EST-001_T1</td>
+                            <td th:text="${m.modelo}">Modelo</td>
+                            <td th:text="${m.estacionCodigo}">EST-001</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </section>
 
                 <div class="paginacion" th:if="${detalleReportePage.totalPages > 1}">
                     <a class="btn-page"
