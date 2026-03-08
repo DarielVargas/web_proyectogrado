@@ -231,40 +231,30 @@
             });
         }
 
-        const cargarDetallePaginado = async (page, limit) => {
+        const baseHistorialPath = '/historial';
+        window.__cargarDetallePaginado = async (page, limit) => {
             if (!detalleContainer || !reporteIdParam) return;
             const params = new URLSearchParams({ reporteId: reporteIdParam, page: String(page), limit: String(limit) });
-            const response = await fetch(`/historial/reporte-detalle?${params.toString()}`, {
+            const response = await fetch(`${baseHistorialPath}/reporte-detalle?${params.toString()}`, {
                 headers: { 'X-Requested-With': 'XMLHttpRequest' }
             });
             if (!response.ok) return;
             detalleContainer.innerHTML = await response.text();
         };
 
-        document.addEventListener('click', (event) => {
-            const link = event.target.closest('.js-report-page');
-            if (!link || !detalleContainer || !previewModal || !previewModal.classList.contains('open')) {
-                return;
-            }
-
-            event.preventDefault();
-            if (link.classList.contains('btn-disabled')) {
-                return;
-            }
-
+        window.__reporteModalPage = (link) => {
+            if (!link || link.classList.contains('btn-disabled')) return false;
             const page = Number(link.dataset.page || '0');
             const limit = Number(link.dataset.limit || '10');
-            cargarDetallePaginado(page, limit);
-        });
+            window.__cargarDetallePaginado(page, limit);
+            return false;
+        };
 
-        document.addEventListener('change', (event) => {
-            if (event.target.id !== 'detalleLimitSelect' || !detalleContainer || !previewModal || !previewModal.classList.contains('open')) {
-                return;
-            }
-
-            const limit = Number(event.target.value || '10');
-            cargarDetallePaginado(0, limit);
-        });
+        window.__reporteModalLimit = (select) => {
+            if (!select) return;
+            const limit = Number(select.value || '10');
+            window.__cargarDetallePaginado(0, limit);
+        };
     });
 </script>
 </body>

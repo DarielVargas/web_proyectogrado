@@ -4,7 +4,7 @@
     <div th:if="${detalleReportePage != null and !#lists.isEmpty(detalleReportePage.content)}">
         <div class="select" style="margin-bottom:10px;">
             <label for="detalleLimitSelect">Mostrar:</label>
-            <select id="detalleLimitSelect">
+            <select id="detalleLimitSelect" onchange="window.__reporteModalLimit(this)">
                 <option value="10" th:selected="${detalleLimit == 10}">10</option>
                 <option value="20" th:selected="${detalleLimit == 20}">20</option>
                 <option value="40" th:selected="${detalleLimit == 40}">40</option>
@@ -36,15 +36,18 @@
         <div class="paginacion" th:if="${detalleReportePage.totalPages > 1}">
             <a href="#" class="btn-page js-report-page"
                th:classappend="${detalleReportePage.first} ? ' btn-disabled' : ''"
-               th:attr="data-page=0,data-limit=${detalleLimit}">Primero</a>
+               th:attr="data-page=0,data-limit=${detalleLimit}"
+               onclick="return window.__reporteModalPage(this);">Primero</a>
 
             <a href="#" class="btn-page js-report-page"
                th:classappend="${detalleReportePage.first} ? ' btn-disabled' : ''"
-               th:attr="data-page=${detalleReportePage.number - 1},data-limit=${detalleLimit}">Anterior</a>
+               th:attr="data-page=${detalleReportePage.number - 1},data-limit=${detalleLimit}"
+               onclick="return window.__reporteModalPage(this);">Anterior</a>
 
             <a href="#" class="btn-page js-report-page"
                th:classappend="${detalleReportePage.number == 0} ? ' btn-active' : ''"
-               th:attr="data-page=0,data-limit=${detalleLimit}">1</a>
+               th:attr="data-page=0,data-limit=${detalleLimit}"
+               onclick="return window.__reporteModalPage(this);">1</a>
 
             <span th:if="${detalleReportePage.number > 3}" style="padding: 0 6px;">...</span>
 
@@ -52,6 +55,7 @@
                 <a href="#" class="btn-page js-report-page"
                    th:classappend="${i == detalleReportePage.number} ? ' btn-active' : ''"
                    th:attr="data-page=${i},data-limit=${detalleLimit}"
+                   onclick="return window.__reporteModalPage(this);"
                    th:text="${i + 1}">2</a>
             </span>
 
@@ -60,15 +64,18 @@
             <a href="#" class="btn-page js-report-page"
                th:classappend="${detalleReportePage.number == detalleReportePage.totalPages - 1} ? ' btn-active' : ''"
                th:attr="data-page=${detalleReportePage.totalPages - 1},data-limit=${detalleLimit}"
+               onclick="return window.__reporteModalPage(this);"
                th:text="${detalleReportePage.totalPages}">Última</a>
 
             <a href="#" class="btn-page js-report-page"
                th:classappend="${detalleReportePage.last} ? ' btn-disabled' : ''"
-               th:attr="data-page=${detalleReportePage.number + 1},data-limit=${detalleLimit}">Siguiente</a>
+               th:attr="data-page=${detalleReportePage.number + 1},data-limit=${detalleLimit}"
+               onclick="return window.__reporteModalPage(this);">Siguiente</a>
 
             <a href="#" class="btn-page js-report-page"
                th:classappend="${detalleReportePage.last} ? ' btn-disabled' : ''"
-               th:attr="data-page=${detalleReportePage.totalPages - 1},data-limit=${detalleLimit}">Final</a>
+               th:attr="data-page=${detalleReportePage.totalPages - 1},data-limit=${detalleLimit}"
+               onclick="return window.__reporteModalPage(this);">Final</a>
         </div>
     </div>
 </div>
