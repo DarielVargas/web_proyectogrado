@@ -196,15 +196,21 @@
             setTimeout(() => el.classList.add('is-visible'), 90 * index);
         });
 
-        flatpickr('#fechaSeleccion', {
-            mode: 'range',
-            dateFormat: 'Y-m-d',
-            locale: { firstDayOfWeek: 1 },
-            allowInput: false
-        });
+        const fechaSeleccionInput = document.getElementById('fechaSeleccion');
+        if (fechaSeleccionInput && typeof window.flatpickr === 'function') {
+            window.flatpickr('#fechaSeleccion', {
+                mode: 'range',
+                dateFormat: 'Y-m-d',
+                locale: { firstDayOfWeek: 1 },
+                allowInput: false
+            });
+        }
 
         const previewModal = document.getElementById('previewModal');
         const closePreviewModal = document.getElementById('closePreviewModal');
+        const detalleContainer = document.getElementById('modalReportDetailContainer');
+        const reporteIdParam = new URLSearchParams(window.location.search).get('reporteId');
+
         if (previewModal) {
             previewModal.classList.add('open');
 
@@ -223,42 +229,42 @@
                     closeModal();
                 }
             });
-
-            const detalleContainer = document.getElementById('modalReportDetailContainer');
-            const reporteIdParam = new URLSearchParams(window.location.search).get('reporteId');
-
-            const cargarDetallePaginado = async (page, limit) => {
-                if (!detalleContainer || !reporteIdParam) return;
-                const params = new URLSearchParams({ reporteId: reporteIdParam, page: String(page), limit: String(limit) });
-                const response = await fetch(`/historial/reporte-detalle?${params.toString()}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                if (!response.ok) return;
-                detalleContainer.innerHTML = await response.text();
-                registrarEventosPaginacion();
-            };
-
-            const registrarEventosPaginacion = () => {
-                if (!detalleContainer) return;
-
-                detalleContainer.querySelectorAll('.js-report-page').forEach((link) => {
-                    link.addEventListener('click', (event) => {
-                        event.preventDefault();
-                        const page = Number(link.dataset.page || '0');
-                        const limit = Number(link.dataset.limit || '10');
-                        cargarDetallePaginado(page, limit);
-                    });
-                });
-
-                const limitSelect = detalleContainer.querySelector('#detalleLimitSelect');
-                if (limitSelect) {
-                    limitSelect.addEventListener('change', () => {
-                        const limit = Number(limitSelect.value || '10');
-                        cargarDetallePaginado(0, limit);
-                    });
-                }
-            };
-
-            registrarEventosPaginacion();
         }
+
+        const cargarDetallePaginado = async (page, limit) => {
+            if (!detalleContainer || !reporteIdParam) return;
+            const params = new URLSearchParams({ reporteId: reporteIdParam, page: String(page), limit: String(limit) });
+            const response = await fetch(`/historial/reporte-detalle?${params.toString()}`, {
+                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            if (!response.ok) return;
+            detalleContainer.innerHTML = await response.text();
+        };
+
+        document.addEventListener('click', (event) => {
+            const link = event.target.closest('.js-report-page');
+            if (!link || !detalleContainer || !previewModal || !previewModal.classList.contains('open')) {
+                return;
+            }
+
+            event.preventDefault();
+            if (link.classList.contains('btn-disabled')) {
+                return;
+            }
+
+            const page = Number(link.dataset.page || '0');
+            const limit = Number(link.dataset.limit || '10');
+            cargarDetallePaginado(page, limit);
+        });
+
+        document.addEventListener('change', (event) => {
+            if (event.target.id !== 'detalleLimitSelect' || !detalleContainer || !previewModal || !previewModal.classList.contains('open')) {
+                return;
+            }
+
+            const limit = Number(event.target.value || '10');
+            cargarDetallePaginado(0, limit);
+        });
     });
 </script>
 </body>
