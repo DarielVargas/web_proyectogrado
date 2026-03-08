@@ -5,6 +5,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -135,4 +136,45 @@ public interface VwMedicionDetalleRepository extends JpaRepository<VwMedicionDet
         ORDER BY ultimas.estacion_codigo, ultimas.tipo_sensor
         """, nativeQuery = true)
     List<VwMedicionDetalle> findUltimasMedicionesPorEstacionYTipoSensor();
+
+
+    @Query(value = """
+        SELECT v.*
+        FROM vw_mediciones_detalle v
+        LEFT JOIN ui_estacion_sensor s
+            ON s.estacion_codigo = v.estacion_codigo
+           AND s.tipo_sensor = v.tipo_sensor
+        WHERE v.estacion_codigo = :estacionCodigo
+          AND DATE(v.fecha_medicion) = CURRENT_DATE
+          AND (s.activo = 1 OR s.activo IS NULL)
+        ORDER BY v.fecha_medicion DESC, v.medicion_id DESC
+        """, nativeQuery = true)
+    List<VwMedicionDetalle> findReporteHoyByEstacionCodigo(@Param("estacionCodigo") String estacionCodigo);
+
+    @Query(value = """
+        SELECT v.*
+        FROM vw_mediciones_detalle v
+        LEFT JOIN ui_estacion_sensor s
+            ON s.estacion_codigo = v.estacion_codigo
+           AND s.tipo_sensor = v.tipo_sensor
+        WHERE v.estacion_codigo = :estacionCodigo
+          AND DATE(v.fecha_medicion) = :fecha
+          AND (s.activo = 1 OR s.activo IS NULL)
+        ORDER BY v.fecha_medicion DESC, v.medicion_id DESC
+        """, nativeQuery = true)
+    List<VwMedicionDetalle> findReportePorDiaByEstacionCodigo(@Param("estacionCodigo") String estacionCodigo, @Param("fecha") java.time.LocalDate fecha);
+
+    @Query(value = """
+        SELECT v.*
+        FROM vw_mediciones_detalle v
+        LEFT JOIN ui_estacion_sensor s
+            ON s.estacion_codigo = v.estacion_codigo
+           AND s.tipo_sensor = v.tipo_sensor
+        WHERE v.estacion_codigo = :estacionCodigo
+          AND DATE(v.fecha_medicion) BETWEEN :fechaInicio AND :fechaFin
+          AND (s.activo = 1 OR s.activo IS NULL)
+        ORDER BY v.fecha_medicion DESC, v.medicion_id DESC
+        """, nativeQuery = true)
+    List<VwMedicionDetalle> findReportePorRangoByEstacionCodigo(@Param("estacionCodigo") String estacionCodigo, @Param("fechaInicio") java.time.LocalDate fechaInicio, @Param("fechaFin") java.time.LocalDate fechaFin);
+
 }

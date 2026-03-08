@@ -15,6 +15,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 import java.math.RoundingMode;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
@@ -68,12 +69,85 @@ public class MedicionesController {
 
     @GetMapping("/historial")
     public String verHistorial(
-            @RequestParam(name = "limit", defaultValue = "20") int limit,
-            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "estacionCodigo", required = false) String estacionCodigo,
+            @RequestParam(name = "tipoFecha", required = false) String tipoFecha,
+            @RequestParam(name = "fecha", required = false) LocalDate fecha,
+            @RequestParam(name = "fechaInicio", required = false) LocalDate fechaInicio,
+            @RequestParam(name = "fechaFin", required = false) LocalDate fechaFin,
             Model model
     ) {
+        List<Estacion> estacionesActivas = estacionService.obtenerEstacionesActivas();
+        List<EstacionOpcionDto> estacionesReporte = estacionesActivas.stream()
+                .map(estacion -> new EstacionOpcionDto(
+                        estacion.getCodigo(),
+                        (estacion.getDescripcion() == null || estacion.getDescripcion().isBlank())
+                                ? estacion.getCodigo()
+                                : estacion.getDescripcion()
+                ))
+                .toList();
 
-        cargarHistorial(limit, page, model);
+        model.addAttribute("estacionesReporte", estacionesReporte);
+        model.addAttribute("estacionCodigoSeleccionada", estacionCodigo);
+        model.addAttribute("tipoFechaSeleccionada", tipoFecha);
+        model.addAttribute("fechaSeleccionada", fecha);
+        model.addAttribute("fechaInicioSeleccionada", fechaInicio);
+        model.addAttribute("fechaFinSeleccionada", fechaFin);
+
+        boolean filtroAplicado = estacionCodigo != null && !estacionCodigo.isBlank()
+                && tipoFecha != null && !tipoFecha.isBlank();
+        model.addAttribute("filtroAplicado", filtroAplicado);
+
+        if (!filtroAplicado) {
+            model.addAttribute("mediciones", List.of());
+            return "historial";
+        }
+
+        boolean estacionValida = estacionesActivas.stream()
+                .anyMatch(estacion -> estacion.getCodigo().equals(estacionCodigo));
+        if (!estacionValida) {
+            model.addAttribute("mediciones", List.of());
+            model.addAttribute("mensajeReporte", "Seleccione una estación activa válida.");
+            return "historial";
+        }
+
+        List<VwMedicionDetalle> mediciones = switch (tipoFecha) {
+            case "HOY" -> repo.findReporteHoyByEstacionCodigo(estacionCodigo);
+            case "DIA" -> {
+                if (fecha == null) {
+                    model.addAttribute("mediciones", List.of());
+                    model.addAttribute("mensajeReporte", "Debe seleccionar una fecha para generar el reporte.");
+                    yield null;
+                }
+                yield repo.findReportePorDiaByEstacionCodigo(estacionCodigo, fecha);
+            }
+            case "RANGO" -> {
+                if (fechaInicio == null || fechaFin == null) {
+                    model.addAttribute("mediciones", List.of());
+                    model.addAttribute("mensajeReporte", "Debe indicar fecha de inicio y fecha fin.");
+                    yield null;
+                }
+                if (fechaInicio.isAfter(fechaFin)) {
+                    model.addAttribute("mediciones", List.of());
+                    model.addAttribute("mensajeReporte", "La fecha de inicio no puede ser mayor que la fecha fin.");
+                    yield null;
+                }
+                yield repo.findReportePorRangoByEstacionCodigo(estacionCodigo, fechaInicio, fechaFin);
+            }
+            default -> {
+                model.addAttribute("mediciones", List.of());
+                model.addAttribute("mensajeReporte", "Tipo de fecha no válido.");
+                yield null;
+            }
+        };
+
+        if (mediciones == null) {
+            return "historial";
+        }
+
+        model.addAttribute("mediciones", mediciones);
+        if (mediciones.isEmpty()) {
+            model.addAttribute("mensajeReporte", "No hay mediciones para esa estación en el rango seleccionado.");
+        }
 
         return "historial";
     }
@@ -119,31 +193,6 @@ public class MedicionesController {
         model.addAttribute("page", Page.empty(PageRequest.of(page, limit)));
         model.addAttribute("mediciones", List.of());
         model.addAttribute("estacionesDashboard", construirCardsPorEstacion());
-    }
-
-    private void cargarHistorial(int limit, int page, Model model) {
-        if (limit < 1) limit = 1;
-        if (limit > 100) limit = 100;
-        if (page < 0) page = 0;
-
-        List<String> codigosEstacionesActivas = estacionService.obtenerEstacionesActivas().stream()
-                .map(estacion -> estacion.getCodigo())
-                .toList();
-
-        List<String> codigosActivos = uiEstacionService.obtenerCodigosActivos().stream()
-                .filter(codigosEstacionesActivas::contains)
-                .toList();
-
-        Page<VwMedicionDetalle> pageResult = codigosActivos.isEmpty()
-                ? Page.empty(PageRequest.of(page, limit))
-                : repo.findByEstacionCodigoInAndSensoresActivosOrderByFechaMedicionDesc(codigosActivos, PageRequest.of(page, limit));
-
-        model.addAttribute("tempPromedioTxt", "--");
-        model.addAttribute("humPromedioTxt", "--");
-        model.addAttribute("limit", limit);
-        model.addAttribute("page", pageResult);
-        model.addAttribute("mediciones", pageResult.getContent());
-        model.addAttribute("estacionesDashboard", List.of());
     }
 
     private List<EstacionDashboardDto> construirCardsPorEstacion() {
@@ -212,6 +261,8 @@ public class MedicionesController {
     }
 
     public record SensorValorDto(String tipoSensor, String valor, boolean activo) {}
+
+    public record EstacionOpcionDto(String codigo, String descripcion) {}
 
     public record EstacionDashboardDto(
             String estacionCodigo,
