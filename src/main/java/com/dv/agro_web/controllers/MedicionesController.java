@@ -1,10 +1,13 @@
 package com.dv.agro_web.controllers;
 
 import com.dv.agro_web.entidades.Estacion;
+import com.dv.agro_web.entidades.Reporte;
 import com.dv.agro_web.entidades.VwMedicionDetalle;
+import com.dv.agro_web.repositorios.ReporteRepository;
 import com.dv.agro_web.repositorios.SensorRepository;
 import com.dv.agro_web.repositorios.VwMedicionDetalleRepository;
 import com.dv.agro_web.servicios.EstacionService;
+import com.dv.agro_web.servicios.ReporteService;
 import com.dv.agro_web.servicios.UiEstacionSensorService;
 import com.dv.agro_web.servicios.UiEstacionService;
 import org.springframework.data.domain.Page;
@@ -12,11 +15,13 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import java.math.BigDecimal;
-import java.time.LocalDate;
 import java.math.RoundingMode;
+import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,17 +45,20 @@ public class MedicionesController {
     private final VwMedicionDetalleRepository repo;
     private final SensorRepository sensorRepository;
     private final EstacionService estacionService;
+    private final ReporteService reporteService;
     private final UiEstacionService uiEstacionService;
     private final UiEstacionSensorService uiEstacionSensorService;
 
     public MedicionesController(VwMedicionDetalleRepository repo,
                                 SensorRepository sensorRepository,
                                 EstacionService estacionService,
+                                ReporteService reporteService,
                                 UiEstacionService uiEstacionService,
                                 UiEstacionSensorService uiEstacionSensorService) {
         this.repo = repo;
         this.sensorRepository = sensorRepository;
         this.estacionService = estacionService;
+        this.reporteService = reporteService;
         this.uiEstacionService = uiEstacionService;
         this.uiEstacionSensorService = uiEstacionSensorService;
     }
@@ -68,17 +76,89 @@ public class MedicionesController {
     }
 
     @GetMapping("/historial")
-    public String verHistorial(
-            @RequestParam(name = "estacionCodigo", required = false) String estacionCodigo,
-            @RequestParam(name = "tipoFecha", required = false) String tipoFecha,
-            @RequestParam(name = "fecha", required = false) LocalDate fecha,
-            @RequestParam(name = "fechaInicio", required = false) LocalDate fechaInicio,
-            @RequestParam(name = "fechaFin", required = false) LocalDate fechaFin,
-            Model model
-    ) {
+    public String verHistorial(@RequestParam(name = "reporteId", required = false) Long reporteId,
+                               Model model) {
+        cargarPantallaReportesBase(model);
+        model.addAttribute("filtroAplicado", false);
+
+        if (reporteId != null) {
+            cargarVistaPreviaReporte(model, reporteId);
+        }
+
+        return "historial";
+    }
+
+    @PostMapping("/historial")
+    public String generarReporte(@RequestParam("estacionId") Long estacionId,
+                                 @RequestParam("tipoReporte") String tipoReporte,
+                                 @RequestParam("fechaSeleccion") String fechaSeleccion,
+                                 RedirectAttributes redirectAttributes) {
+
+        Estacion estacion = estacionService.obtenerEstacionActivaPorId(estacionId).orElse(null);
+        if (estacion == null) {
+            redirectAttributes.addFlashAttribute("mensajeReporte", "Seleccione una estación activa válida.");
+            return "redirect:/historial";
+        }
+
+        String tipoNormalizado = switch (tipoReporte) {
+            case "DIARIO", "SEMANAL", "MENSUAL" -> tipoReporte;
+            default -> null;
+        };
+
+        if (tipoNormalizado == null) {
+            redirectAttributes.addFlashAttribute("mensajeReporte", "Seleccione un tipo de reporte válido.");
+            return "redirect:/historial";
+        }
+
+        RangoFechaSeleccionado rango = parsearFechaSeleccion(fechaSeleccion);
+        if (rango == null) {
+            redirectAttributes.addFlashAttribute("mensajeReporte", "Seleccione una fecha válida en el calendario.");
+            return "redirect:/historial";
+        }
+
+        List<VwMedicionDetalle> mediciones = repo.findReportePorRangoByEstacionCodigo(estacion.getCodigo(), rango.fechaInicio(), rango.fechaFin());
+        if (mediciones.isEmpty()) {
+            redirectAttributes.addFlashAttribute("mensajeReporte", "No existen mediciones para los filtros seleccionados.");
+            return "redirect:/historial";
+        }
+
+        Reporte reporte = reporteService.guardarReporteGenerado(estacion.getId(), rango.fechaInicio(), rango.fechaFin(), tipoNormalizado);
+        redirectAttributes.addFlashAttribute("mensajeExito", "Reporte generado correctamente.");
+        return "redirect:/historial?reporteId=" + reporte.getIdReporte();
+    }
+
+    private RangoFechaSeleccionado parsearFechaSeleccion(String fechaSeleccion) {
+        if (fechaSeleccion == null || fechaSeleccion.isBlank()) {
+            return null;
+        }
+
+        String[] partes = fechaSeleccion.trim().split("\\s+to\\s+");
+        try {
+            if (partes.length == 1) {
+                LocalDate dia = LocalDate.parse(partes[0].trim());
+                return new RangoFechaSeleccionado(dia, dia);
+            }
+
+            if (partes.length == 2) {
+                LocalDate inicio = LocalDate.parse(partes[0].trim());
+                LocalDate fin = LocalDate.parse(partes[1].trim());
+                if (inicio.isAfter(fin)) {
+                    return null;
+                }
+                return new RangoFechaSeleccionado(inicio, fin);
+            }
+        } catch (Exception ignored) {
+            return null;
+        }
+
+        return null;
+    }
+
+    private void cargarPantallaReportesBase(Model model) {
         List<Estacion> estacionesActivas = estacionService.obtenerEstacionesActivas();
         List<EstacionOpcionDto> estacionesReporte = estacionesActivas.stream()
                 .map(estacion -> new EstacionOpcionDto(
+                        estacion.getId(),
                         estacion.getCodigo(),
                         (estacion.getDescripcion() == null || estacion.getDescripcion().isBlank())
                                 ? estacion.getCodigo()
@@ -86,70 +166,32 @@ public class MedicionesController {
                 ))
                 .toList();
 
+        List<ReporteRepository.ReporteRecienteView> recientes = reporteService.listarReportesRecientes();
+
         model.addAttribute("estacionesReporte", estacionesReporte);
-        model.addAttribute("estacionCodigoSeleccionada", estacionCodigo);
-        model.addAttribute("tipoFechaSeleccionada", tipoFecha);
-        model.addAttribute("fechaSeleccionada", fecha);
-        model.addAttribute("fechaInicioSeleccionada", fechaInicio);
-        model.addAttribute("fechaFinSeleccionada", fechaFin);
+        model.addAttribute("reportesRecientes", recientes);
+    }
 
-        boolean filtroAplicado = estacionCodigo != null && !estacionCodigo.isBlank()
-                && tipoFecha != null && !tipoFecha.isBlank();
-        model.addAttribute("filtroAplicado", filtroAplicado);
-
-        if (!filtroAplicado) {
-            model.addAttribute("mediciones", List.of());
-            return "historial";
+    private void cargarVistaPreviaReporte(Model model, Long reporteId) {
+        ReporteRepository.ReporteRecienteView reporte = reporteService.obtenerDetalleReporte(reporteId).orElse(null);
+        if (reporte == null) {
+            model.addAttribute("mensajeReporte", "El reporte seleccionado no existe.");
+            return;
         }
 
-        boolean estacionValida = estacionesActivas.stream()
-                .anyMatch(estacion -> estacion.getCodigo().equals(estacionCodigo));
-        if (!estacionValida) {
-            model.addAttribute("mediciones", List.of());
-            model.addAttribute("mensajeReporte", "Seleccione una estación activa válida.");
-            return "historial";
+        if (reporte.getEstacionCodigo() == null) {
+            model.addAttribute("mensajeReporte", "No se encontró la estación del reporte seleccionado.");
+            return;
         }
 
-        List<VwMedicionDetalle> mediciones = switch (tipoFecha) {
-            case "HOY" -> repo.findReporteHoyByEstacionCodigo(estacionCodigo);
-            case "DIA" -> {
-                if (fecha == null) {
-                    model.addAttribute("mediciones", List.of());
-                    model.addAttribute("mensajeReporte", "Debe seleccionar una fecha para generar el reporte.");
-                    yield null;
-                }
-                yield repo.findReportePorDiaByEstacionCodigo(estacionCodigo, fecha);
-            }
-            case "RANGO" -> {
-                if (fechaInicio == null || fechaFin == null) {
-                    model.addAttribute("mediciones", List.of());
-                    model.addAttribute("mensajeReporte", "Debe indicar fecha de inicio y fecha fin.");
-                    yield null;
-                }
-                if (fechaInicio.isAfter(fechaFin)) {
-                    model.addAttribute("mediciones", List.of());
-                    model.addAttribute("mensajeReporte", "La fecha de inicio no puede ser mayor que la fecha fin.");
-                    yield null;
-                }
-                yield repo.findReportePorRangoByEstacionCodigo(estacionCodigo, fechaInicio, fechaFin);
-            }
-            default -> {
-                model.addAttribute("mediciones", List.of());
-                model.addAttribute("mensajeReporte", "Tipo de fecha no válido.");
-                yield null;
-            }
-        };
+        List<VwMedicionDetalle> detalle = repo.findReportePorRangoByEstacionCodigo(
+                reporte.getEstacionCodigo(),
+                reporte.getFechaInicio(),
+                reporte.getFechaFin()
+        );
 
-        if (mediciones == null) {
-            return "historial";
-        }
-
-        model.addAttribute("mediciones", mediciones);
-        if (mediciones.isEmpty()) {
-            model.addAttribute("mensajeReporte", "No hay mediciones para esa estación en el rango seleccionado.");
-        }
-
-        return "historial";
+        model.addAttribute("reporteSeleccionado", reporte);
+        model.addAttribute("detalleReporte", detalle);
     }
 
     private void cargarDashboard(int limit, int page, Model model) {
@@ -260,9 +302,11 @@ public class MedicionesController {
         return valor + " " + medicion.getUnidadMedida();
     }
 
+    public record RangoFechaSeleccionado(LocalDate fechaInicio, LocalDate fechaFin) {}
+
     public record SensorValorDto(String tipoSensor, String valor, boolean activo) {}
 
-    public record EstacionOpcionDto(String codigo, String descripcion) {}
+    public record EstacionOpcionDto(Long id, String codigo, String descripcion) {}
 
     public record EstacionDashboardDto(
             String estacionCodigo,
