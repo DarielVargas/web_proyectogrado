@@ -115,7 +115,7 @@
                     <div class="field">
                         <label for="fechaSeleccion">Fecha</label>
                         <input type="text" name="fechaSeleccion" id="fechaSeleccion" placeholder="Seleccione día o rango" required>
-                        <p class="date-help">Use el mismo calendario para elegir un solo día o un rango de fechas.</p>
+                        
                     </div>
 
                     <div class="field">
@@ -135,7 +135,7 @@
 
         <section class="card animate-item">
             <h2 class="card-title">Reportes Recientes</h2>
-            <p class="card-sub">Últimos reportes guardados en el sistema. Haga clic en un reporte para abrir su vista en una página independiente.</p>
+           
 
             <div class="recent-list" th:if="${!#lists.isEmpty(reportesRecientes)}">
                 <article class="recent-item" th:each="r : ${reportesRecientes}">
