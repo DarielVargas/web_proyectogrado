@@ -66,13 +66,6 @@
         .empty{ border:1px dashed #cbd5e1; border-radius:12px; padding:14px; color:#64748b; font-weight:700; background:#f8fafc; }
         .animate-item{ opacity:0; transform: translateY(16px); transition: opacity .55s ease, transform .55s ease; }
 
-        .modal-overlay{ position:fixed; inset:0; background:rgba(15,23,42,.55); display:none; align-items:center; justify-content:center; padding:20px; z-index:999; }
-        .modal-overlay.open{ display:flex; }
-        .modal-card{ width:min(1100px, 96vw); max-height:90vh; overflow:auto; background:#fff; border-radius:16px; border:1px solid #dbe3ee; box-shadow:0 24px 60px rgba(15,23,42,.35); padding:16px; }
-        .modal-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:14px; margin-bottom:10px; }
-        .modal-title{ margin:0; font-size:20px; font-weight:900; color:#0f172a; }
-        .modal-sub{ margin:6px 0 0; font-size:13px; color:#475569; font-weight:600; }
-        .btn-close{ background:#111827; color:#fff; border-color:#111827; padding:8px 12px; font-size:12px; }
 
         .animate-item.is-visible{ opacity:1; transform: translateY(0); }
 
@@ -148,11 +141,11 @@
 
         <section class="card animate-item">
             <h2 class="card-title">Reportes Recientes</h2>
-            <p class="card-sub">Últimos reportes guardados en el sistema. Haga clic en un reporte para ver su vista previa.</p>
+            <p class="card-sub">Últimos reportes guardados en el sistema. Haga clic en un reporte para abrir su vista en una página independiente.</p>
 
             <div class="recent-list" th:if="${!#lists.isEmpty(reportesRecientes)}">
                 <article class="recent-item" th:each="r : ${reportesRecientes}">
-                    <a class="recent-link" th:href="@{/historial(reporteId=${r.idReporte})}">
+                    <a class="recent-link" th:href="@{/reportes/{id}(id=${r.idReporte})}">
                         <p class="recent-name" th:text="${r.nombreReporte}">Reporte Diario - 2026-03-07</p>
                         <p class="recent-meta"
                            th:text="|Estación: ${r.estacionCodigo != null ? r.estacionCodigo : 'N/A'}${r.estacionDescripcion != null ? ' - ' + r.estacionDescripcion : ''} · Rango: ${r.fechaInicio} a ${r.fechaFin} · Generado: ${r.fechaGenerado}|">
@@ -167,24 +160,7 @@
 
         
 
-        <div id="previewModal" class="modal-overlay" th:if="${reporteSeleccionado}">
-            <div class="modal-card">
-                <div class="modal-head">
-                    <div>
-                        <h2 class="modal-title" th:text="${reporteSeleccionado.nombreReporte}">Vista previa</h2>
-                        <p class="modal-sub"
-                           th:text="|Estación: ${reporteSeleccionado.estacionCodigo != null ? reporteSeleccionado.estacionCodigo : 'N/A'}${reporteSeleccionado.estacionDescripcion != null ? ' - ' + reporteSeleccionado.estacionDescripcion : ''} · Rango: ${reporteSeleccionado.fechaInicio} a ${reporteSeleccionado.fechaFin}|">
-                            Estación y rango
-                        </p>
-                    </div>
-                    <button type="button" class="btn btn-close" id="closePreviewModal">Cerrar</button>
-                </div>
-
-                <div id="modalReportDetailContainer"
-                     th:replace="fragments/reporte-modal-detalle :: detalleReporteModal">
-                </div>
-            </div>
-        </div>
+        
 
     </main>
 </div>
@@ -203,62 +179,6 @@
             allowInput: false
         });
 
-        const previewModal = document.getElementById('previewModal');
-        const closePreviewModal = document.getElementById('closePreviewModal');
-        if (previewModal) {
-            previewModal.classList.add('open');
-
-            const closeModal = () => {
-                previewModal.classList.remove('open');
-                const cleanUrl = window.location.pathname;
-                window.history.replaceState({}, '', cleanUrl);
-            };
-
-            if (closePreviewModal) {
-                closePreviewModal.addEventListener('click', closeModal);
-            }
-
-            previewModal.addEventListener('click', (event) => {
-                if (event.target === previewModal) {
-                    closeModal();
-                }
-            });
-
-            const detalleContainer = document.getElementById('modalReportDetailContainer');
-            const reporteIdParam = new URLSearchParams(window.location.search).get('reporteId');
-
-            const cargarDetallePaginado = async (page, limit) => {
-                if (!detalleContainer || !reporteIdParam) return;
-                const params = new URLSearchParams({ reporteId: reporteIdParam, page: String(page), limit: String(limit) });
-                const response = await fetch(`/historial/reporte-detalle?${params.toString()}`, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-                if (!response.ok) return;
-                detalleContainer.innerHTML = await response.text();
-                registrarEventosPaginacion();
-            };
-
-            const registrarEventosPaginacion = () => {
-                if (!detalleContainer) return;
-
-                detalleContainer.querySelectorAll('.js-report-page').forEach((link) => {
-                    link.addEventListener('click', (event) => {
-                        event.preventDefault();
-                        const page = Number(link.dataset.page || '0');
-                        const limit = Number(link.dataset.limit || '10');
-                        cargarDetallePaginado(page, limit);
-                    });
-                });
-
-                const limitSelect = detalleContainer.querySelector('#detalleLimitSelect');
-                if (limitSelect) {
-                    limitSelect.addEventListener('change', () => {
-                        const limit = Number(limitSelect.value || '10');
-                        cargarDetallePaginado(0, limit);
-                    });
-                }
-            };
-
-            registrarEventosPaginacion();
-        }
     });
 </script>
 </body>
