@@ -15,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -76,25 +77,21 @@ public class MedicionesController {
     }
 
     @GetMapping("/historial")
-    public String verHistorial(@RequestParam(name = "reporteId", required = false) Long reporteId,
-                               Model model) {
+    public String verHistorial(Model model) {
         cargarPantallaReportesBase(model);
         model.addAttribute("filtroAplicado", false);
-
-        if (reporteId != null) {
-            cargarVistaPreviaReporte(model, reporteId, 0, 10);
-        }
 
         return "historial";
     }
 
-    @GetMapping("/historial/reporte-detalle")
-    public String cargarDetalleReporteModal(@RequestParam("reporteId") Long reporteId,
-                                            @RequestParam(name = "page", defaultValue = "0") int page,
-                                            @RequestParam(name = "limit", defaultValue = "10") int limit,
-                                            Model model) {
+    @GetMapping("/reportes/{reporteId}")
+    public String verDetalleReporte(@PathVariable("reporteId") Long reporteId,
+                                    @RequestParam(name = "page", defaultValue = "0") int page,
+                                    @RequestParam(name = "limit", defaultValue = "10") int limit,
+                                    Model model) {
+        cargarPantallaReportesBase(model);
         cargarVistaPreviaReporte(model, reporteId, page, limit);
-        return "fragments/reporte-modal-detalle :: detalleReporteModal";
+        return "reporte-detalle";
     }
 
     @PostMapping("/historial")
@@ -133,7 +130,7 @@ public class MedicionesController {
 
         Reporte reporte = reporteService.guardarReporteGenerado(estacion.getId(), rango.fechaInicio(), rango.fechaFin(), tipoNormalizado);
         redirectAttributes.addFlashAttribute("mensajeExito", "Reporte generado correctamente.");
-        return "redirect:/historial?reporteId=" + reporte.getIdReporte();
+        return "redirect:/reportes/" + reporte.getIdReporte();
     }
 
     private RangoFechaSeleccionado parsearFechaSeleccion(String fechaSeleccion) {

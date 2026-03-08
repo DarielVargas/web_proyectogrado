@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
+    <title>Detalle de Reporte - Agro IoT</title>
+
+    <style>
+        *{ box-sizing:border-box; }
+        body{ margin:0; font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif; background:var(--bg-soft); color:var(--text-main); }
+        .layout{ min-height:100vh; display:grid; grid-template-columns: 260px 1fr; }
+        .sidebar{ background: linear-gradient(180deg, var(--primary-light), var(--primary)); color:#fff; padding:18px 16px; height:100vh; position:sticky; top:0; display:flex; flex-direction:column; gap:14px; }
+        .brand{ font-weight:900; letter-spacing:.2px; padding:12px 12px; border-radius:12px; background: rgba(255,255,255,.10); }
+        .nav{ display:flex; flex-direction:column; gap:8px; margin-top:4px; }
+        .nav a{ text-decoration:none; color:#fff; padding:10px 12px; border-radius:12px; background: rgba(255,255,255,.08); opacity:.95; font-weight:700; }
+        .nav a.active{ background: rgba(255,255,255,.18); }
+        .sidebar-footer{ margin-top:auto; padding-top:12px; border-top:1px solid rgba(255,255,255,.18); display:flex; flex-direction:column; gap:10px; }
+        .user-box{ font-size:12px; opacity:.9; line-height:1.35; }
+
+        .main{ padding:22px 22px 40px; display:flex; flex-direction:column; gap:14px; }
+        .card{ background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 12px 28px rgba(15,23,42,.08); padding:18px; }
+        .card-title{ margin:0 0 6px; font-size:24px; font-weight:900; color:#0f172a; }
+        .card-sub{ margin:0; color:#64748b; font-size:13px; font-weight:700; }
+
+        .btn{ display:inline-flex; align-items:center; justify-content:center; padding:10px 14px; border-radius:12px; border:1px solid transparent; font-weight:800; cursor:pointer; text-decoration:none; }
+        .btn-back{ background:#111827; color:#fff; border-color:#111827; }
+        .btn-download{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+        .btn-logout{ background:#111827; color:#fff; border-color:#111827; width:100%; }
+        .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+
+        .meta-grid{ display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:10px; margin-top:12px; }
+        .meta-item{ background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px 12px; }
+        .meta-label{ margin:0 0 4px; font-size:11px; font-weight:900; color:#475569; text-transform:uppercase; }
+        .meta-value{ margin:0; font-size:14px; font-weight:800; color:#0f172a; }
+
+        .empty{ border:1px dashed #cbd5e1; border-radius:12px; padding:14px; color:#64748b; font-weight:700; background:#f8fafc; }
+        .results-table{ width:100%; border-collapse:collapse; border:1px solid #e2e8f0; border-radius:12px; overflow:hidden; margin-top:12px; }
+        .results-table th, .results-table td{ padding:9px 10px; border-bottom:1px solid #e2e8f0; font-size:12px; text-align:left; }
+        .results-table th{ background:#f8fafc; font-weight:900; color:#0f172a; }
+        .paginacion{ display:flex; gap:8px; align-items:center; justify-content:flex-start; margin-top: 14px; flex-wrap: wrap; }
+        .btn-page{ background:#ffffff; color: #333; border:1px solid #ddd; border-radius:10px; padding:8px 12px; font-weight:800; text-decoration:none; }
+        .btn-active{ background:#111827; color:white; border-color:#111827; }
+        .btn-disabled{ opacity: 0.5; pointer-events: none; }
+        .select{ display:flex; align-items:center; gap:8px; color:var(--text-soft); font-size:13px; font-weight:700; margin-top:10px; }
+        .select select{ padding:8px 10px; border-radius:12px; border:1px solid var(--border); background:#fff; font-weight:800; color:var(--text-main); outline:none; }
+
+        @media (max-width: 980px){ .layout{ grid-template-columns:1fr; } .sidebar{ position:relative; height:auto; } }
+        @media (max-width: 720px){ .meta-grid{ grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <aside class="sidebar">
+        <div class="brand">Agro IoT</div>
+        <nav class="nav">
+            <a th:href="@{/mediciones}">Dashboard</a>
+            <a th:href="@{/historial}" class="active">Historial y Reportes</a>
+            <a th:href="@{/estaciones}">Estaciones</a>
+            <a href="#">Alertas</a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-box">Conectado como:<br><b>admin</b><br>Administrador</div>
+            <form method="post" th:action="@{/logout}">
+                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                <button type="submit" class="btn btn-logout">Cerrar Sesión</button>
+            </form>
+        </div>
+    </aside>
+
+    <main class="main">
+        <div class="actions">
+            <a class="btn btn-back" th:href="@{/historial}">Volver</a>
+            <button type="button" class="btn btn-download">Descargar</button>
+        </div>
+
+        <section class="card" th:if="${reporteSeleccionado != null}">
+            <h1 class="card-title" th:text="${reporteSeleccionado.nombreReporte}">Reporte</h1>
+            <p class="card-sub">Vista detallada del reporte generado.</p>
+
+            <div class="meta-grid">
+                <div class="meta-item">
+                    <p class="meta-label">Estación</p>
+                    <p class="meta-value"
+                       th:text="${reporteSeleccionado.estacionCodigo != null ? reporteSeleccionado.estacionCodigo : 'N/A'} + (${reporteSeleccionado.estacionDescripcion != null ? ' - ' + reporteSeleccionado.estacionDescripcion : ''})">EST-001</p>
+                </div>
+                <div class="meta-item">
+                    <p class="meta-label">Rango de fechas</p>
+                    <p class="meta-value" th:text="|${reporteSeleccionado.fechaInicio} a ${reporteSeleccionado.fechaFin}|">2026-01-01 a 2026-01-02</p>
+                </div>
+                <div class="meta-item">
+                    <p class="meta-label">Tipo de reporte</p>
+                    <p class="meta-value" th:text="${reporteSeleccionado.tipoReporte}">DIARIO</p>
+                </div>
+            </div>
+
+            <div class="empty" th:if="${detalleReportePage == null or #lists.isEmpty(detalleReportePage.content)}" style="margin-top:12px;">No hay mediciones para este reporte.</div>
+
+            <div th:if="${detalleReportePage != null and !#lists.isEmpty(detalleReportePage.content)}">
+                <div class="select">
+                    <label for="detalleLimitSelect">Mostrar:</label>
+                    <select id="detalleLimitSelect">
+                        <option value="10" th:selected="${detalleLimit == 10}">10</option>
+                        <option value="20" th:selected="${detalleLimit == 20}">20</option>
+                        <option value="40" th:selected="${detalleLimit == 40}">40</option>
+                        <option value="50" th:selected="${detalleLimit == 50}">50</option>
+                        <option value="100" th:selected="${detalleLimit == 100}">100</option>
+                    </select>
+                </div>
+
+                <table class="results-table">
+                    <thead>
+                    <tr>
+                        <th>ID</th><th>Fecha</th><th>Valor</th><th>Unidad</th><th>Tipo Sensor</th><th>Código Sensor</th><th>Modelo</th><th>Estación</th>
+                    </tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="m : ${detalleReportePage.content}">
+                        <td th:text="${m.medicionId}">1</td>
+                        <td th:text="${m.fechaMedicion}">2026-01-01</td>
+                        <td th:text="${m.valor}">0</td>
+                        <td th:text="${m.unidadMedida}">%</td>
+                        <td th:text="${m.tipoSensor}">Temperatura</td>
+                        <td th:text="${m.codigoSensor}">EST-001_T1</td>
+                        <td th:text="${m.modelo}">Modelo</td>
+                        <td th:text="${m.estacionCodigo}">EST-001</td>
+                    </tr>
+                    </tbody>
+                </table>
+
+                <div class="paginacion" th:if="${detalleReportePage.totalPages > 1}">
+                    <a class="btn-page"
+                       th:classappend="${detalleReportePage.first} ? ' btn-disabled' : ''"
+                       th:href="@{/reportes/{id}(id=${reporteSeleccionado.idReporte},page=0,limit=${detalleLimit})}">Primero</a>
+
+                    <a class="btn-page"
+                       th:classappend="${detalleReportePage.first} ? ' btn-disabled' : ''"
+                       th:href="@{/reportes/{id}(id=${reporteSeleccionado.idReporte},page=${detalleReportePage.number - 1},limit=${detalleLimit})}">Anterior</a>
+
+                    <a class="btn-page"
+                       th:classappend="${detalleReportePage.number == 0} ? ' btn-active' : ''"
+                       th:href="@{/reportes/{id}(id=${reporteSeleccionado.idReporte},page=0,limit=${detalleLimit})}">1</a>
+
+                    <span th:if="${detalleReportePage.number > 3}" style="padding: 0 6px;">...</span>
+
+                    <span th:each="i : ${#numbers.sequence(T(java.lang.Math).max(1, detalleReportePage.number - 1), T(java.lang.Math).min(detalleReportePage.totalPages - 2, detalleReportePage.number + 1))}">
+                        <a class="btn-page"
+                           th:classappend="${i == detalleReportePage.number} ? ' btn-active' : ''"
+                           th:href="@{/reportes/{id}(id=${reporteSeleccionado.idReporte},page=${i},limit=${detalleLimit})}"
+                           th:text="${i + 1}">2</a>
+                    </span>
+
+                    <span th:if="${detalleReportePage.number < detalleReportePage.totalPages - 4}" style="padding: 0 6px;">...</span>
+
+                    <a class="btn-page"
+                       th:classappend="${detalleReportePage.number == detalleReportePage.totalPages - 1} ? ' btn-active' : ''"
+                       th:href="@{/reportes/{id}(id=${reporteSeleccionado.idReporte},page=${detalleReportePage.totalPages - 1},limit=${detalleLimit})}"
+                       th:text="${detalleReportePage.totalPages}">Última</a>
+
+                    <a class="btn-page"
+                       th:classappend="${detalleReportePage.last} ? ' btn-disabled' : ''"
+                       th:href="@{/reportes/{id}(id=${reporteSeleccionado.idReporte},page=${detalleReportePage.number + 1},limit=${detalleLimit})}">Siguiente</a>
+
+                    <a class="btn-page"
+                       th:classappend="${detalleReportePage.last} ? ' btn-disabled' : ''"
+                       th:href="@{/reportes/{id}(id=${reporteSeleccionado.idReporte},page=${detalleReportePage.totalPages - 1},limit=${detalleLimit})}">Final</a>
+                </div>
+            </div>
+        </section>
+
+        <section class="card" th:if="${reporteSeleccionado == null}">
+            <div class="empty" th:text="${mensajeReporte != null ? mensajeReporte : 'El reporte solicitado no existe.'}">El reporte solicitado no existe.</div>
+            <div class="actions" style="margin-top:12px; margin-bottom:0;">
+                <a class="btn btn-back" th:href="@{/historial}">Volver</a>
+            </div>
+        </section>
+    </main>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', () => {
+        const limitSelect = document.getElementById('detalleLimitSelect');
+        if (!limitSelect) return;
+
+        limitSelect.addEventListener('change', () => {
+            const url = new URL(window.location.href);
+            url.searchParams.set('page', '0');
+            url.searchParams.set('limit', limitSelect.value || '10');
+            window.location.href = url.toString();
+        });
+    });
+</script>
+</body>
+</html>
