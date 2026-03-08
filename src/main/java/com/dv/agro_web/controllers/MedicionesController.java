@@ -82,10 +82,19 @@ public class MedicionesController {
         model.addAttribute("filtroAplicado", false);
 
         if (reporteId != null) {
-            cargarVistaPreviaReporte(model, reporteId);
+            cargarVistaPreviaReporte(model, reporteId, 0, 10);
         }
 
         return "historial";
+    }
+
+    @GetMapping("/historial/reporte-detalle")
+    public String cargarDetalleReporteModal(@RequestParam("reporteId") Long reporteId,
+                                            @RequestParam(name = "page", defaultValue = "0") int page,
+                                            @RequestParam(name = "limit", defaultValue = "10") int limit,
+                                            Model model) {
+        cargarVistaPreviaReporte(model, reporteId, page, limit);
+        return "fragments/reporte-modal-detalle :: detalleReporteModal";
     }
 
     @PostMapping("/historial")
@@ -172,7 +181,7 @@ public class MedicionesController {
         model.addAttribute("reportesRecientes", recientes);
     }
 
-    private void cargarVistaPreviaReporte(Model model, Long reporteId) {
+    private void cargarVistaPreviaReporte(Model model, Long reporteId, int page, int limit) {
         ReporteRepository.ReporteRecienteView reporte = reporteService.obtenerDetalleReporte(reporteId).orElse(null);
         if (reporte == null) {
             model.addAttribute("mensajeReporte", "El reporte seleccionado no existe.");
@@ -184,14 +193,20 @@ public class MedicionesController {
             return;
         }
 
-        List<VwMedicionDetalle> detalle = repo.findReportePorRangoByEstacionCodigo(
+        int limiteNormalizado = Math.max(1, Math.min(100, limit));
+        int paginaNormalizada = Math.max(0, page);
+
+        Page<VwMedicionDetalle> detallePage = repo.findReportePorRangoPaginadoByEstacionCodigo(
                 reporte.getEstacionCodigo(),
                 reporte.getFechaInicio(),
-                reporte.getFechaFin()
+                reporte.getFechaFin(),
+                PageRequest.of(paginaNormalizada, limiteNormalizado)
         );
 
         model.addAttribute("reporteSeleccionado", reporte);
-        model.addAttribute("detalleReporte", detalle);
+        model.addAttribute("detalleReportePage", detallePage);
+        model.addAttribute("detalleReporte", detallePage.getContent());
+        model.addAttribute("detalleLimit", limiteNormalizado);
     }
 
     private void cargarDashboard(int limit, int page, Model model) {
