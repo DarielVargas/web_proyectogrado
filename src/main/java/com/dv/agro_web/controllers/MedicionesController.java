@@ -267,19 +267,23 @@ public class MedicionesController {
                     }
                     List<VwMedicionDetalle> medicionesSensor = entry.getValue();
                     if (inicioPorSensor >= medicionesSensor.size()) {
-                        return new DetalleSensorDto(tipoMostrar, List.of(), "--", "--", "--", "--");
+                        return new DetalleSensorDto(tipoMostrar, List.of(), "--", "--", "--", "--", "", "", "");
                     }
 
                     int finPorSensor = Math.min(inicioPorSensor + limiteNormalizado, medicionesSensor.size());
                     List<VwMedicionDetalle> medicionesPaginaSensor = medicionesSensor.subList(inicioPorSensor, finPorSensor);
                     ResumenSensorDto resumen = calcularResumenSensor(medicionesPaginaSensor);
+                    SensorChartDto chart = construirSerieGrafica(medicionesSensor);
                     return new DetalleSensorDto(
                             tipoMostrar,
                             medicionesPaginaSensor,
                             resumen.promedio(),
                             resumen.minimo(),
                             resumen.maximo(),
-                            resumen.ultimaMedicion()
+                            resumen.ultimaMedicion(),
+                            chart.labelsCsv(),
+                            chart.valuesCsv(),
+                            chart.unidad()
                     );
                 })
                 .filter(detalle -> !detalle.mediciones().isEmpty())
@@ -309,6 +313,33 @@ public class MedicionesController {
             return "sin_tipo_de_sensor";
         }
         return tipoSensor.trim().toLowerCase();
+    }
+
+    private SensorChartDto construirSerieGrafica(List<VwMedicionDetalle> medicionesSensor) {
+        List<VwMedicionDetalle> ordenadas = medicionesSensor.stream()
+                .sorted((a, b) -> {
+                    if (a.getFechaMedicion() == null && b.getFechaMedicion() == null) return 0;
+                    if (a.getFechaMedicion() == null) return -1;
+                    if (b.getFechaMedicion() == null) return 1;
+                    return a.getFechaMedicion().compareTo(b.getFechaMedicion());
+                })
+                .toList();
+
+        String labelsCsv = ordenadas.stream()
+                .map(m -> m.getFechaMedicion() != null ? m.getFechaMedicion().toString() : "")
+                .collect(Collectors.joining("||"));
+
+        String valuesCsv = ordenadas.stream()
+                .map(m -> m.getValor() != null ? m.getValor().stripTrailingZeros().toPlainString() : "")
+                .collect(Collectors.joining("||"));
+
+        String unidad = ordenadas.stream()
+                .map(VwMedicionDetalle::getUnidadMedida)
+                .filter(u -> u != null && !u.isBlank())
+                .findFirst()
+                .orElse("");
+
+        return new SensorChartDto(labelsCsv, valuesCsv, unidad);
     }
 
     private ResumenSensorDto calcularResumenSensor(List<VwMedicionDetalle> medicionesPaginaSensor) {
@@ -504,9 +535,11 @@ public class MedicionesController {
 
     public record EstacionOpcionDto(Long id, String codigo, String descripcion) {}
 
-    public record DetalleSensorDto(String tipoSensor, List<VwMedicionDetalle> mediciones, String promedio, String minimo, String maximo, String ultimaMedicion) {}
+    public record DetalleSensorDto(String tipoSensor, List<VwMedicionDetalle> mediciones, String promedio, String minimo, String maximo, String ultimaMedicion, String chartLabelsCsv, String chartValuesCsv, String chartUnidad) {}
 
     public record ResumenSensorDto(String promedio, String minimo, String maximo, String ultimaMedicion) {}
+
+    public record SensorChartDto(String labelsCsv, String valuesCsv, String unidad) {}
 
     public record EstacionDashboardDto(
             String estacionCodigo,

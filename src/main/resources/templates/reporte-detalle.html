@@ -54,6 +54,8 @@
         .summary-item{ background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px 12px; }
         .summary-label{ margin:0 0 4px; font-size:11px; font-weight:900; color:#475569; text-transform:uppercase; }
         .summary-value{ margin:0; font-size:14px; font-weight:800; color:#0f172a; }
+        .chart-wrap{ width:100%; min-height:340px; }
+        .chart-wrap canvas{ width:100% !important; height:340px !important; }
 
         @media (max-width: 980px){ .layout{ grid-template-columns:1fr; } .sidebar{ position:relative; height:auto; } }
         @media (max-width: 720px){ .meta-grid{ grid-template-columns:1fr; } }
@@ -65,7 +67,7 @@
         <div class="brand">Agro IoT</div>
         <nav class="nav">
             <a th:href="@{/mediciones}">Dashboard</a>
-            <a th:href="@{/historial}" class="active">Reportes</a>
+            <a th:href="@{/historial}" class="active">Historial y Reportes</a>
             <a th:href="@{/estaciones}">Estaciones</a>
             <a href="#">Alertas</a>
         </nav>
@@ -119,7 +121,7 @@
                             class="sensor-tab"
                             th:each="grupo,iter : ${detalleAgrupadoPorSensor}"
                             th:classappend="${iter.first} ? ' active' : ''"
-                            th:attr="data-tab-target='sensor-panel-' + ${iter.index}"
+                            th:attr="data-tab-target='sensor-panel-' + ${iter.index},data-chart-labels=${grupo.chartLabelsCsv},data-chart-values=${grupo.chartValuesCsv},data-chart-unit=${grupo.chartUnidad},data-chart-sensor=${grupo.tipoSensor}"
                             th:text="${grupo.tipoSensor}">Temperatura Ambiental</button>
                 </div>
 
@@ -207,6 +209,14 @@
             </div>
         </section>
 
+        <section class="card" th:if="${reporteSeleccionado != null and !#lists.isEmpty(detalleAgrupadoPorSensor)}">
+            <h2 class="card-title">Gráfica del sensor</h2>
+            <p class="card-sub" id="chartSubtitle">Tendencia del sensor seleccionado en todo el rango del reporte.</p>
+            <div class="chart-wrap">
+                <canvas id="sensorTrendChart"></canvas>
+            </div>
+        </section>
+
         <section class="card" th:if="${reporteSeleccionado == null}">
             <div class="empty" th:text="${mensajeReporte != null ? mensajeReporte : 'El reporte solicitado no existe.'}">El reporte solicitado no existe.</div>
             <div class="actions" style="margin-top:12px; margin-bottom:0;">
@@ -216,6 +226,7 @@
     </main>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
     document.addEventListener('DOMContentLoaded', () => {
         const limitSelect = document.getElementById('detalleLimitSelect');
@@ -231,9 +242,67 @@
         const tabs = Array.from(document.querySelectorAll('.sensor-tab'));
         const panels = Array.from(document.querySelectorAll('.sensor-panel'));
 
+        const chartCanvas = document.getElementById('sensorTrendChart');
+        const chartSubtitle = document.getElementById('chartSubtitle');
+        let sensorChart = null;
+
+        const parseCsv = (csv) => {
+            if (!csv) return [];
+            return csv.split('||').map(item => item.trim());
+        };
+
+        const renderChartForTab = (tab) => {
+            if (!chartCanvas || !tab) return;
+
+            const labels = parseCsv(tab.dataset.chartLabels);
+            const values = parseCsv(tab.dataset.chartValues)
+                .map(v => (v === '' ? null : Number(v))); 
+            const sensor = tab.dataset.chartSensor || 'Sensor';
+            const unidad = tab.dataset.chartUnit || '';
+
+            if (chartSubtitle) {
+                chartSubtitle.textContent = `Tendencia de ${sensor} en todo el rango del reporte.`;
+            }
+
+            if (sensorChart) {
+                sensorChart.destroy();
+            }
+
+            sensorChart = new Chart(chartCanvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: unidad ? `${sensor} (${unidad})` : sensor,
+                        data: values,
+                        borderColor: '#1d4ed8',
+                        backgroundColor: 'rgba(29, 78, 216, .15)',
+                        tension: 0.25,
+                        pointRadius: 2,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    scales: {
+                        x: { title: { display: true, text: 'Fecha / Hora' } },
+                        y: { title: { display: true, text: unidad ? `Valor (${unidad})` : 'Valor' } }
+                    }
+                }
+            });
+        };
+
         const activarTab = (targetId) => {
-            tabs.forEach(tab => tab.classList.toggle('active', tab.dataset.tabTarget === targetId));
+            let tabActivo = null;
+            tabs.forEach(tab => {
+                const activa = tab.dataset.tabTarget === targetId;
+                tab.classList.toggle('active', activa);
+                if (activa) tabActivo = tab;
+            });
             panels.forEach(panel => panel.classList.toggle('active', panel.id === targetId));
+            renderChartForTab(tabActivo);
         };
 
         tabs.forEach(tab => {
@@ -242,6 +311,9 @@
 
         if (tabs.length > 0 && !tabs.some(tab => tab.classList.contains('active'))) {
             activarTab(tabs[0].dataset.tabTarget);
+        }
+        if (tabs.length > 0 && tabs.some(tab => tab.classList.contains('active'))) {
+            renderChartForTab(tabs.find(tab => tab.classList.contains('active')));
         }
     });
 </script>
