@@ -10,11 +10,17 @@ import jakarta.persistence.Table;
 public class TipoSensor {
 
     @Id
-    @Column(name = "id")
+    @Column(name = "id_tipo_sensor")
     private Long id;
 
-    @Column(name = "nombre")
+    @Column(name = "tipo_sensor")
     private String nombre;
+
+    @Column(name = "unidad_medida")
+    private String unidadMedida;
+
+    @Column(name = "modelo")
+    private String modelo;
 
     public Long getId() {
         return id;
@@ -30,5 +36,21 @@ public class TipoSensor {
 
     public void setNombre(String nombre) {
         this.nombre = nombre;
+    }
+
+    public String getUnidadMedida() {
+        return unidadMedida;
+    }
+
+    public void setUnidadMedida(String unidadMedida) {
+        this.unidadMedida = unidadMedida;
+    }
+
+    public String getModelo() {
+        return modelo;
+    }
+
+    public void setModelo(String modelo) {
+        this.modelo = modelo;
     }
 }
