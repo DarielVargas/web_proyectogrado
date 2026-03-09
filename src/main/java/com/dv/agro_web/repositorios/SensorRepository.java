@@ -20,10 +20,13 @@ public interface SensorRepository extends JpaRepository<Sensor, Long> {
             FROM sensores s
             INNER JOIN estaciones e ON e.id = s.estacion_id
             INNER JOIN tipo_sensor ts ON ts.id_tipo_sensor = s.id_tipo_sensor
+            LEFT JOIN ui_estacion ue
+                ON ue.estacion_codigo = e.codigo
             LEFT JOIN ui_estacion_sensor ues
                 ON ues.estacion_codigo = e.codigo
                AND ues.tipo_sensor = ts.tipo_sensor
             WHERE e.activa = 1
+              AND (ue.activo = 1 OR ue.activo IS NULL)
               AND (ues.activo = 1 OR ues.activo IS NULL)
             """, nativeQuery = true)
     long contarSensoresActivosDeEstacionesActivas();
