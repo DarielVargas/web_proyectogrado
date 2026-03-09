@@ -251,6 +251,21 @@
             return csv.split('||').map(item => item.trim());
         };
 
+        const formatHourLabel = (rawLabel) => {
+            if (!rawLabel) return '';
+            const normalizada = rawLabel.replace(' ', 'T');
+            const fecha = new Date(normalizada);
+            if (!Number.isNaN(fecha.getTime())) {
+                return fecha.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+            }
+
+            const partes = rawLabel.split(' ');
+            if (partes.length > 1) {
+                return partes[1].slice(0, 5);
+            }
+            return rawLabel;
+        };
+
         const renderChartForTab = (tab) => {
             if (!chartCanvas || !tab) return;
 
@@ -287,7 +302,17 @@
                     maintainAspectRatio: false,
                     interaction: { mode: 'index', intersect: false },
                     scales: {
-                        x: { title: { display: true, text: 'Fecha / Hora' } },
+                        x: {
+                            title: { display: true, text: 'Hora' },
+                            ticks: {
+                                autoSkip: true,
+                                maxTicksLimit: 8,
+                                callback: function(value) {
+                                    const rawLabel = this.getLabelForValue(value);
+                                    return formatHourLabel(rawLabel);
+                                }
+                            }
+                        },
                         y: { title: { display: true, text: unidad ? `Valor (${unidad})` : 'Valor' } }
                     }
                 }
