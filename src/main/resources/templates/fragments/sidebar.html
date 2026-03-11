@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<body>
+<aside class="sidebar" th:fragment="appSidebar(activeMenu)">
+    <div class="brand">
+        <span class="brand-icon">☁️</span>
+        <span class="brand-title">AGRO IOT</span>
+        <span class="brand-subtitle">Monitoreo de cultivos</span>
+    </div>
+
+    <nav class="nav">
+        <a th:href="@{/mediciones}" th:classappend="${activeMenu == 'dashboard'} ? ' active' : ''">
+            <span class="nav-icon">📊</span><span class="nav-label">Dashboard</span>
+        </a>
+        <a th:href="@{/estaciones}" th:classappend="${activeMenu == 'estaciones'} ? ' active' : ''">
+            <span class="nav-icon">🌦️</span><span class="nav-label">Estaciones</span>
+        </a>
+        <a th:href="@{/alertas}" th:classappend="${activeMenu == 'alertas'} ? ' active' : ''">
+            <span class="nav-icon">⚠️</span><span class="nav-label">Alertas</span>
+        </a>
+        <a th:href="@{/historial}" th:classappend="${activeMenu == 'reportes'} ? ' active' : ''">
+            <span class="nav-icon">📈</span><span class="nav-label">Reportes</span>
+        </a>
+    </nav>
+
+    <div class="sidebar-footer">
+        <div class="user-box">
+            Conectado como:<br>
+            <b>admin</b><br>
+            Administrador
+        </div>
+
+        <form method="post" th:action="@{/logout}">
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <button type="submit" class="btn btn-logout" style="width:100%;">Cerrar Sesión</button>
+        </form>
+    </div>
+</aside>
+</body>
+</html>

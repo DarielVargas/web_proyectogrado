@@ -8,16 +8,6 @@
         *{ box-sizing:border-box; }
         body{ margin:0; font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif; background:var(--bg-soft); color:var(--text-main); }
         .layout{ min-height:100vh; display:grid; grid-template-columns: 260px 1fr; }
-        .sidebar{ background: linear-gradient(180deg, var(--primary-light), var(--primary)); color:#fff; padding:18px 16px; height:100vh; position:sticky; top:0; display:flex; flex-direction:column; gap:14px; }
-        .brand{ font-weight:900; letter-spacing:.2px; padding:12px 12px; border-radius:12px; background: rgba(255,255,255,.10); }
-        .nav{ display:flex; flex-direction:column; gap:8px; margin-top:4px; }
-        .nav a{ text-decoration:none; color:#fff; padding:10px 12px; border-radius:12px; background: rgba(255,255,255,.08); opacity:.95; font-weight:700; position:relative; overflow:hidden; transition: transform .25s ease, background-color .25s ease, box-shadow .25s ease; }
-        .nav a::after{ content:""; position:absolute; left:8px; right:8px; bottom:4px; height:2px; border-radius:999px; background:rgba(255,255,255,.9); transform:scaleX(0); transform-origin:left; transition:transform .25s ease; }
-        .nav a:hover{ transform: translateX(4px); background: rgba(255,255,255,.16); box-shadow: 0 6px 14px rgba(0,0,0,.14); }
-        .nav a:hover::after, .nav a.active::after{ transform:scaleX(1); }
-        .nav a.active{ background: rgba(255,255,255,.18); }
-        .sidebar-footer{ margin-top:auto; padding-top:12px; border-top:1px solid rgba(255,255,255,.18); display:flex; flex-direction:column; gap:10px; }
-        .user-box{ font-size:12px; opacity:.9; line-height:1.35; }
         .main{ padding:22px 22px 40px; }
         .title{ display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
         .title h1{ margin:0; font-size:22px; font-weight:900; }
@@ -28,7 +18,6 @@
         .alert-exito{ margin-top:14px; background:#dcfce7; border:1px solid #86efac; color:#166534; padding:12px 14px; border-radius:12px; font-weight:700; }
         .alert-error{ margin-top:10px; background:#fee2e2; border:1px solid #fecaca; color:#991b1b; padding:12px 14px; border-radius:12px; font-weight:700; }
         .btn{ display:inline-flex; align-items:center; justify-content:center; padding:10px 14px; border-radius:12px; text-decoration:none; font-weight:800; border:1px solid var(--border); background:#fff; color:var(--text-main); cursor:pointer; white-space:nowrap; }
-        .btn-logout{ background:#111827; color:#fff; border-color:#111827; }
         .estaciones-lista{ margin-top:18px; display:flex; flex-direction:column; gap:14px; }
         .estacion-fila{ background:#fff; border:1px solid #e7ecf2; border-radius:14px; box-shadow: 0 8px 22px rgba(15, 23, 42, .06); padding:16px 18px; display:flex; align-items:center; justify-content:space-between; gap:14px; transition: transform .28s ease, box-shadow .28s ease, border-color .28s ease; }
         .estacion-fila:hover{ transform: translateY(-6px); box-shadow: 0 20px 34px rgba(15, 23, 42, .14); border-color:#d7e2ef; }
@@ -58,22 +47,7 @@
 </head>
 <body>
 <div class="layout">
-    <aside class="sidebar">
-        <div class="brand">Agro IoT</div>
-        <nav class="nav">
-            <a th:href="@{/mediciones}">Dashboard</a>
-            <a th:href="@{/historial}">Reportes</a>
-            <a th:href="@{/estaciones}" class="active">Estaciones</a>
-            <a th:href="@{/alertas}">Alertas</a>
-        </nav>
-        <div class="sidebar-footer">
-            <div class="user-box">Conectado como:<br><b>admin</b><br>Administrador</div>
-            <form method="post" th:action="@{/logout}">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                <button type="submit" class="btn btn-logout" style="width:100%;">Cerrar Sesión</button>
-            </form>
-        </div>
-    </aside>
+    <aside th:replace="~{fragments/sidebar :: appSidebar('estaciones')}"></aside>
 
     <main class="main">
         <div class="title">
