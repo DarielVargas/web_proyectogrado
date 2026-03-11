@@ -11,7 +11,7 @@
         .layout{ min-height:100vh; display:grid; grid-template-columns: 260px 1fr; }
 
         .main{ padding:22px 22px 40px; display:flex; flex-direction:column; gap:14px; }
-        .header h1{ margin:0; font-size:30px; font-weight:900; color:#0f172a; }
+        .header h1{ margin:0; font-size:30px; font-weight:900; color:var(--primary-dark); }
         .header p{ margin:8px 0 0; color:#64748b; font-size:14px; font-weight:600; }
         .card{ background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 12px 28px rgba(15,23,42,.08); padding:18px; }
         .card-title{ margin:0 0 6px; font-size:20px; font-weight:900; color:#0f172a; }
@@ -94,7 +94,7 @@
                     <button type="submit" class="btn btn-danger" onclick="return confirm('¿Desea eliminar esta alerta?')">Eliminar todas</button>
                 </form>
             </div>
-            <p class="card-sub">Listado actual de reglas guardadas en la base de datos.</p>
+            <p class="card-sub"></p>
 
 
             <div class="alert-list" th:if="${!#lists.isEmpty(alertasConfiguradas)}">
@@ -136,7 +136,7 @@
                     <button type="submit" class="btn btn-danger" onclick="return confirm('¿Desea eliminar todo el historial de alertas?')">Eliminar todas</button>
                 </form>
             </div>
-            <p class="card-sub">Eventos de alertas que realmente se dispararon y fueron notificadas en pantalla.</p>
+            <p class="card-sub">Historial de alertas activadas en el sistema.</p>
 
 
             <div class="alert-list" th:if="${!#lists.isEmpty(historialAlertas)}">
