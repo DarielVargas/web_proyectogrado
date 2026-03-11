@@ -3,6 +3,7 @@ package com.dv.agro_web.controllers;
 import com.dv.agro_web.entidades.Estacion;
 import com.dv.agro_web.entidades.Reporte;
 import com.dv.agro_web.entidades.VwMedicionDetalle;
+import com.dv.agro_web.repositorios.AlertaRepository;
 import com.dv.agro_web.repositorios.ReporteRepository;
 import com.dv.agro_web.repositorios.SensorRepository;
 import com.dv.agro_web.repositorios.VwMedicionDetalleRepository;
@@ -55,6 +56,7 @@ public class MedicionesController {
 
     private final VwMedicionDetalleRepository repo;
     private final SensorRepository sensorRepository;
+    private final AlertaRepository alertaRepository;
     private final EstacionService estacionService;
     private final ReporteService reporteService;
     private final UiEstacionService uiEstacionService;
@@ -62,12 +64,14 @@ public class MedicionesController {
 
     public MedicionesController(VwMedicionDetalleRepository repo,
                                 SensorRepository sensorRepository,
+                                AlertaRepository alertaRepository,
                                 EstacionService estacionService,
                                 ReporteService reporteService,
                                 UiEstacionService uiEstacionService,
                                 UiEstacionSensorService uiEstacionSensorService) {
         this.repo = repo;
         this.sensorRepository = sensorRepository;
+        this.alertaRepository = alertaRepository;
         this.estacionService = estacionService;
         this.reporteService = reporteService;
         this.uiEstacionService = uiEstacionService;
@@ -453,11 +457,13 @@ public class MedicionesController {
 
         long sensoresActivos = sensorRepository.contarSensoresActivosDeEstacionesActivas();
         long sensoresRegistrados = sensorRepository.contarSensoresRegistradosDeEstacionesActivas();
+        long totalAlertasConfiguradas = alertaRepository.count();
 
         model.addAttribute("sensoresActivos", sensoresActivos);
         model.addAttribute("sensoresRegistrados", sensoresRegistrados);
         model.addAttribute("tempPromedioTxt", tempPromedioTxt);
         model.addAttribute("humPromedioTxt", humPromedioTxt);
+        model.addAttribute("totalAlertasConfiguradas", totalAlertasConfiguradas);
         model.addAttribute("limit", limit);
         model.addAttribute("page", Page.empty(PageRequest.of(page, limit)));
         model.addAttribute("mediciones", List.of());
