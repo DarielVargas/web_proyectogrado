@@ -35,7 +35,7 @@ public class AlertaService {
     }
 
     public List<Alerta> listarAlertasConfiguradas() {
-        return alertaRepository.findAllByOrderByFechaCreacionDescIdAlertaDesc();
+        return alertaRepository.findAllByActivaTrueOrderByFechaCreacionDescIdAlertaDesc();
     }
 
     public List<HistorialAlerta> listarHistorialAlertas() {
