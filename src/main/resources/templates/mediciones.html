@@ -102,22 +102,28 @@
 
         .topbar{
             display:flex;
-            align-items:flex-start;
+            align-items:center;
             justify-content:space-between;
-            gap:16px;
+            gap:20px;
             flex-wrap:wrap;
-            margin-bottom:14px;
+            margin-bottom:16px;
+            padding:20px 22px;
+            border-radius:18px;
+            border:1px solid var(--border);
+            background: linear-gradient(135deg, #ffffff, #f3f8ff);
+            box-shadow: var(--shadow-soft);
         }
         .title h1{
             margin:0;
-            font-size:22px;
+            font-size:30px;
             font-weight:900;
+            color:var(--primary-dark);
         }
         .title p{
             margin:6px 0 0;
             color:var(--text-soft);
-            font-size:13px;
-            font-weight:600;
+            font-size:14px;
+            font-weight:700;
         }
 
         .actions{
@@ -148,6 +154,7 @@
             border-color:#16a34a;
             box-shadow: 0 10px 24px rgba(22,163,74,.18);
             transition: transform .22s ease, filter .22s ease, box-shadow .22s ease;
+            padding:11px 16px;
         }
         .btn-recargar:hover{
             filter: brightness(.97);
@@ -370,6 +377,8 @@
             .sidebar{ position:relative; height:auto; }
             .cards{ grid-template-columns: repeat(2, minmax(200px, 1fr)); }
             .estaciones-grid{ grid-template-columns: 1fr; }
+            .topbar{ padding:16px 18px; }
+            .title h1{ font-size:26px; }
         }
         @media (max-width: 560px){
             .cards{ grid-template-columns: 1fr; }
@@ -409,13 +418,13 @@
         <div class="topbar">
             <div class="title">
                 <h1>Dashboard</h1>
-                
+                <p>Monitoreo en tiempo real de cultivo de plátano</p>
             </div>
 
             <div class="actions">
                 <a class="btn btn-recargar"
                    th:href="@{/mediciones(limit=${limit}, page=${page.number})}">
-                    Recargar
+                    Recargar Web
                 </a>
             </div>
         </div>
