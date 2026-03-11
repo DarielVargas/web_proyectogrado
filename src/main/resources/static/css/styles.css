@@ -2,6 +2,8 @@
     --primary: #0aa53a;
     --primary-dark: #087d2d;
     --primary-light: #0bbd43;
+    --sidebar-green-start: #1c9a58;
+    --sidebar-green-end: #127847;
     --bg-soft: #f4f7fb;
     --card: #ffffff;
     --text-main: #1e2a3a;
@@ -51,7 +53,7 @@ body {
     transform: translateY(-8px);
 }
 .sidebar {
-    background: linear-gradient(180deg, #1c9a58 0%, #127847 100%);
+    background: linear-gradient(180deg, var(--sidebar-green-start) 0%, var(--sidebar-green-end) 100%);
     color: #fff;
     padding: 22px 16px 16px;
     height: 100vh;
