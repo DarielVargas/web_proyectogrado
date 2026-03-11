@@ -24,9 +24,10 @@
 
         .btn{ display:inline-flex; align-items:center; justify-content:center; padding:10px 14px; border-radius:12px; border:1px solid transparent; font-weight:800; cursor:pointer; text-decoration:none; }
         .btn-back{ background:#111827; color:#fff; border-color:#111827; }
-        .btn-download{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; }
+        .btn-download{ background:#ecfdf3; border-color:#bbf7d0; color:#166534; transition:all .22s ease; }
         .btn-logout{ background:#111827; color:#fff; border-color:#111827; width:100%; }
         .actions{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
+        .btn-download:hover{ background:#dcfce7; border-color:#86efac; color:#14532d; transform:translateY(-1px); }
 
         .meta-grid{ display:grid; grid-template-columns:repeat(2,minmax(220px,1fr)); gap:10px; margin-top:12px; }
         .meta-item{ background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px 12px; }
@@ -67,7 +68,7 @@
         <div class="brand">Agro IoT</div>
         <nav class="nav">
             <a th:href="@{/mediciones}">Dashboard</a>
-            <a th:href="@{/historial}" class="active">Historial y Reportes</a>
+            <a th:href="@{/historial}" class="active">Reportes</a>
             <a th:href="@{/estaciones}">Estaciones</a>
             <a th:href="@{/alertas}">Alertas</a>
         </nav>
