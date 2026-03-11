@@ -34,6 +34,9 @@ public class Alerta {
     @Column(name = "activa")
     private Boolean activa = true;
 
+    @Column(name = "disparada")
+    private Boolean disparada = false;
+
     @Column(name = "fecha_creacion", insertable = false, updatable = false)
     private LocalDateTime fechaCreacion;
 
@@ -91,5 +94,13 @@ public class Alerta {
 
     public void setFechaCreacion(LocalDateTime fechaCreacion) {
         this.fechaCreacion = fechaCreacion;
+    }
+
+    public Boolean getDisparada() {
+        return disparada;
+    }
+
+    public void setDisparada(Boolean disparada) {
+        this.disparada = disparada;
     }
 }

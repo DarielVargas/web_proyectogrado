@@ -7,6 +7,7 @@ CREATE TABLE IF NOT EXISTS historial_alertas (
     umbral DECIMAL(10,2) NOT NULL,
     valor_detectado DECIMAL(10,2) NULL,
     fecha_activacion DATETIME NOT NULL,
+    CONSTRAINT uq_historial_alerta UNIQUE (alerta_id),
     CONSTRAINT fk_historial_alertas_alerta
         FOREIGN KEY (alerta_id) REFERENCES alertas(id_alerta)
         ON DELETE CASCADE

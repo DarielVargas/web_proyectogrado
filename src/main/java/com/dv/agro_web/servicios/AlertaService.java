@@ -13,14 +13,10 @@ import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 @Service
 public class AlertaService {
-
-    private static final String SESSION_ALERTAS_PENDIENTES = "alertasPendientes";
 
     private final AlertaRepository alertaRepository;
     private final HistorialAlertaRepository historialAlertaRepository;
@@ -49,6 +45,7 @@ public class AlertaService {
         alerta.setOperador(operador);
         alerta.setUmbral(umbral);
         alerta.setActiva(true);
+        alerta.setDisparada(false);
         return alertaRepository.save(alerta);
     }
 
@@ -73,12 +70,11 @@ public class AlertaService {
     }
 
     public List<NotificacionAlertaDto> obtenerAlertasDisparadas(HttpSession session) {
-        Map<Long, Long> pendientes = obtenerPendientes(session);
         List<Alerta> alertas = alertaRepository.findAllByOrderByFechaCreacionAscIdAlertaAsc();
         List<NotificacionAlertaDto> notificaciones = new ArrayList<>();
 
         for (Alerta alerta : alertas) {
-            if (alerta.getIdAlerta() == null) {
+            if (alerta.getIdAlerta() == null || Boolean.TRUE.equals(alerta.getDisparada())) {
                 continue;
             }
 
@@ -94,26 +90,12 @@ public class AlertaService {
             }
 
             boolean condicionCumplida = evaluarCondicion(ultimaMedicion.getValor(), alerta.getOperador(), alerta.getUmbral());
-            boolean alertaArmada = Boolean.TRUE.equals(alerta.getActiva());
-            Long medicionPendiente = pendientes.get(alerta.getIdAlerta());
-
-            if (!alertaArmada && !condicionCumplida) {
-                alerta.setActiva(true);
-                alertaRepository.save(alerta);
-                pendientes.remove(alerta.getIdAlerta());
-                continue;
-            }
-
-            if (!alertaArmada || !condicionCumplida) {
-                continue;
-            }
-
-            if (medicionPendiente != null && medicionPendiente.equals(ultimaMedicion.getMedicionId())) {
+            if (!condicionCumplida) {
                 continue;
             }
 
             guardarEventoHistorial(alerta, ultimaMedicion);
-            pendientes.put(alerta.getIdAlerta(), ultimaMedicion.getMedicionId());
+            marcarComoDisparada(alerta);
             notificaciones.add(new NotificacionAlertaDto(
                     alerta.getIdAlerta(),
                     ultimaMedicion.getMedicionId(),
@@ -121,40 +103,11 @@ public class AlertaService {
             ));
         }
 
-        session.setAttribute(SESSION_ALERTAS_PENDIENTES, pendientes);
         return notificaciones;
     }
 
     public void marcarAlertaAtendida(Long alertaId, Long medicionId, HttpSession session) {
-        if (alertaId == null || medicionId == null) {
-            return;
-        }
-
-        Map<Long, Long> pendientes = obtenerPendientes(session);
-        Long medicionPendiente = pendientes.get(alertaId);
-
-        if (medicionPendiente == null || !medicionPendiente.equals(medicionId)) {
-            return;
-        }
-
-        alertaRepository.findById(alertaId).ifPresent(alerta -> {
-            alerta.setActiva(false);
-            alertaRepository.save(alerta);
-        });
-
-        pendientes.remove(alertaId);
-        session.setAttribute(SESSION_ALERTAS_PENDIENTES, pendientes);
-    }
-
-    @SuppressWarnings("unchecked")
-    private Map<Long, Long> obtenerPendientes(HttpSession session) {
-        Object valor = session.getAttribute(SESSION_ALERTAS_PENDIENTES);
-        if (valor instanceof Map<?, ?> map) {
-            return (Map<Long, Long>) map;
-        }
-        Map<Long, Long> nuevo = new HashMap<>();
-        session.setAttribute(SESSION_ALERTAS_PENDIENTES, nuevo);
-        return nuevo;
+        // Mantener endpoint por compatibilidad con frontend actual.
     }
 
     private void guardarEventoHistorial(Alerta alerta, VwMedicionDetalle medicion) {
@@ -172,6 +125,12 @@ public class AlertaService {
         historial.setFechaActivacion(fechaActivacion);
 
         historialAlertaRepository.save(historial);
+    }
+
+    private void marcarComoDisparada(Alerta alerta) {
+        alerta.setDisparada(true);
+        alerta.setActiva(false);
+        alertaRepository.save(alerta);
     }
 
     private boolean evaluarCondicion(BigDecimal valor, String operador, BigDecimal umbral) {
