@@ -30,10 +30,13 @@
         .btn-new{ background:#16a34a; color:#fff; border-color:#15803d; }
         .btn-save{ background:#2563eb; color:#fff; border-color:#1d4ed8; }
         .btn-cancel{ background:#f8fafc; border-color:#cbd5e1; color:#0f172a; }
+        .btn-danger{ background:#dc2626; color:#fff; border-color:#b91c1c; }
+        .btn-danger-sm{ padding:7px 10px; border-radius:10px; font-size:12px; }
         .btn-logout{ background:#111827; color:#fff; border-color:#111827; width:100%; }
 
         .alert-list{ display:flex; flex-direction:column; gap:10px; margin-top:10px; }
         .alert-item{ border:1px solid #e2e8f0; border-radius:12px; background:#f8fafc; padding:12px; }
+        .alert-item-head{ display:flex; justify-content:space-between; align-items:flex-start; gap:10px; }
         .alert-main{ margin:0; font-size:14px; font-weight:900; color:#0f172a; }
         .alert-meta{ margin:6px 0 0; font-size:12px; color:#475569; }
         .empty{ border:1px dashed #cbd5e1; border-radius:12px; padding:14px; color:#64748b; font-weight:700; background:#f8fafc; }
@@ -107,7 +110,13 @@
 
         <section class="card">
 
-            <h2 class="card-title">Alertas Configuradas</h2>
+            <div class="toolbar">
+                <h2 class="card-title">Alertas Configuradas</h2>
+                <form method="post" th:action="@{/alertas/eliminar-todas}" th:if="${!#lists.isEmpty(alertasConfiguradas)}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button type="submit" class="btn btn-danger">Eliminar todas</button>
+                </form>
+            </div>
             <p class="card-sub">Listado actual de reglas guardadas en la base de datos.</p>
 
 
@@ -115,10 +124,17 @@
 
                 <article class="alert-item" th:each="a : ${alertasConfiguradas}">
 
-                    <p class="alert-main"
-                       th:text="${a.estacionCodigo + ' | ' + a.sensorTipo + ' | ' + a.operador + ' | ' + a.umbral}">
-                        EST-001 | Temperatura | > | 30
-                    </p>
+                    <div class="alert-item-head">
+                        <p class="alert-main"
+                           th:text="${a.estacionCodigo + ' | ' + a.sensorTipo + ' | ' + a.operador + ' | ' + a.umbral}">
+                            EST-001 | Temperatura | > | 30
+                        </p>
+
+                        <form method="post" th:action="@{/alertas/eliminar/{id_alerta}(id_alerta=${a.idAlerta})}">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <button type="submit" class="btn btn-danger btn-danger-sm">Eliminar</button>
+                        </form>
+                    </div>
 
                     <p class="alert-meta"
                        th:text="${'Creada: ' + (a.fechaCreacion != null ? a.fechaCreacion : 'N/A') + ' · Activa: ' + (a.activa != null && a.activa ? 'Sí' : 'No')}">

@@ -29,4 +29,14 @@ public class AlertaService {
         alerta.setActiva(true);
         return alertaRepository.save(alerta);
     }
+
+    public void eliminarAlertaPorId(Long idAlerta) {
+        if (alertaRepository.existsById(idAlerta)) {
+            alertaRepository.deleteById(idAlerta);
+        }
+    }
+
+    public void eliminarTodasLasAlertas() {
+        alertaRepository.deleteAll();
+    }
 }
