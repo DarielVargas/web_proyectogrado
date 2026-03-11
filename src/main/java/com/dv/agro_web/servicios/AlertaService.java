@@ -94,17 +94,10 @@ public class AlertaService {
             }
 
             boolean condicionCumplida = evaluarCondicion(ultimaMedicion.getValor(), alerta.getOperador(), alerta.getUmbral());
-            boolean alertaArmada = Boolean.TRUE.equals(alerta.getActiva());
+            boolean alertaDisponible = Boolean.TRUE.equals(alerta.getActiva());
             Long medicionPendiente = pendientes.get(alerta.getIdAlerta());
 
-            if (!alertaArmada && !condicionCumplida) {
-                alerta.setActiva(true);
-                alertaRepository.save(alerta);
-                pendientes.remove(alerta.getIdAlerta());
-                continue;
-            }
-
-            if (!alertaArmada || !condicionCumplida) {
+            if (!alertaDisponible || !condicionCumplida) {
                 continue;
             }
 
@@ -113,6 +106,8 @@ public class AlertaService {
             }
 
             guardarEventoHistorial(alerta, ultimaMedicion);
+            alerta.setActiva(false);
+            alertaRepository.save(alerta);
             pendientes.put(alerta.getIdAlerta(), ultimaMedicion.getMedicionId());
             notificaciones.add(new NotificacionAlertaDto(
                     alerta.getIdAlerta(),
