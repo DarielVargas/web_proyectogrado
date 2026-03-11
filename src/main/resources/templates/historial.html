@@ -12,6 +12,7 @@
         .layout{ min-height:100vh; display:grid; grid-template-columns: 260px 1fr; }
 
         .main{ padding:22px 22px 40px; display:flex; flex-direction:column; gap:14px; }
+        .topbar{ display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:2px; padding:20px 22px; border-radius:18px; border:1px solid var(--border); background:linear-gradient(135deg, #ffffff, #f3f8ff); box-shadow:var(--shadow-soft); }
         .header h1{ margin:0; font-size:30px; font-weight:900; color:var(--primary-dark); }
         .header p{ margin:8px 0 0; color:#64748b; font-size:14px; font-weight:600; }
 
@@ -75,10 +76,12 @@
     <aside th:replace="~{fragments/sidebar :: appSidebar('reportes')}"></aside>
 
     <main class="main">
-        <header class="header animate-item">
-            <h1>Reportes</h1>
-            <p>Generación de reportes y análisis</p>
-        </header>
+        <div class="topbar animate-item">
+            <header class="header">
+                <h1>Reportes</h1>
+                <p>Generación de reportes y análisis</p>
+            </header>
+        </div>
 
         <section class="card animate-item">
             <h2 class="card-title">Generador de Reportes Meteorológicos</h2>

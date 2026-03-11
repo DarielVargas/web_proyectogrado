@@ -11,6 +11,7 @@
         .layout{ min-height:100vh; display:grid; grid-template-columns: 260px 1fr; }
 
         .main{ padding:22px 22px 40px; display:flex; flex-direction:column; gap:14px; }
+        .topbar{ display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:2px; padding:20px 22px; border-radius:18px; border:1px solid var(--border); background:linear-gradient(135deg, #ffffff, #f3f8ff); box-shadow:var(--shadow-soft); }
         .header h1{ margin:0; font-size:30px; font-weight:900; color:var(--primary-dark); }
         .header p{ margin:8px 0 0; color:#64748b; font-size:14px; font-weight:600; }
         .card{ background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 12px 28px rgba(15,23,42,.08); padding:18px; }
@@ -18,6 +19,7 @@
         .card-sub{ margin:0 0 14px; color:#64748b; font-size:13px; font-weight:600; }
 
         .toolbar{ display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; }
+        .topbar-actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
         .counter{ font-size:13px; font-weight:800; color:#334155; background:#eef2ff; border:1px solid #c7d2fe; border-radius:12px; padding:8px 10px; }
         .btn{ display:inline-flex; align-items:center; justify-content:center; padding:10px 14px; border-radius:12px; border:1px solid transparent; font-weight:900; cursor:pointer; text-decoration:none; }
         .btn-new{ background:#16a34a; color:#fff; border-color:#15803d; }
@@ -68,16 +70,18 @@
 
     <main class="main">
 
-        <header class="header">
-            <h1>Configuración de Alertas</h1>
-            <p>Defina umbrales por estación y sensor para preparar futuras alertas del sistema.</p>
-        </header>
+        <div class="topbar">
+            <header class="header">
+                <h1>Configuración de Alertas</h1>
+                <p>Defina umbrales por estación y sensor para preparar futuras alertas del sistema</p>
+            </header>
 
-        <div class="toolbar">
-            <button id="btnNuevaAlarma" class="btn btn-new" type="button">Nueva Alarma</button>
-            <span class="counter" th:text="'Alertas configuradas: ' + ${totalAlertas}">
-                Alertas configuradas: 0
-            </span>
+            <div class="topbar-actions">
+                <button id="btnNuevaAlarma" class="btn btn-new" type="button">Nueva Alarma</button>
+                <span class="counter" th:text="'Alertas configuradas: ' + ${totalAlertas}">
+                    Alertas configuradas: 0
+                </span>
+            </div>
         </div>
 
 

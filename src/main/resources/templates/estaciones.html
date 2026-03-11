@@ -9,6 +9,7 @@
         body{ margin:0; font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif; background:var(--bg-soft); color:var(--text-main); }
         .layout{ min-height:100vh; display:grid; grid-template-columns: 260px 1fr; }
         .main{ padding:22px 22px 40px; }
+        .topbar{ display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; margin-bottom:16px; padding:20px 22px; border-radius:18px; border:1px solid var(--border); background:linear-gradient(135deg, #ffffff, #f3f8ff); box-shadow:var(--shadow-soft); }
         .title{ display:flex; align-items:flex-start; justify-content:space-between; gap:14px; }
         .title h1{ margin:0; font-size:22px; font-weight:900; color:var(--primary-dark); }
         .title p{ margin:6px 0 0; color:var(--text-soft); font-size:13px; font-weight:600; }
@@ -50,10 +51,12 @@
     <aside th:replace="~{fragments/sidebar :: appSidebar('estaciones')}"></aside>
 
     <main class="main">
-        <div class="title">
-            <div class="title-info">
-                <h1>Gestión de Estaciones</h1>
-                <p>Configuración y estado de todas las estaciones del sistema</p>
+        <div class="topbar">
+            <div class="title">
+                <div class="title-info">
+                    <h1>Gestión de Estaciones</h1>
+                    <p>Configuración y estado de todas las estaciones del sistema</p>
+                </div>
             </div>
             <a class="btn btn-add" th:href="@{/estaciones/nueva}">➕ Agregar estación</a>
         </div>
