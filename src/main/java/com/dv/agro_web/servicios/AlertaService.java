@@ -18,7 +18,7 @@ import java.util.Map;
 @Service
 public class AlertaService {
 
-    private static final String SESSION_ALERTAS_CURSOR = "alertasCursores";
+    private static final String SESSION_ALERTAS_PENDIENTES = "alertasPendientes";
 
     private final AlertaRepository alertaRepository;
     private final VwMedicionDetalleRepository medicionDetalleRepository;
@@ -54,50 +54,100 @@ public class AlertaService {
     }
 
     public List<NotificacionAlertaDto> obtenerAlertasDisparadas(HttpSession session) {
-        Map<Long, Long> cursores = obtenerCursores(session);
-        List<Alerta> alertasActivas = alertaRepository.findByActivaTrueOrderByFechaCreacionAscIdAlertaAsc();
+        Map<Long, Long> pendientes = obtenerPendientes(session);
+        List<Alerta> alertas = alertaRepository.findAllByOrderByFechaCreacionAscIdAlertaAsc();
         List<NotificacionAlertaDto> notificaciones = new ArrayList<>();
 
-        Map<Long, Long> cursoresLimpios = new HashMap<>();
-
-        for (Alerta alerta : alertasActivas) {
-            Long ultimoIdNotificado = cursores.getOrDefault(alerta.getIdAlerta(), 0L);
-            LocalDateTime fechaCreacion = alerta.getFechaCreacion() != null ? alerta.getFechaCreacion() : LocalDateTime.now();
-
-            VwMedicionDetalle medicion = medicionDetalleRepository.findUltimaMedicionQueCumpleAlerta(
-                    alerta.getEstacionCodigo(),
-                    alerta.getSensorTipo(),
-                    alerta.getOperador(),
-                    alerta.getUmbral(),
-                    Timestamp.valueOf(fechaCreacion),
-                    ultimoIdNotificado
-            );
-
-            if (medicion != null && medicion.getMedicionId() != null) {
-                ultimoIdNotificado = medicion.getMedicionId();
-                notificaciones.add(new NotificacionAlertaDto(
-                        alerta.getIdAlerta(),
-                        medicion.getMedicionId(),
-                        construirMensaje(alerta)
-                ));
+        for (Alerta alerta : alertas) {
+            if (alerta.getIdAlerta() == null) {
+                continue;
             }
 
-            cursoresLimpios.put(alerta.getIdAlerta(), ultimoIdNotificado);
+            LocalDateTime fechaCreacion = alerta.getFechaCreacion() != null ? alerta.getFechaCreacion() : LocalDateTime.now();
+            VwMedicionDetalle ultimaMedicion = medicionDetalleRepository.findUltimaMedicionPorEstacionYSensorDesde(
+                    alerta.getEstacionCodigo(),
+                    alerta.getSensorTipo(),
+                    Timestamp.valueOf(fechaCreacion)
+            );
+
+            if (ultimaMedicion == null || ultimaMedicion.getValor() == null || ultimaMedicion.getMedicionId() == null) {
+                continue;
+            }
+
+            boolean condicionCumplida = evaluarCondicion(ultimaMedicion.getValor(), alerta.getOperador(), alerta.getUmbral());
+            boolean alertaArmada = Boolean.TRUE.equals(alerta.getActiva());
+            Long medicionPendiente = pendientes.get(alerta.getIdAlerta());
+
+            if (!alertaArmada && !condicionCumplida) {
+                alerta.setActiva(true);
+                alertaRepository.save(alerta);
+                pendientes.remove(alerta.getIdAlerta());
+                continue;
+            }
+
+            if (!alertaArmada || !condicionCumplida) {
+                continue;
+            }
+
+            if (medicionPendiente != null && medicionPendiente.equals(ultimaMedicion.getMedicionId())) {
+                continue;
+            }
+
+            pendientes.put(alerta.getIdAlerta(), ultimaMedicion.getMedicionId());
+            notificaciones.add(new NotificacionAlertaDto(
+                    alerta.getIdAlerta(),
+                    ultimaMedicion.getMedicionId(),
+                    construirMensaje(alerta)
+            ));
         }
 
-        session.setAttribute(SESSION_ALERTAS_CURSOR, cursoresLimpios);
+        session.setAttribute(SESSION_ALERTAS_PENDIENTES, pendientes);
         return notificaciones;
     }
 
+    public void marcarAlertaAtendida(Long alertaId, Long medicionId, HttpSession session) {
+        if (alertaId == null || medicionId == null) {
+            return;
+        }
+
+        Map<Long, Long> pendientes = obtenerPendientes(session);
+        Long medicionPendiente = pendientes.get(alertaId);
+
+        if (medicionPendiente == null || !medicionPendiente.equals(medicionId)) {
+            return;
+        }
+
+        alertaRepository.findById(alertaId).ifPresent(alerta -> {
+            alerta.setActiva(false);
+            alertaRepository.save(alerta);
+        });
+
+        pendientes.remove(alertaId);
+        session.setAttribute(SESSION_ALERTAS_PENDIENTES, pendientes);
+    }
+
     @SuppressWarnings("unchecked")
-    private Map<Long, Long> obtenerCursores(HttpSession session) {
-        Object valor = session.getAttribute(SESSION_ALERTAS_CURSOR);
+    private Map<Long, Long> obtenerPendientes(HttpSession session) {
+        Object valor = session.getAttribute(SESSION_ALERTAS_PENDIENTES);
         if (valor instanceof Map<?, ?> map) {
             return (Map<Long, Long>) map;
         }
         Map<Long, Long> nuevo = new HashMap<>();
-        session.setAttribute(SESSION_ALERTAS_CURSOR, nuevo);
+        session.setAttribute(SESSION_ALERTAS_PENDIENTES, nuevo);
         return nuevo;
+    }
+
+    private boolean evaluarCondicion(BigDecimal valor, String operador, BigDecimal umbral) {
+        if (valor == null || umbral == null || operador == null) {
+            return false;
+        }
+
+        return switch (operador) {
+            case ">" -> valor.compareTo(umbral) > 0;
+            case "<" -> valor.compareTo(umbral) < 0;
+            case "=" -> valor.compareTo(umbral) == 0;
+            default -> false;
+        };
     }
 
     private String construirMensaje(Alerta alerta) {
