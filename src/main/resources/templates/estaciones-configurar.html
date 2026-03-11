@@ -31,11 +31,18 @@
             gap:14px;
         }
         .brand{
+            font-size:28px;
             font-weight:900;
+            letter-spacing:.3px;
+            line-height:1.05;
+            margin:2px 0 0;
+        }
+        .brand-sub{
+            margin:2px 0 8px;
+            font-size:12px;
+            font-weight:600;
+            opacity:.82;
             letter-spacing:.2px;
-            padding:12px 12px;
-            border-radius:12px;
-            background: rgba(255,255,255,.10);
         }
         .nav{
             display:flex;
@@ -396,6 +403,7 @@
 <div class="layout">
     <aside class="sidebar">
         <div class="brand">Agro IoT</div>
+        <div class="brand-sub">Monitoreo de cultivos</div>
 
         <nav class="nav">
             <a th:href="@{/mediciones}">Dashboard</a>
