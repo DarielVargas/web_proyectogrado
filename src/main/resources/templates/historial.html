@@ -1,9 +1,3 @@
-<!--
-TEMPLATE: historial.html
-EN LA INTERFAZ SE MUESTRA COMO: "Reportes"
-Este template maneja la vista de reportes generados.
--->
-
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <head>
@@ -89,9 +83,9 @@ Este template maneja la vista de reportes generados.
         <div class="brand">Agro IoT</div>
         <nav class="nav">
             <a th:href="@{/mediciones}">Dashboard</a>
-            <a th:href="@{/historial}" class="active">Reportes</a>
+            <a th:href="@{/historial}" class="active">Historial y Reportes</a>
             <a th:href="@{/estaciones}">Estaciones</a>
-            <a href="#">Alertas</a>
+            <a th:href="@{/alertas}">Alertas</a>
         </nav>
         <div class="sidebar-footer">
             <div class="user-box">Conectado como:<br><b>admin</b><br>Administrador</div>
@@ -121,7 +115,7 @@ Este template maneja la vista de reportes generados.
                     <div class="field">
                         <label for="fechaSeleccion">Fecha</label>
                         <input type="text" name="fechaSeleccion" id="fechaSeleccion" placeholder="Seleccione día o rango" required>
-                        
+                        <p class="date-help">Use el mismo calendario para elegir un solo día o un rango de fechas.</p>
                     </div>
 
                     <div class="field">
@@ -141,7 +135,7 @@ Este template maneja la vista de reportes generados.
 
         <section class="card animate-item">
             <h2 class="card-title">Reportes Recientes</h2>
-           
+            <p class="card-sub">Últimos reportes guardados en el sistema. Haga clic en un reporte para abrir su vista en una página independiente.</p>
 
             <div class="recent-list" th:if="${!#lists.isEmpty(reportesRecientes)}">
                 <article class="recent-item" th:each="r : ${reportesRecientes}">
@@ -153,7 +147,7 @@ Este template maneja la vista de reportes generados.
                         </p>
                     </a>
                     <div class="recent-actions">
-                        <a class="btn btn-preview" th:href="@{/reportes/{id}(id=${r.idReporte})}">Ver</a>
+                        <a class="btn btn-preview" th:href="@{/reportes/{id}(id=${r.idReporte})}">Previsualizar</a>
                         <a class="btn btn-download" th:href="@{/reportes/{id}/descargar(id=${r.idReporte})}">Descargar</a>
                         <form class="inline-form"
                               method="post"
