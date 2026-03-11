@@ -1,8 +1,10 @@
 package com.dv.agro_web.servicios;
 
 import com.dv.agro_web.entidades.Alerta;
+import com.dv.agro_web.entidades.HistorialAlerta;
 import com.dv.agro_web.entidades.VwMedicionDetalle;
 import com.dv.agro_web.repositorios.AlertaRepository;
+import com.dv.agro_web.repositorios.HistorialAlertaRepository;
 import com.dv.agro_web.repositorios.VwMedicionDetalleRepository;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.stereotype.Service;
@@ -21,16 +23,23 @@ public class AlertaService {
     private static final String SESSION_ALERTAS_PENDIENTES = "alertasPendientes";
 
     private final AlertaRepository alertaRepository;
+    private final HistorialAlertaRepository historialAlertaRepository;
     private final VwMedicionDetalleRepository medicionDetalleRepository;
 
     public AlertaService(AlertaRepository alertaRepository,
+                         HistorialAlertaRepository historialAlertaRepository,
                          VwMedicionDetalleRepository medicionDetalleRepository) {
         this.alertaRepository = alertaRepository;
+        this.historialAlertaRepository = historialAlertaRepository;
         this.medicionDetalleRepository = medicionDetalleRepository;
     }
 
     public List<Alerta> listarAlertasConfiguradas() {
         return alertaRepository.findAllByOrderByFechaCreacionDescIdAlertaDesc();
+    }
+
+    public List<HistorialAlerta> listarHistorialAlertas() {
+        return historialAlertaRepository.findAllByOrderByFechaActivacionDescIdDesc();
     }
 
     public Alerta guardarNuevaAlerta(String estacionCodigo, String sensorTipo, String operador, BigDecimal umbral) {
@@ -51,6 +60,16 @@ public class AlertaService {
 
     public void eliminarTodasLasAlertas() {
         alertaRepository.deleteAll();
+    }
+
+    public void eliminarHistorialPorId(Long idHistorial) {
+        if (historialAlertaRepository.existsById(idHistorial)) {
+            historialAlertaRepository.deleteById(idHistorial);
+        }
+    }
+
+    public void eliminarTodoElHistorial() {
+        historialAlertaRepository.deleteAll();
     }
 
     public List<NotificacionAlertaDto> obtenerAlertasDisparadas(HttpSession session) {
@@ -93,6 +112,7 @@ public class AlertaService {
                 continue;
             }
 
+            guardarEventoHistorial(alerta, ultimaMedicion);
             pendientes.put(alerta.getIdAlerta(), ultimaMedicion.getMedicionId());
             notificaciones.add(new NotificacionAlertaDto(
                     alerta.getIdAlerta(),
@@ -135,6 +155,23 @@ public class AlertaService {
         Map<Long, Long> nuevo = new HashMap<>();
         session.setAttribute(SESSION_ALERTAS_PENDIENTES, nuevo);
         return nuevo;
+    }
+
+    private void guardarEventoHistorial(Alerta alerta, VwMedicionDetalle medicion) {
+        HistorialAlerta historial = new HistorialAlerta();
+        historial.setAlertaId(alerta.getIdAlerta());
+        historial.setEstacionCodigo(alerta.getEstacionCodigo());
+        historial.setSensorTipo(alerta.getSensorTipo());
+        historial.setOperador(alerta.getOperador());
+        historial.setUmbral(alerta.getUmbral());
+        historial.setValorDetectado(medicion.getValor());
+
+        LocalDateTime fechaActivacion = medicion.getFechaMedicion() != null
+                ? medicion.getFechaMedicion().toLocalDateTime()
+                : LocalDateTime.now();
+        historial.setFechaActivacion(fechaActivacion);
+
+        historialAlertaRepository.save(historial);
     }
 
     private boolean evaluarCondicion(BigDecimal valor, String operador, BigDecimal umbral) {
