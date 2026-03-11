@@ -31,6 +31,7 @@
             flex-direction:column;
             gap:14px;
         }
+        .brand-icon{ font-size:26px; line-height:1; text-align:center; width:100%; margin:2px 0 0; }
         .brand{
             font-size:28px;
             font-weight:900;
@@ -55,7 +56,7 @@
             gap:8px;
             margin-top:4px;
         }
-        .nav a{
+        .nav a{ display:flex; align-items:center; gap:8px;
             text-decoration:none;
             color:#fff;
             padding:10px 12px;
@@ -392,14 +393,15 @@
 <div class="layout">
 
     <aside class="sidebar">
-        <div class="brand">Agro IoT</div>
+        <div class="brand-icon">🌱</div>
+        <div class="brand">AGRO IOT</div>
         <div class="brand-sub">Monitoreo de cultivos</div>
 
         <nav class="nav">
-            <a th:href="@{/mediciones}" class="active">Dashboard</a>
-            <a th:href="@{/historial}">Reportes</a>
-            <a th:href="@{/estaciones}">Estaciones</a>
-            <a th:href="@{/alertas}">Alertas</a>
+            <a th:href="@{/mediciones}" class="active">📊 Dashboard</a>
+            <a th:href="@{/historial}">📈 Reportes</a>
+            <a th:href="@{/estaciones}">🌦️ Estaciones</a>
+            <a th:href="@{/alertas}">⚠️ Alertas</a>
         </nav>
 
         <div class="sidebar-footer">

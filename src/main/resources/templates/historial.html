@@ -11,10 +11,11 @@
         body{ margin:0; font-family: Inter, "Segoe UI", Roboto, Arial, sans-serif; background:var(--bg-soft); color:var(--text-main); }
         .layout{ min-height:100vh; display:grid; grid-template-columns: 260px 1fr; }
         .sidebar{ background: linear-gradient(180deg, var(--primary-light), var(--primary)); color:#fff; padding:18px 16px; height:100vh; position:sticky; top:0; display:flex; flex-direction:column; gap:14px; }
+        .brand-icon{ font-size:26px; line-height:1; text-align:center; width:100%; margin:2px 0 0; }
         .brand{ font-size:28px; font-weight:900; letter-spacing:.3px; line-height:1.05; margin:2px 0 0; text-align:center; width:100%; }
         .brand-sub{ margin:2px 0 8px; font-size:12px; font-weight:600; opacity:.82; letter-spacing:.2px; text-align:center; width:100%; }
         .nav{ display:flex; flex-direction:column; gap:8px; margin-top:4px; }
-        .nav a{ text-decoration:none; color:#fff; padding:10px 12px; border-radius:12px; background: rgba(255,255,255,.08); opacity:.95; font-weight:700; position:relative; overflow:hidden; transition: transform .25s ease, background-color .25s ease, box-shadow .25s ease; }
+        .nav a{ display:flex; align-items:center; gap:8px; text-decoration:none; color:#fff; padding:10px 12px; border-radius:12px; background: rgba(255,255,255,.08); opacity:.95; font-weight:700; position:relative; overflow:hidden; transition: transform .25s ease, background-color .25s ease, box-shadow .25s ease; }
         .nav a::after{ content:""; position:absolute; left:8px; right:8px; bottom:4px; height:2px; border-radius:999px; background:rgba(255,255,255,.9); transform:scaleX(0); transform-origin:left; transition:transform .25s ease; }
         .nav a:hover{ transform: translateX(4px); background: rgba(255,255,255,.16); box-shadow: 0 6px 14px rgba(0,0,0,.14); }
         .nav a:hover::after, .nav a.active::after{ transform:scaleX(1); }
@@ -85,13 +86,14 @@
 <body>
 <div class="layout">
     <aside class="sidebar">
-        <div class="brand">Agro IoT</div>
+        <div class="brand-icon">🌱</div>
+        <div class="brand">AGRO IOT</div>
         <div class="brand-sub">Monitoreo de cultivos</div>
         <nav class="nav">
-            <a th:href="@{/mediciones}">Dashboard</a>
-            <a th:href="@{/historial}" class="active">Reportes</a>
-            <a th:href="@{/estaciones}">Estaciones</a>
-            <a th:href="@{/alertas}">Alertas</a>
+            <a th:href="@{/mediciones}">📊 Dashboard</a>
+            <a th:href="@{/historial}" class="active">📈 Reportes</a>
+            <a th:href="@{/estaciones}">🌦️ Estaciones</a>
+            <a th:href="@{/alertas}">⚠️ Alertas</a>
         </nav>
         <div class="sidebar-footer">
             <div class="user-box">Conectado como:<br><b>admin</b><br>Administrador</div>
