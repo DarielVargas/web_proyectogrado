@@ -1,7 +1,6 @@
 package com.dv.agro_web.controllers;
 
 import com.dv.agro_web.entidades.Alerta;
-import com.dv.agro_web.entidades.Estacion;
 import com.dv.agro_web.entidades.TipoSensor;
 import com.dv.agro_web.repositorios.TipoSensorRepository;
 import com.dv.agro_web.servicios.AlertaService;
@@ -84,6 +83,21 @@ public class AlertasController {
         return "redirect:/alertas";
     }
 
+    @PostMapping("/alertas/historial/eliminar/{id}")
+    public String eliminarHistorial(@PathVariable("id") Long idHistorial,
+                                    RedirectAttributes redirectAttributes) {
+        alertaService.eliminarHistorialPorId(idHistorial);
+        redirectAttributes.addFlashAttribute("mensajeExito", "Registro del historial eliminado correctamente");
+        return "redirect:/alertas";
+    }
+
+    @PostMapping("/alertas/historial/eliminar-todas")
+    public String eliminarTodoElHistorial(RedirectAttributes redirectAttributes) {
+        alertaService.eliminarTodoElHistorial();
+        redirectAttributes.addFlashAttribute("mensajeExito", "Historial de alertas eliminado");
+        return "redirect:/alertas";
+    }
+
     private void cargarPantallaAlertas(Model model) {
         List<Alerta> alertas = alertaService.listarAlertasConfiguradas();
 
@@ -103,6 +117,7 @@ public class AlertasController {
 
         model.addAttribute("alertasConfiguradas", alertas);
         model.addAttribute("totalAlertas", alertas.size());
+        model.addAttribute("historialAlertas", alertaService.listarHistorialAlertas());
         model.addAttribute("estacionesAlerta", estaciones);
         model.addAttribute("sensoresAlerta", sensores);
     }

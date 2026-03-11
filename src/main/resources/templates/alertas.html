@@ -155,8 +155,51 @@
             <div class="empty" th:if="${#lists.isEmpty(alertasConfiguradas)}">
                 No hay alertas configuradas todavía.
             </div>
+        </section>
+
+        <section class="card">
+
+            <div class="toolbar">
+                <h2 class="card-title">Historial de Alertas</h2>
+                <form method="post" th:action="@{/alertas/historial/eliminar-todas}" th:if="${!#lists.isEmpty(historialAlertas)}">
+                    <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                    <button type="submit" class="btn btn-danger" onclick="return confirm('¿Desea eliminar todo el historial de alertas?')">Eliminar todas</button>
+                </form>
+            </div>
+            <p class="card-sub">Eventos de alertas que realmente se dispararon y fueron notificadas en pantalla.</p>
+
+
+            <div class="alert-list" th:if="${!#lists.isEmpty(historialAlertas)}">
+
+                <article class="alert-item" th:each="h : ${historialAlertas}">
+
+                    <div class="alert-item-head">
+                        <p class="alert-main"
+                           th:text="${h.estacionCodigo + ' | ' + h.sensorTipo + ' | ' + h.operador + ' | ' + h.umbral}">
+                            EST-001 | Temperatura | > | 30
+                        </p>
+
+                        <form method="post" th:action="@{/alertas/historial/eliminar/{id}(id=${h.id})}">
+                            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+                            <button type="submit" class="btn btn-danger btn-danger-sm" onclick="return confirm('¿Desea eliminar este registro del historial?')">Eliminar</button>
+                        </form>
+                    </div>
+
+                    <p class="alert-meta"
+                       th:text="${'Activada: ' + (h.fechaActivacion != null ? #temporals.format(h.fechaActivacion, 'dd/MM/yyyy HH:mm') : 'N/A') + (h.valorDetectado != null ? ' · Valor detectado: ' + h.valorDetectado : '')}">
+                        Activada: 11/03/2026 00:10 · Valor detectado: 30.45
+                    </p>
+
+                </article>
+
+            </div>
+
+            <div class="empty" th:if="${#lists.isEmpty(historialAlertas)}">
+                No hay alertas disparadas en el historial todavía.
+            </div>
 
         </section>
+
 
     </main>
 
