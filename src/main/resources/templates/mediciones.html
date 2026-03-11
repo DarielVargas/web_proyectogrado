@@ -20,92 +20,6 @@
             grid-template-columns: 260px 1fr;
         }
 
-        .sidebar{
-            background: linear-gradient(180deg, #1c9a58 0%, #127847 100%);
-            color:#fff;
-            padding:22px 16px 16px;
-            height:100vh;
-            position:sticky;
-            top:0;
-            display:flex;
-            flex-direction:column;
-            gap:18px;
-            box-shadow: inset -1px 0 0 rgba(255,255,255,.08);
-        }
-        .brand{
-            display:flex;
-            flex-direction:column;
-            align-items:center;
-            justify-content:center;
-            text-align:center;
-            gap:4px;
-            padding:16px 14px;
-            border-radius:16px;
-            background: rgba(255,255,255,.09);
-            border:1px solid rgba(255,255,255,.16);
-        }
-        .brand-icon{ font-size:24px; line-height:1; }
-        .brand-title{
-            font-size:20px;
-            font-weight:900;
-            letter-spacing:1px;
-            text-transform:uppercase;
-        }
-        .brand-subtitle{
-            font-size:12px;
-            font-weight:600;
-            color:rgba(255,255,255,.86);
-        }
-
-        .nav{
-            display:flex;
-            flex-direction:column;
-            gap:6px;
-            margin-top:2px;
-        }
-        .nav a{
-            text-decoration:none;
-            color:#fff;
-            padding:11px 12px;
-            border-radius:12px;
-            font-weight:700;
-            position:relative;
-            display:flex;
-            align-items:center;
-            gap:10px;
-            transition: transform .22s ease, background-color .22s ease, box-shadow .22s ease;
-        }
-        .nav a .nav-icon{
-            width:22px;
-            text-align:center;
-            font-size:16px;
-            opacity:.95;
-        }
-        .nav a .nav-label{ font-size:14px; }
-        .nav a:hover{
-            transform: translateX(5px);
-            background: rgba(255,255,255,.14);
-            box-shadow: 0 8px 18px rgba(9, 40, 24, .24);
-        }
-        .nav a.active{
-            background: rgba(255,255,255,.2);
-            box-shadow: 0 10px 20px rgba(9, 40, 24, .24);
-        }
-
-        .sidebar-footer{
-            margin-top:auto;
-            padding-top:14px;
-            border-top:1px solid rgba(255,255,255,.22);
-            display:flex;
-            flex-direction:column;
-            gap:10px;
-        }
-        .user-box{
-            font-size:12px;
-            opacity:.9;
-            line-height:1.35;
-        }
-
         .main{
             padding:22px 22px 40px;
         }
@@ -170,19 +84,6 @@
             filter: brightness(.97);
             transform: translateY(-1px) scale(1.03);
             box-shadow: 0 14px 26px rgba(22,163,74,.28);
-        }
-
-        .btn-logout{
-            background: rgba(255,255,255,.14);
-            color:#fff;
-            border-color:rgba(255,255,255,.26);
-            backdrop-filter: blur(2px);
-            transition: transform .22s ease, box-shadow .22s ease, background-color .22s ease;
-        }
-        .btn-logout:hover{
-            background: rgba(255,255,255,.22);
-            transform: translateY(-1px);
-            box-shadow: 0 8px 16px rgba(9, 40, 24, .22);
         }
 
         .cards{
@@ -405,33 +306,7 @@
 <body>
 <div class="layout">
 
-    <aside class="sidebar">
-        <div class="brand">
-            <span class="brand-icon">☁️</span>
-            <span class="brand-title">AGRO IOT</span>
-            <span class="brand-subtitle">Monitoreo de cultivos</span>
-        </div>
-
-        <nav class="nav">
-            <a th:href="@{/mediciones}" class="active"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
-            <a th:href="@{/estaciones}"><span class="nav-icon">🌦️</span><span class="nav-label">Estaciones</span></a>
-            <a th:href="@{/alertas}"><span class="nav-icon">⚠️</span><span class="nav-label">Alertas</span></a>
-            <a th:href="@{/historial}"><span class="nav-icon">📈</span><span class="nav-label">Reportes</span></a>
-        </nav>
-
-        <div class="sidebar-footer">
-            <div class="user-box">
-                Conectado como:<br>
-                <b>admin</b><br>
-                Administrador
-            </div>
-
-            <form method="post" th:action="@{/logout}">
-                <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
-                <button type="submit" class="btn btn-logout" style="width:100%;">Cerrar Sesión</button>
-            </form>
-        </div>
-    </aside>
+    <aside th:replace="~{fragments/sidebar :: appSidebar('dashboard')}"></aside>
 
     <main class="main">
 
