@@ -9,6 +9,7 @@ import com.dv.agro_web.servicios.EstacionService;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
@@ -64,6 +65,22 @@ public class AlertasController {
 
         alertaService.guardarNuevaAlerta(estacionCodigo, sensorTipo, operador, umbral);
         redirectAttributes.addFlashAttribute("mensajeExito", "Alarma guardada correctamente.");
+        return "redirect:/alertas";
+    }
+
+
+    @PostMapping("/alertas/eliminar/{id}")
+    public String eliminarAlerta(@PathVariable("id") Long idAlerta,
+                                 RedirectAttributes redirectAttributes) {
+        alertaService.eliminarAlertaPorId(idAlerta);
+        redirectAttributes.addFlashAttribute("mensajeExito", "Alerta eliminada correctamente");
+        return "redirect:/alertas";
+    }
+
+    @PostMapping("/alertas/eliminar-todas")
+    public String eliminarTodasLasAlertas(RedirectAttributes redirectAttributes) {
+        alertaService.eliminarTodasLasAlertas();
+        redirectAttributes.addFlashAttribute("mensajeExito", "Todas las alertas eliminadas");
         return "redirect:/alertas";
     }
 
