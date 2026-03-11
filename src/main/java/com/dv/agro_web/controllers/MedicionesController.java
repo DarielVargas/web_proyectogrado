@@ -457,7 +457,7 @@ public class MedicionesController {
 
         long sensoresActivos = sensorRepository.contarSensoresActivosDeEstacionesActivas();
         long sensoresRegistrados = sensorRepository.contarSensoresRegistradosDeEstacionesActivas();
-        long totalAlertasConfiguradas = alertaRepository.count();
+        long totalAlertasConfiguradas = alertaRepository.countByActivaTrue();
 
         model.addAttribute("sensoresActivos", sensoresActivos);
         model.addAttribute("sensoresRegistrados", sensoresRegistrados);

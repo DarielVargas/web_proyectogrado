@@ -9,4 +9,6 @@ public interface AlertaRepository extends JpaRepository<Alerta, Long> {
     List<Alerta> findAllByOrderByFechaCreacionDescIdAlertaDesc();
 
     List<Alerta> findAllByOrderByFechaCreacionAscIdAlertaAsc();
+
+    long countByActivaTrue();
 }
