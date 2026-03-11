@@ -1,7 +1,9 @@
 package com.dv.agro_web.servicios;
 
 import com.dv.agro_web.entidades.Alerta;
+import com.dv.agro_web.entidades.AlertaHistorial;
 import com.dv.agro_web.entidades.VwMedicionDetalle;
+import com.dv.agro_web.repositorios.AlertaHistorialRepository;
 import com.dv.agro_web.repositorios.AlertaRepository;
 import com.dv.agro_web.repositorios.VwMedicionDetalleRepository;
 import jakarta.servlet.http.HttpSession;
@@ -21,11 +23,14 @@ public class AlertaService {
     private static final String SESSION_ALERTAS_PENDIENTES = "alertasPendientes";
 
     private final AlertaRepository alertaRepository;
+    private final AlertaHistorialRepository alertaHistorialRepository;
     private final VwMedicionDetalleRepository medicionDetalleRepository;
 
     public AlertaService(AlertaRepository alertaRepository,
+                         AlertaHistorialRepository alertaHistorialRepository,
                          VwMedicionDetalleRepository medicionDetalleRepository) {
         this.alertaRepository = alertaRepository;
+        this.alertaHistorialRepository = alertaHistorialRepository;
         this.medicionDetalleRepository = medicionDetalleRepository;
     }
 
@@ -53,6 +58,21 @@ public class AlertaService {
         alertaRepository.deleteAll();
     }
 
+
+
+    public List<AlertaHistorial> listarHistorialAlertas() {
+        return alertaHistorialRepository.findAllByOrderByFechaActivacionDescIdHistorialDesc();
+    }
+
+    public void eliminarHistorialPorId(Long idHistorial) {
+        if (alertaHistorialRepository.existsById(idHistorial)) {
+            alertaHistorialRepository.deleteById(idHistorial);
+        }
+    }
+
+    public void eliminarTodoElHistorial() {
+        alertaHistorialRepository.deleteAll();
+    }
     public List<NotificacionAlertaDto> obtenerAlertasDisparadas(HttpSession session) {
         Map<Long, Long> pendientes = obtenerPendientes(session);
         List<Alerta> alertas = alertaRepository.findAllByOrderByFechaCreacionAscIdAlertaAsc();
@@ -120,6 +140,15 @@ public class AlertaService {
         alertaRepository.findById(alertaId).ifPresent(alerta -> {
             alerta.setActiva(false);
             alertaRepository.save(alerta);
+
+            AlertaHistorial historial = new AlertaHistorial();
+            historial.setIdAlerta(alerta.getIdAlerta());
+            historial.setEstacionCodigo(alerta.getEstacionCodigo());
+            historial.setSensorTipo(alerta.getSensorTipo());
+            historial.setOperador(alerta.getOperador());
+            historial.setUmbral(alerta.getUmbral());
+            historial.setFechaActivacion(LocalDateTime.now());
+            alertaHistorialRepository.save(historial);
         });
 
         pendientes.remove(alertaId);

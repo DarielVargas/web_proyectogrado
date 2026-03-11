@@ -1,7 +1,7 @@
 package com.dv.agro_web.controllers;
 
 import com.dv.agro_web.entidades.Alerta;
-import com.dv.agro_web.entidades.Estacion;
+import com.dv.agro_web.entidades.AlertaHistorial;
 import com.dv.agro_web.entidades.TipoSensor;
 import com.dv.agro_web.repositorios.TipoSensorRepository;
 import com.dv.agro_web.servicios.AlertaService;
@@ -84,8 +84,25 @@ public class AlertasController {
         return "redirect:/alertas";
     }
 
+
+
+    @PostMapping("/alertas/historial/eliminar/{id}")
+    public String eliminarHistorialAlerta(@PathVariable("id") Long idHistorial,
+                                          RedirectAttributes redirectAttributes) {
+        alertaService.eliminarHistorialPorId(idHistorial);
+        redirectAttributes.addFlashAttribute("mensajeExito", "Registro del historial eliminado correctamente");
+        return "redirect:/alertas";
+    }
+
+    @PostMapping("/alertas/historial/eliminar-todas")
+    public String eliminarTodoElHistorialAlertas(RedirectAttributes redirectAttributes) {
+        alertaService.eliminarTodoElHistorial();
+        redirectAttributes.addFlashAttribute("mensajeExito", "Historial de alertas eliminado correctamente");
+        return "redirect:/alertas";
+    }
     private void cargarPantallaAlertas(Model model) {
         List<Alerta> alertas = alertaService.listarAlertasConfiguradas();
+        List<AlertaHistorial> historialAlertas = alertaService.listarHistorialAlertas();
 
         List<EstacionOpcionDto> estaciones = estacionService.obtenerEstacionesActivas().stream()
                 .map(est -> new EstacionOpcionDto(
@@ -103,6 +120,8 @@ public class AlertasController {
 
         model.addAttribute("alertasConfiguradas", alertas);
         model.addAttribute("totalAlertas", alertas.size());
+        model.addAttribute("historialAlertas", historialAlertas);
+        model.addAttribute("totalHistorialAlertas", historialAlertas.size());
         model.addAttribute("estacionesAlerta", estaciones);
         model.addAttribute("sensoresAlerta", sensores);
     }

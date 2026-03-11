@@ -251,5 +251,4 @@ public interface VwMedicionDetalleRepository extends JpaRepository<VwMedicionDet
             @Param("fechaDesde") java.sql.Timestamp fechaDesde
     );
 
-
 }
