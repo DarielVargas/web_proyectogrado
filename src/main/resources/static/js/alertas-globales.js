@@ -14,11 +14,26 @@
     return container;
   }
 
-  function mostrarToast(mensaje, id) {
-    if (!mensaje || vistos.has(id)) {
+  function marcarAtendida(alertaId, medicionId) {
+    if (!alertaId || !medicionId) return;
+
+    const params = new URLSearchParams({
+      alertaId: String(alertaId),
+      medicionId: String(medicionId)
+    });
+
+    fetch(`/api/alertas/notificaciones/atender?${params.toString()}`)
+      .catch(() => {
+        // Si falla el marcado, en el siguiente ciclo se reintentará desde el backend.
+      });
+  }
+
+  function mostrarToast(mensaje, alertaId, medicionId) {
+    const idUnico = `${alertaId}-${medicionId}`;
+    if (!mensaje || vistos.has(idUnico)) {
       return;
     }
-    vistos.add(id);
+    vistos.add(idUnico);
 
     const container = ensureContainer();
     const toast = document.createElement('div');
@@ -28,6 +43,7 @@
 
     setTimeout(() => {
       toast.classList.add('out');
+      marcarAtendida(alertaId, medicionId);
       setTimeout(() => toast.remove(), 300);
     }, DURACION_MS);
   }
@@ -40,8 +56,7 @@
       if (!Array.isArray(data)) return;
 
       data.forEach((noti) => {
-        const id = `${noti.alertaId}-${noti.medicionId}`;
-        mostrarToast(noti.mensaje, id);
+        mostrarToast(noti.mensaje, noti.alertaId, noti.medicionId);
       });
     } catch (_) {
       // Ignorar errores intermitentes para no romper la UI.

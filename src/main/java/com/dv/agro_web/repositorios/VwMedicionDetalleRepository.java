@@ -234,4 +234,22 @@ public interface VwMedicionDetalleRepository extends JpaRepository<VwMedicionDet
             @Param("medicionIdMinima") Long medicionIdMinima
     );
 
+
+
+    @Query(value = """
+        SELECT v.*
+        FROM vw_mediciones_detalle v
+        WHERE v.estacion_codigo = :estacionCodigo
+          AND v.tipo_sensor = :sensorTipo
+          AND v.fecha_medicion > :fechaDesde
+        ORDER BY v.fecha_medicion DESC, v.medicion_id DESC
+        LIMIT 1
+        """, nativeQuery = true)
+    VwMedicionDetalle findUltimaMedicionPorEstacionYSensorDesde(
+            @Param("estacionCodigo") String estacionCodigo,
+            @Param("sensorTipo") String sensorTipo,
+            @Param("fechaDesde") java.sql.Timestamp fechaDesde
+    );
+
+
 }

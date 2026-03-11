@@ -4,6 +4,7 @@ import com.dv.agro_web.servicios.AlertaService;
 import jakarta.servlet.http.HttpSession;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
@@ -21,5 +22,12 @@ public class AlertasNotificacionController {
     @GetMapping("/notificaciones")
     public List<AlertaService.NotificacionAlertaDto> obtenerNotificaciones(HttpSession session) {
         return alertaService.obtenerAlertasDisparadas(session);
+    }
+
+    @GetMapping("/notificaciones/atender")
+    public void atenderNotificacion(@RequestParam("alertaId") Long alertaId,
+                                    @RequestParam("medicionId") Long medicionId,
+                                    HttpSession session) {
+        alertaService.marcarAlertaAtendida(alertaId, medicionId, session);
     }
 }
