@@ -21,71 +21,81 @@
         }
 
         .sidebar{
-            background: linear-gradient(180deg, var(--primary-light), var(--primary));
+            background: linear-gradient(180deg, #1c9a58 0%, #127847 100%);
             color:#fff;
-            padding:18px 16px;
+            padding:22px 16px 16px;
             height:100vh;
             position:sticky;
             top:0;
             display:flex;
             flex-direction:column;
-            gap:14px;
+            gap:18px;
+            box-shadow: inset -1px 0 0 rgba(255,255,255,.08);
         }
         .brand{
-            font-weight:900;
-            letter-spacing:.2px;
-            padding:12px 12px;
-            border-radius:12px;
-            background: rgba(255,255,255,.10);
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            text-align:center;
+            gap:4px;
+            padding:16px 14px;
+            border-radius:16px;
+            background: rgba(255,255,255,.09);
+            border:1px solid rgba(255,255,255,.16);
         }
+        .brand-icon{ font-size:24px; line-height:1; }
+        .brand-title{
+            font-size:20px;
+            font-weight:900;
+            letter-spacing:1px;
+            text-transform:uppercase;
+        }
+        .brand-subtitle{
+            font-size:12px;
+            font-weight:600;
+            color:rgba(255,255,255,.86);
+        }
+
         .nav{
             display:flex;
             flex-direction:column;
-            gap:8px;
-            margin-top:4px;
+            gap:6px;
+            margin-top:2px;
         }
         .nav a{
             text-decoration:none;
             color:#fff;
-            padding:10px 12px;
+            padding:11px 12px;
             border-radius:12px;
-            background: rgba(255,255,255,.08);
-            opacity:.95;
             font-weight:700;
             position:relative;
-            overflow:hidden;
-            transition: transform .25s ease, background-color .25s ease, box-shadow .25s ease;
+            display:flex;
+            align-items:center;
+            gap:10px;
+            transition: transform .22s ease, background-color .22s ease, box-shadow .22s ease;
         }
-        .nav a::after{
-            content:"";
-            position:absolute;
-            left:8px;
-            right:8px;
-            bottom:4px;
-            height:2px;
-            border-radius:999px;
-            background:rgba(255,255,255,.9);
-            transform:scaleX(0);
-            transform-origin:left;
-            transition:transform .25s ease;
+        .nav a .nav-icon{
+            width:22px;
+            text-align:center;
+            font-size:16px;
+            opacity:.95;
         }
+        .nav a .nav-label{ font-size:14px; }
         .nav a:hover{
-            transform: translateX(4px);
-            background: rgba(255,255,255,.16);
-            box-shadow: 0 6px 14px rgba(0,0,0,.14);
-        }
-        .nav a:hover::after,
-        .nav a.active::after{
-            transform:scaleX(1);
+            transform: translateX(5px);
+            background: rgba(255,255,255,.14);
+            box-shadow: 0 8px 18px rgba(9, 40, 24, .24);
         }
         .nav a.active{
-            background: rgba(255,255,255,.18);
+            background: rgba(255,255,255,.2);
+            box-shadow: 0 10px 20px rgba(9, 40, 24, .24);
         }
 
         .sidebar-footer{
             margin-top:auto;
-            padding-top:12px;
-            border-top:1px solid rgba(255,255,255,.18);
+            padding-top:14px;
+            border-top:1px solid rgba(255,255,255,.22);
             display:flex;
             flex-direction:column;
             gap:10px;
@@ -163,11 +173,17 @@
         }
 
         .btn-logout{
-            background:#111827;
+            background: rgba(255,255,255,.14);
             color:#fff;
-            border-color:#111827;
+            border-color:rgba(255,255,255,.26);
+            backdrop-filter: blur(2px);
+            transition: transform .22s ease, box-shadow .22s ease, background-color .22s ease;
         }
-        .btn-logout:hover{ filter: brightness(1.05); }
+        .btn-logout:hover{
+            background: rgba(255,255,255,.22);
+            transform: translateY(-1px);
+            box-shadow: 0 8px 16px rgba(9, 40, 24, .22);
+        }
 
         .cards{
             display:grid;
@@ -390,13 +406,17 @@
 <div class="layout">
 
     <aside class="sidebar">
-        <div class="brand">Agro IoT</div>
+        <div class="brand">
+            <span class="brand-icon">☁️</span>
+            <span class="brand-title">AGRO IOT</span>
+            <span class="brand-subtitle">Monitoreo de cultivos</span>
+        </div>
 
         <nav class="nav">
-            <a th:href="@{/mediciones}" class="active">Dashboard</a>
-            <a th:href="@{/historial}">Reportes</a>
-            <a th:href="@{/estaciones}">Estaciones</a>
-            <a th:href="@{/alertas}">Alertas</a>
+            <a th:href="@{/mediciones}" class="active"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></a>
+            <a th:href="@{/estaciones}"><span class="nav-icon">🌦️</span><span class="nav-label">Estaciones</span></a>
+            <a th:href="@{/alertas}"><span class="nav-icon">⚠️</span><span class="nav-label">Alertas</span></a>
+            <a th:href="@{/historial}"><span class="nav-icon">📈</span><span class="nav-label">Reportes</span></a>
         </nav>
 
         <div class="sidebar-footer">
