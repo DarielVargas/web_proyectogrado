@@ -8,6 +8,8 @@ import java.util.List;
 public interface AlertaRepository extends JpaRepository<Alerta, Long> {
     List<Alerta> findAllByOrderByFechaCreacionDescIdAlertaDesc();
 
+    List<Alerta> findAllByActivaTrueOrderByFechaCreacionDescIdAlertaDesc();
+
     List<Alerta> findAllByOrderByFechaCreacionAscIdAlertaAsc();
 
     long countByActivaTrue();
