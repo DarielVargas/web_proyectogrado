@@ -408,8 +408,8 @@
         <div class="sidebar-footer">
             <div class="user-box">
                 Conectado como:<br>
-                <b>admin</b><br>
-                Administrador
+                <b th:text="${sidebarUsuarioNombre}">Usuario</b><br>
+                <span th:text="${sidebarUsuarioRol}">Usuario</span>
             </div>
 
             <form method="post" th:action="@{/logout}">

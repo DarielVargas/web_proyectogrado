@@ -46,7 +46,7 @@
             <a th:href="@{/alertas}">Alertas</a>
         </nav>
         <div class="sidebar-footer">
-            <div class="user-box">Conectado como:<br><b>admin</b><br>Administrador</div>
+            <div class="user-box">Conectado como:<br><b th:text="${sidebarUsuarioNombre}">Usuario</b><br><span th:text="${sidebarUsuarioRol}">Usuario</span></div>
             <form method="post" th:action="@{/logout}">
                 <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                 <button type="submit" class="btn btn-logout" style="width:100%;">Cerrar Sesión</button>
