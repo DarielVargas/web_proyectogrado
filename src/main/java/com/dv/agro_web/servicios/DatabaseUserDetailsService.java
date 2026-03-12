@@ -23,7 +23,9 @@ public class DatabaseUserDetailsService implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        Usuario usuario = usuarioRepository.findByUsername(username)
+        String usernameNormalizado = username == null ? "" : username.trim();
+
+        Usuario usuario = usuarioRepository.findByUsernameIgnoreCase(usernameNormalizado)
                 .orElseThrow(() -> new UsernameNotFoundException("Usuario no encontrado: " + username));
 
         return toUserDetails(usuario);
@@ -31,6 +33,9 @@ public class DatabaseUserDetailsService implements UserDetailsService {
 
     private UserDetails toUserDetails(Usuario usuario) {
         String rol = usuario.getRol() == null ? "USER" : usuario.getRol().trim().toUpperCase();
+        if (rol.startsWith("ROLE_")) {
+            rol = rol.substring(5);
+        }
         List<GrantedAuthority> authorities = List.of(new SimpleGrantedAuthority("ROLE_" + rol));
 
         return User.withUsername(usuario.getUsername())
