@@ -24,10 +24,13 @@
     </nav>
 
     <div class="sidebar-footer">
-        <div class="user-box">
-            Conectado como:<br>
-            <b>admin</b><br>
-            Administrador
+        <div class="user-box user-profile-card">
+            <div class="user-avatar" th:text="${#strings.substring(sidebarUsuarioNombre, 0, 1)}">U</div>
+            <div class="user-meta">
+                <span class="user-label">Conectado como</span>
+                <strong class="user-name" th:text="${sidebarUsuarioNombre}">Usuario</strong>
+                <span class="user-role" th:text="${sidebarUsuarioRol}">Usuario</span>
+            </div>
         </div>
 
         <form method="post" th:action="@{/logout}">
