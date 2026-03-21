@@ -19,7 +19,7 @@ public interface VwMedicionDetalleRepository extends JpaRepository<VwMedicionDet
 
     interface UltimaMedicionEstacion {
         String getEstacionCodigo();
-        java.sql.Timestamp getFechaMedicion();
+        java.time.LocalDateTime getFechaMedicion();
     }
 
     Page<VwMedicionDetalle> findAllByOrderByFechaMedicionDesc(Pageable pageable);

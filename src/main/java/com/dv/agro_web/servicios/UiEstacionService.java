@@ -6,7 +6,6 @@ import com.dv.agro_web.repositorios.VwMedicionDetalleRepository;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.LinkedHashMap;
@@ -37,7 +36,7 @@ public class UiEstacionService {
                         LinkedHashMap::new
                 ));
 
-        Map<String, Timestamp> ultimasMediciones = medicionDetalleRepository.findUltimaFechaMedicionPorEstacion().stream()
+        Map<String, LocalDateTime> ultimasMediciones = medicionDetalleRepository.findUltimaFechaMedicionPorEstacion().stream()
                 .filter(resumen -> resumen.getEstacionCodigo() != null)
                 .filter(resumen -> resumen.getFechaMedicion() != null)
                 .collect(Collectors.toMap(
@@ -48,8 +47,8 @@ public class UiEstacionService {
                 ));
 
         LocalDateTime ahora = LocalDateTime.now();
-        for (Map.Entry<String, Timestamp> entry : ultimasMediciones.entrySet()) {
-            boolean inactivaPorTiempo = !entry.getValue().toLocalDateTime()
+        for (Map.Entry<String, LocalDateTime> entry : ultimasMediciones.entrySet()) {
+            boolean inactivaPorTiempo = !entry.getValue()
                     .isAfter(ahora.minus(MAX_TIEMPO_SIN_MEDICIONES));
             estados.merge(entry.getKey(), !inactivaPorTiempo, (actual, calculado) -> actual && calculado);
         }

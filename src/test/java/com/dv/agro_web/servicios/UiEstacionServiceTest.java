@@ -9,7 +9,6 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
@@ -89,8 +88,8 @@ class UiEstacionServiceTest {
             }
 
             @Override
-            public Timestamp getFechaMedicion() {
-                return Timestamp.valueOf(fecha);
+            public LocalDateTime getFechaMedicion() {
+                return fecha;
             }
         };
     }
