@@ -455,7 +455,9 @@ public class MedicionesController {
                 ? "--"
                 : humAvg.setScale(1, RoundingMode.HALF_UP).toPlainString() + "%";
 
-        long sensoresActivos = sensorRepository.contarSensoresActivosDeEstacionesActivas();
+        long sensoresActivos = codigosActivos.isEmpty()
+                ? 0
+                : sensorRepository.contarSensoresActivosDeEstacionesActivas(codigosActivos);
         long sensoresRegistrados = sensorRepository.contarSensoresRegistradosDeEstacionesActivas();
         long totalAlertasConfiguradas = alertaRepository.countByActivaTrue();
 
