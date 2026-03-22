@@ -85,9 +85,9 @@
         <div class="alert-error" th:if="${mensajeError}" th:text="${mensajeError}">Error</div>
 
         <section class="estaciones-lista">
-            <article class="estacion-fila animate-item" th:each="item : ${estaciones}">
+            <article class="estacion-fila animate-item" th:each="item : ${estaciones}" th:attr="data-estacion-codigo=${item.estacion.codigo}">
                 <div class="estacion-info">
-                    <span class="estado-dot" th:classappend="${item.activa} ? ' activa' : ' inactiva'"></span>
+                    <span class="estado-dot" data-estacion-estado-dot th:classappend="${item.activa} ? ' activa' : ' inactiva'"></span>
                     <div>
                         <h2 class="estacion-nombre" th:text="${item.estacion.descripcion != null and !#strings.isEmpty(item.estacion.descripcion) ? item.estacion.descripcion : item.estacion.codigo}">EST-001 - Norte</h2>
                         <p class="estacion-sub" th:text="${item.estacion.descripcion != null and !#strings.isEmpty(item.estacion.descripcion) ? item.estacion.descripcion : item.estacion.codigo}">Zona Norte</p>
@@ -100,6 +100,7 @@
                         <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                         <button type="submit"
                                 class="btn-toggle"
+                                data-estacion-toggle
                                 th:classappend="${item.activa} ? ' on' : ' off'"
                                 th:text="${item.activa} ? 'Desactivar' : 'Activar'">
                             Desactivar

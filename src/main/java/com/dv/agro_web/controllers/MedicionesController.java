@@ -3,14 +3,11 @@ package com.dv.agro_web.controllers;
 import com.dv.agro_web.entidades.Estacion;
 import com.dv.agro_web.entidades.Reporte;
 import com.dv.agro_web.entidades.VwMedicionDetalle;
-import com.dv.agro_web.repositorios.AlertaRepository;
 import com.dv.agro_web.repositorios.ReporteRepository;
-import com.dv.agro_web.repositorios.SensorRepository;
 import com.dv.agro_web.repositorios.VwMedicionDetalleRepository;
+import com.dv.agro_web.servicios.DashboardTiempoRealService;
 import com.dv.agro_web.servicios.EstacionService;
 import com.dv.agro_web.servicios.ReporteService;
-import com.dv.agro_web.servicios.UiEstacionSensorService;
-import com.dv.agro_web.servicios.UiEstacionService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -55,27 +52,18 @@ public class MedicionesController {
     );
 
     private final VwMedicionDetalleRepository repo;
-    private final SensorRepository sensorRepository;
-    private final AlertaRepository alertaRepository;
     private final EstacionService estacionService;
     private final ReporteService reporteService;
-    private final UiEstacionService uiEstacionService;
-    private final UiEstacionSensorService uiEstacionSensorService;
+    private final DashboardTiempoRealService dashboardTiempoRealService;
 
     public MedicionesController(VwMedicionDetalleRepository repo,
-                                SensorRepository sensorRepository,
-                                AlertaRepository alertaRepository,
                                 EstacionService estacionService,
                                 ReporteService reporteService,
-                                UiEstacionService uiEstacionService,
-                                UiEstacionSensorService uiEstacionSensorService) {
+                                DashboardTiempoRealService dashboardTiempoRealService) {
         this.repo = repo;
-        this.sensorRepository = sensorRepository;
-        this.alertaRepository = alertaRepository;
         this.estacionService = estacionService;
         this.reporteService = reporteService;
-        this.uiEstacionService = uiEstacionService;
-        this.uiEstacionSensorService = uiEstacionSensorService;
+        this.dashboardTiempoRealService = dashboardTiempoRealService;
     }
 
     @GetMapping("/mediciones")
@@ -430,111 +418,26 @@ public class MedicionesController {
         if (limit > 100) limit = 100;
         if (page < 0) page = 0;
 
-        List<String> codigosEstacionesActivas = estacionService.obtenerEstacionesActivas().stream()
-                .map(estacion -> estacion.getCodigo())
-                .toList();
+        DashboardTiempoRealService.DashboardSnapshotDto snapshot = dashboardTiempoRealService.obtenerSnapshot();
 
-        List<String> codigosActivos = uiEstacionService.obtenerCodigosActivos().stream()
-                .filter(codigosEstacionesActivas::contains)
-                .toList();
-        uiEstacionSensorService.asegurarSensoresRegistrados(codigosEstacionesActivas);
-
-        BigDecimal tempAvg = codigosActivos.isEmpty()
-                ? null
-                : repo.avgUltimas40TempAmbientalSoloActivas(codigosActivos);
-
-        BigDecimal humAvg = codigosActivos.isEmpty()
-                ? null
-                : repo.avgUltimas40HumedadAmbientalSoloActivas(codigosActivos);
-
-        String tempPromedioTxt = (tempAvg == null)
-                ? "--"
-                : tempAvg.setScale(1, RoundingMode.HALF_UP).toPlainString() + "°C";
-
-        String humPromedioTxt = (humAvg == null)
-                ? "--"
-                : humAvg.setScale(1, RoundingMode.HALF_UP).toPlainString() + "%";
-
-        long sensoresActivos = codigosActivos.isEmpty()
-                ? 0
-                : sensorRepository.contarSensoresActivosDeEstacionesActivas(codigosActivos);
-        long sensoresRegistrados = sensorRepository.contarSensoresRegistradosDeEstacionesActivas();
-        long totalAlertasConfiguradas = alertaRepository.countByActivaTrue();
-
-        model.addAttribute("sensoresActivos", sensoresActivos);
-        model.addAttribute("sensoresRegistrados", sensoresRegistrados);
-        model.addAttribute("tempPromedioTxt", tempPromedioTxt);
-        model.addAttribute("humPromedioTxt", humPromedioTxt);
-        model.addAttribute("totalAlertasConfiguradas", totalAlertasConfiguradas);
+        model.addAttribute("sensoresActivos", snapshot.sensoresActivos());
+        model.addAttribute("sensoresRegistrados", snapshot.sensoresRegistrados());
+        model.addAttribute("tempPromedioTxt", snapshot.tempPromedioTxt());
+        model.addAttribute("humPromedioTxt", snapshot.humPromedioTxt());
+        model.addAttribute("totalAlertasConfiguradas", snapshot.totalAlertasConfiguradas());
         model.addAttribute("limit", limit);
         model.addAttribute("page", Page.empty(PageRequest.of(page, limit)));
         model.addAttribute("mediciones", List.of());
-        model.addAttribute("estacionesDashboard", construirCardsPorEstacion());
-    }
-
-    private List<EstacionDashboardDto> construirCardsPorEstacion() {
-        List<Estacion> estacionesActivas = estacionService.obtenerEstacionesActivas();
-        List<String> codigosEstacionesActivas = estacionesActivas.stream()
-                .map(Estacion::getCodigo)
-                .toList();
-
-        List<VwMedicionDetalle> ultimas = repo.findUltimasMedicionesPorEstacionYTipoSensor();
-        Map<String, Boolean> estadosUi = uiEstacionService.obtenerEstadosPorCodigo();
-        Map<String, Map<String, Boolean>> estadosSensoresPorEstacion =
-                uiEstacionSensorService.obtenerEstadosPorEstaciones(codigosEstacionesActivas);
-
-        Map<String, Map<String, VwMedicionDetalle>> ultimasPorEstacion = new LinkedHashMap<>();
-        for (VwMedicionDetalle medicion : ultimas) {
-            ultimasPorEstacion
-                    .computeIfAbsent(medicion.getEstacionCodigo(), key -> new LinkedHashMap<>())
-                    .put(medicion.getTipoSensor(), medicion);
-        }
-
-        List<EstacionDashboardDto> cards = new ArrayList<>();
-
-        for (Estacion estacion : estacionesActivas) {
-            String codigoEstacion = estacion.getCodigo();
-            Map<String, VwMedicionDetalle> porTipo =
-                    ultimasPorEstacion.getOrDefault(codigoEstacion, Map.of());
-            Map<String, Boolean> estadosSensores =
-                    estadosSensoresPorEstacion.getOrDefault(codigoEstacion, Map.of());
-
-            List<SensorValorDto> sensores = new ArrayList<>();
-            for (String tipoSensor : TIPOS_SENSOR_DASHBOARD) {
-                VwMedicionDetalle medicion = porTipo.get(tipoSensor);
-                boolean activo = estadosSensores.getOrDefault(tipoSensor, true);
-                sensores.add(new SensorValorDto(tipoSensor, formatearValor(medicion), activo));
-            }
-
-            String descripcion = (estacion.getDescripcion() == null || estacion.getDescripcion().isBlank())
-                    ? codigoEstacion
-                    : estacion.getDescripcion();
-
-            cards.add(new EstacionDashboardDto(
-                    codigoEstacion,
-                    descripcion,
-                    estadosUi.getOrDefault(codigoEstacion, true),
-                    sensores
-            ));
-        }
-
-        return cards;
-    }
-
-    private String formatearValor(VwMedicionDetalle medicion) {
-        if (medicion == null || medicion.getValor() == null) {
-            return "--";
-        }
-
-        String valor = medicion.getValor()
-                .stripTrailingZeros()
-                .toPlainString();
-
-        if (medicion.getUnidadMedida() == null || medicion.getUnidadMedida().isBlank()) {
-            return valor;
-        }
-
-        return valor + " " + medicion.getUnidadMedida();
+        model.addAttribute("estacionesDashboard", snapshot.estaciones().stream()
+                .map(estacion -> new EstacionDashboardDto(
+                        estacion.estacionCodigo(),
+                        estacion.estacionDescripcion(),
+                        estacion.activa(),
+                        estacion.sensores().stream()
+                                .map(sensor -> new SensorValorDto(sensor.tipoSensor(), sensor.valor(), sensor.activo()))
+                                .toList()
+                ))
+                .toList());
     }
 
     public record RangoFechaSeleccionado(LocalDate fechaInicio, LocalDate fechaFin) {}

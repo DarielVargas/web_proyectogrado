@@ -324,20 +324,20 @@
             </div>
         </div>
 
-        <section class="cards">
+        <section class="cards" data-dashboard-cards>
             <div class="card animate-item">
                 <div class="card-head">
                     <div class="card-title">Sensores Activos</div>
                 </div>
-                <div class="card-value" th:text="${sensoresActivos}">0</div>
-                <div class="card-sub" th:text="|${sensoresActivos} sensores activos de ${sensoresRegistrados} sensores|">0 sensores activos de 0 sensores</div>
+                <div class="card-value" data-dashboard-sensores-activos th:text="${sensoresActivos}">0</div>
+                <div class="card-sub" data-dashboard-sensores-sub th:text="|${sensoresActivos} sensores activos de ${sensoresRegistrados} sensores|">0 sensores activos de 0 sensores</div>
             </div>
 
             <div class="card animate-item">
                 <div class="card-head">
                     <div class="card-title">Temp. Promedio</div>
                 </div>
-                <div class="card-value" th:text="${tempPromedioTxt}">--</div>
+                <div class="card-value" data-dashboard-temp th:text="${tempPromedioTxt}">--</div>
                 <div class="card-sub">Temperatura ambiental</div>
             </div>
 
@@ -345,7 +345,7 @@
                 <div class="card-head">
                     <div class="card-title">Humedad Promedio</div>
                 </div>
-                <div class="card-value" th:text="${humPromedioTxt}">--</div>
+                <div class="card-value" data-dashboard-hum th:text="${humPromedioTxt}">--</div>
                 <div class="card-sub">Humedad ambiental</div>
             </div>
 
@@ -353,12 +353,12 @@
                 <div class="card-head">
                     <div class="card-title">Alertas Configuradas</div>
                 </div>
-                <div class="card-value" th:text="${totalAlertasConfiguradas}">0</div>
+                <div class="card-value" data-dashboard-alertas th:text="${totalAlertasConfiguradas}">0</div>
                 <div class="card-sub">Alertas configuradas en el sistema</div>
             </div>
         </section>
 
-        <section class="estaciones-grid">
+        <section class="estaciones-grid" data-dashboard-estaciones>
             <article class="estacion-card animate-item"
                      th:each="estacion : ${estacionesDashboard}">
                 <div class="estacion-head">
