@@ -3,6 +3,9 @@ package com.dv.agro_web.repositorios;
 import com.dv.agro_web.entidades.Sensor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
+
+import java.util.List;
 
 public interface SensorRepository extends JpaRepository<Sensor, Long> {
     boolean existsByEstacionIdAndIdTipoSensor(Long estacionId, Long idTipoSensor);
@@ -26,8 +29,9 @@ public interface SensorRepository extends JpaRepository<Sensor, Long> {
                 ON ues.estacion_codigo = e.codigo
                AND ues.tipo_sensor = ts.tipo_sensor
             WHERE e.activa = 1
+              AND e.codigo IN (:codigosEstacionesActivas)
               AND (ue.activo = 1 OR ue.activo IS NULL)
               AND (ues.activo = 1 OR ues.activo IS NULL)
             """, nativeQuery = true)
-    long contarSensoresActivosDeEstacionesActivas();
+    long contarSensoresActivosDeEstacionesActivas(@Param("codigosEstacionesActivas") List<String> codigosEstacionesActivas);
 }
