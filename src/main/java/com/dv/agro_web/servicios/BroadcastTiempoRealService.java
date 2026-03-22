@@ -1,46 +1,42 @@
 package com.dv.agro_web.servicios;
 
 import com.dv.agro_web.websocket.TiempoRealWebSocketHandler;
-import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Objects;
+import java.util.StringJoiner;
 
 @Service
 public class BroadcastTiempoRealService {
 
     private final DashboardTiempoRealService dashboardTiempoRealService;
     private final TiempoRealWebSocketHandler tiempoRealWebSocketHandler;
-    private final ObjectMapper objectMapper;
 
-    private String ultimoSnapshotSerializado;
+    private String ultimoSnapshotFingerprint;
     private Map<String, Boolean> ultimosEstados = Map.of();
 
     public BroadcastTiempoRealService(DashboardTiempoRealService dashboardTiempoRealService,
-                                      TiempoRealWebSocketHandler tiempoRealWebSocketHandler,
-                                      ObjectMapper objectMapper) {
+                                      TiempoRealWebSocketHandler tiempoRealWebSocketHandler) {
         this.dashboardTiempoRealService = dashboardTiempoRealService;
         this.tiempoRealWebSocketHandler = tiempoRealWebSocketHandler;
-        this.objectMapper = objectMapper;
     }
 
     @Scheduled(fixedDelayString = "${app.tiempo-real.intervalo-ms:5000}")
     public void publicarCambios() {
         DashboardTiempoRealService.DashboardSnapshotDto snapshot = dashboardTiempoRealService.obtenerSnapshot();
-        String snapshotSerializado = serializar(snapshot);
+        String snapshotFingerprint = construirFingerprint(snapshot);
         Map<String, Boolean> estadosActuales = extraerEstados(snapshot);
 
-        if (ultimoSnapshotSerializado == null) {
-            ultimoSnapshotSerializado = snapshotSerializado;
+        if (ultimoSnapshotFingerprint == null) {
+            ultimoSnapshotFingerprint = snapshotFingerprint;
             ultimosEstados = estadosActuales;
             return;
         }
 
-        boolean snapshotCambio = !Objects.equals(ultimoSnapshotSerializado, snapshotSerializado);
+        boolean snapshotCambio = !Objects.equals(ultimoSnapshotFingerprint, snapshotFingerprint);
         if (snapshotCambio) {
             tiempoRealWebSocketHandler.broadcast(new TiempoRealWebSocketHandler.EventoTiempoRealDto(
                     "dashboard-update",
@@ -76,7 +72,7 @@ public class BroadcastTiempoRealService {
             ));
         }
 
-        ultimoSnapshotSerializado = snapshotSerializado;
+        ultimoSnapshotFingerprint = snapshotFingerprint;
         ultimosEstados = estadosActuales;
     }
 
@@ -86,12 +82,26 @@ public class BroadcastTiempoRealService {
         return estados;
     }
 
-    private String serializar(Object value) {
-        try {
-            return objectMapper.writeValueAsString(value);
-        } catch (JsonProcessingException ex) {
-            throw new IllegalStateException("No se pudo serializar el snapshot de dashboard", ex);
-        }
+    private String construirFingerprint(DashboardTiempoRealService.DashboardSnapshotDto snapshot) {
+        StringJoiner joiner = new StringJoiner("|");
+        joiner.add(String.valueOf(snapshot.sensoresActivos()));
+        joiner.add(String.valueOf(snapshot.sensoresRegistrados()));
+        joiner.add(snapshot.tempPromedioTxt());
+        joiner.add(snapshot.humPromedioTxt());
+        joiner.add(String.valueOf(snapshot.totalAlertasConfiguradas()));
+
+        snapshot.estaciones().forEach(estacion -> {
+            joiner.add(estacion.estacionCodigo());
+            joiner.add(estacion.estacionDescripcion());
+            joiner.add(String.valueOf(Boolean.TRUE.equals(estacion.activa())));
+            estacion.sensores().forEach(sensor -> {
+                joiner.add(sensor.tipoSensor());
+                joiner.add(sensor.valor());
+                joiner.add(String.valueOf(sensor.activo()));
+            });
+        });
+
+        return joiner.toString();
     }
 
     public record CambioEstadoDto(String estacionCodigo, boolean activa, String mensaje) {}

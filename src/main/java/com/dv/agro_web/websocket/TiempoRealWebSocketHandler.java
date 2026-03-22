@@ -16,11 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 public class TiempoRealWebSocketHandler extends TextWebSocketHandler {
 
     private final Set<WebSocketSession> sesiones = ConcurrentHashMap.newKeySet();
-    private final ObjectMapper objectMapper;
-
-    public TiempoRealWebSocketHandler(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
-    }
+    private final ObjectMapper objectMapper = new ObjectMapper();
 
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
