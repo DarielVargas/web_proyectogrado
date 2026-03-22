@@ -17,6 +17,11 @@ public interface VwMedicionDetalleRepository extends JpaRepository<VwMedicionDet
         String getEstacionDescripcion();
     }
 
+    interface UltimaMedicionEstacion {
+        String getEstacionCodigo();
+        java.time.LocalDateTime getFechaMedicion();
+    }
+
     Page<VwMedicionDetalle> findAllByOrderByFechaMedicionDesc(Pageable pageable);
 
     @Query(
@@ -121,6 +126,14 @@ public interface VwMedicionDetalleRepository extends JpaRepository<VwMedicionDet
         ORDER BY codigo
         """, nativeQuery = true)
     List<EstacionResumen> findEstacionesConDatos();
+
+    @Query(value = """
+        SELECT estacion_codigo AS estacionCodigo,
+               MAX(fecha_medicion) AS fechaMedicion
+        FROM vw_mediciones_detalle
+        GROUP BY estacion_codigo
+        """, nativeQuery = true)
+    List<UltimaMedicionEstacion> findUltimaFechaMedicionPorEstacion();
 
     @Query(value = """
         SELECT *
