@@ -16,7 +16,7 @@ import java.util.stream.Collectors;
 @Service
 public class UiEstacionService {
 
-    private static final Duration MAX_TIEMPO_SIN_MEDICIONES = Duration.ofMinutes(1);
+    private static final Duration MAX_TIEMPO_SIN_MEDICIONES = Duration.ofSeconds(30);
 
     private final UiEstacionRepository uiEstacionRepository;
     private final VwMedicionDetalleRepository medicionDetalleRepository;

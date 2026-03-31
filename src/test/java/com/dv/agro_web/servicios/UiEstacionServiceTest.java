@@ -33,14 +33,14 @@ class UiEstacionServiceTest {
     }
 
     @Test
-    void debeMarcarComoInactivaUnaEstacionConMasDeUnMinutoSinMediciones() {
+    void debeMarcarComoInactivaUnaEstacionConMasDeTreintaSegundosSinMediciones() {
         UiEstacion estadoManual = new UiEstacion();
         estadoManual.setEstacionCodigo("EST-001");
         estadoManual.setActivo(true);
 
         when(uiEstacionRepository.findAll()).thenReturn(List.of(estadoManual));
         when(medicionDetalleRepository.findUltimaFechaMedicionPorEstacion()).thenReturn(List.of(
-                ultimaMedicion("EST-001", LocalDateTime.now().minusMinutes(1))
+                ultimaMedicion("EST-001", LocalDateTime.now().minusSeconds(30))
         ));
 
         Map<String, Boolean> estados = uiEstacionService.obtenerEstadosPorCodigo();
@@ -67,10 +67,10 @@ class UiEstacionServiceTest {
     }
 
     @Test
-    void debeMantenerOperativaUnaEstacionConMenosDeUnMinutoSinMediciones() {
+    void debeMantenerOperativaUnaEstacionConMenosDeTreintaSegundosSinMediciones() {
         when(uiEstacionRepository.findAll()).thenReturn(List.of());
         when(medicionDetalleRepository.findUltimaFechaMedicionPorEstacion()).thenReturn(List.of(
-                ultimaMedicion("EST-003", LocalDateTime.now().minusSeconds(59))
+                ultimaMedicion("EST-003", LocalDateTime.now().minusSeconds(29))
         ));
 
         Map<String, Boolean> estados = uiEstacionService.obtenerEstadosPorCodigo();
