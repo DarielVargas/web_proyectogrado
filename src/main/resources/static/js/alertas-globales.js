@@ -3,6 +3,7 @@
   const POLL_MS = 12000;
   const STORAGE_KEY_ESTADOS = 'alertas-globales-estados-estacion';
   const vistos = new Set();
+  const ultimoEstadoNotificado = new Map();
   let websocket = null;
   let reconnectTimer = null;
 
@@ -81,6 +82,25 @@
     return activa
       ? `La estación ${codigo} pasó a estado operativa`
       : `La estación ${codigo} pasó a estado inactiva`;
+  }
+
+
+
+  function notificarCambioEstado(codigo, activa, mensaje) {
+    if (!codigo) return;
+
+    const estadoActual = Boolean(activa);
+    const estadoAnteriorNotificado = ultimoEstadoNotificado.get(codigo);
+    if (estadoAnteriorNotificado === estadoActual) {
+      return;
+    }
+
+    ultimoEstadoNotificado.set(codigo, estadoActual);
+    mostrarToast({
+      mensaje: mensaje || construirMensajeEstado(codigo, estadoActual),
+      idUnico: `estado-estacion-${codigo}-${estadoActual}-${Date.now()}`,
+      variante: 'estado-estacion'
+    });
   }
 
   function parseValorSensor(valor) {
@@ -258,11 +278,7 @@
             return;
           }
 
-          mostrarToast({
-            mensaje: construirMensajeEstado(codigo, activa),
-            idUnico: `estado-estacion-${codigo}-${activa}`,
-            variante: 'estado-estacion'
-          });
+          notificarCambioEstado(codigo, activa);
         });
       }
 
@@ -318,14 +334,10 @@
             break;
           case 'station-status-changed':
             if (data.payload?.estacionCodigo) {
+              notificarCambioEstado(data.payload.estacionCodigo, data.payload.activa, data.payload?.mensaje);
               actualizarEstadoGuardado(data.payload.estacionCodigo, data.payload.activa);
               actualizarListadoEstaciones({ [data.payload.estacionCodigo]: Boolean(data.payload.activa) });
             }
-            mostrarToast({
-              mensaje: data.payload?.mensaje,
-              idUnico: `ws-estado-${data.payload?.estacionCodigo}-${data.payload?.activa}`,
-              variante: 'estado-estacion'
-            });
             break;
           case 'alerts-refresh':
             cargarAlertas();
