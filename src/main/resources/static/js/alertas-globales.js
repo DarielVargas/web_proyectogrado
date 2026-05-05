@@ -140,45 +140,72 @@
       .replaceAll("'", '&#39;');
   }
 
-  function calcularProgreso(sensor) {
-    if (!sensor || !sensor.valor || sensor.valor === '--') {
-      return 0;
+  const SENSOR_RANGES = {
+    'Temperatura Ambiental': { criticalLow: 12, warningLow: 18, idealHigh: 30, criticalHigh: 38, unit: '°C', idealMsg: 'La temperatura está dentro del rango óptimo para el cultivo.' },
+    'Humedad Ambiental': { criticalLow: 35, warningLow: 50, idealHigh: 75, criticalHigh: 88, unit: '%', idealMsg: 'La humedad ambiental favorece el desarrollo del cultivo.' },
+    'Humedad del Suelo': { criticalLow: 20, warningLow: 35, idealHigh: 65, criticalHigh: 80, unit: '%', idealMsg: 'La humedad del suelo es adecuada para una buena absorción de nutrientes.' },
+    'Intensidad de Luz Solar': { criticalLow: 200, warningLow: 400, idealHigh: 800, criticalHigh: 1000, unit: 'W/m²', idealMsg: 'La luz solar está en un nivel ideal para la fotosíntesis.' },
+    'pH del Suelo': { criticalLow: 4.8, warningLow: 5.8, idealHigh: 7.0, criticalHigh: 7.8, unit: 'pH', idealMsg: 'El pH del suelo está balanceado para la disponibilidad de nutrientes.' },
+    'Conductividad Eléctrica': { criticalLow: 0.2, warningLow: 0.8, idealHigh: 2.2, criticalHigh: 3.0, unit: 'mS/cm', idealMsg: 'La conductividad eléctrica es favorable para el cultivo.' },
+    'Nitrógeno (N)': { criticalLow: 8, warningLow: 15, idealHigh: 35, criticalHigh: 45, unit: 'mg/kg', idealMsg: 'El nivel de nitrógeno es saludable para el crecimiento vegetal.' },
+    'Fósforo (P)': { criticalLow: 5, warningLow: 10, idealHigh: 25, criticalHigh: 35, unit: 'mg/kg', idealMsg: 'El fósforo se encuentra en un nivel adecuado para raíces y floración.' },
+    'Potasio (K)': { criticalLow: 40, warningLow: 80, idealHigh: 200, criticalHigh: 260, unit: 'mg/kg', idealMsg: 'El potasio está en un rango ideal para vigor y resistencia.' }
+  };
+
+  function getEstado(sensorTipo, valor) {
+    const rango = SENSOR_RANGES[sensorTipo];
+    if (!rango || !Number.isFinite(valor)) {
+      return { estado: 'Sin datos', severity: 'neutral', color: '', mensaje: 'No hay datos suficientes para interpretar esta métrica.' };
     }
 
-    const { numero } = parseValorSensor(sensor.valor);
-    const baseNumero = Number(String(numero).replace(',', '.'));
-    if (!Number.isFinite(baseNumero)) {
-      return 0;
+    if (valor < rango.criticalLow) {
+      return { estado: 'Crítico bajo', severity: 'critical', color: '#ef4444', mensaje: `Valor muy bajo para ${sensorTipo.toLowerCase()}. Requiere atención inmediata.` };
     }
-
-    if (sensor.tipoSensor === 'Intensidad de Luz Solar') {
-      return Math.min(100, Math.max(0, baseNumero / 10));
+    if (valor < rango.warningLow) {
+      return { estado: 'Advertencia baja', severity: 'warning', color: '#f59e0b', mensaje: `Valor ligeramente bajo para ${sensorTipo.toLowerCase()}. Conviene revisar.` };
     }
+    if (valor <= rango.idealHigh) {
+      return { estado: 'Ideal', severity: 'ideal', color: '#22c55e', mensaje: rango.idealMsg || 'Nivel óptimo para el cultivo.' };
+    }
+    if (valor <= rango.criticalHigh) {
+      return { estado: 'Advertencia alta', severity: 'warning', color: '#f59e0b', mensaje: `Valor ligeramente alto para ${sensorTipo.toLowerCase()}. Conviene ajustar.` };
+    }
+    return { estado: 'Crítico alto', severity: 'critical', color: '#ef4444', mensaje: `Valor muy alto para ${sensorTipo.toLowerCase()}. Requiere atención inmediata.` };
+  }
 
-    return Math.min(100, Math.max(0, baseNumero));
+  function calcularProgreso(sensor, valorNumerico) {
+    if (!sensor || !Number.isFinite(valorNumerico)) return 0;
+    if (sensor.tipoSensor === 'Intensidad de Luz Solar') return Math.min(100, Math.max(0, valorNumerico / 10));
+    return Math.min(100, Math.max(0, valorNumerico));
   }
 
   function renderSensor(sensor) {
     const { numero, unidad } = parseValorSensor(sensor.valor);
-    const progreso = calcularProgreso(sensor);
-    const mostrarBarra = sensor.tipoSensor === 'Humedad del Suelo' || sensor.tipoSensor === 'Intensidad de Luz Solar';
+    const valorNumerico = Number(String(numero).replace(',', '.'));
+    const interpretacion = getEstado(sensor.tipoSensor, valorNumerico);
+    const progreso = calcularProgreso(sensor, valorNumerico);
+    const colorizable = sensor.tipoSensor === 'Humedad del Suelo' || sensor.tipoSensor === 'Intensidad de Luz Solar';
+    const mostrarBarra = colorizable;
 
     return `
       <div class="sensor-row${sensor.activo ? '' : ' inactivo'}">
         <div class="sensor-main">
           <div class="sensor-info">
-            <span class="sensor-icon">${escapeHtml(obtenerIconoSensor(sensor.tipoSensor))}</span>
+            <span class="sensor-icon${colorizable ? ' sensor-icon-dynamic' : ''}" ${colorizable ? `style="color:${interpretacion.color}"` : ''}>${escapeHtml(obtenerIconoSensor(sensor.tipoSensor))}</span>
             <span class="sensor-name">${escapeHtml(sensor.tipoSensor)}</span>
             ${sensor.activo ? '' : '<span class="sensor-badge-off">Sensor desactivado</span>'}
           </div>
           <div class="sensor-value-wrap">
             <span class="sensor-value">${escapeHtml(numero)}</span>
             ${unidad ? `<span class="sensor-unit">${escapeHtml(unidad)}</span>` : ''}
+            <button type="button" class="sensor-info-btn" aria-label="Información de estado">ℹ️</button>
+            <span class="sensor-state-badge ${interpretacion.severity}">${escapeHtml(interpretacion.estado)}</span>
+            <div class="sensor-tooltip"><strong>${escapeHtml(interpretacion.estado)}</strong><span>${escapeHtml(interpretacion.mensaje)}</span></div>
           </div>
         </div>
         ${mostrarBarra ? `
           <div class="progress-track">
-            <div class="progress-fill${sensor.tipoSensor === 'Intensidad de Luz Solar' ? ' luz' : ''}" style="--target-width:${progreso.toFixed(0)}%; width:${progreso.toFixed(0)}%"></div>
+            <div class="progress-fill dynamic" style="--target-width:${progreso.toFixed(0)}%; width:${progreso.toFixed(0)}%; --dynamic-color:${interpretacion.color}"></div>
           </div>` : ''}
       </div>`;
   }
