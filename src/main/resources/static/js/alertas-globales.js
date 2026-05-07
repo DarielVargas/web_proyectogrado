@@ -140,14 +140,65 @@
       .replaceAll("'", '&#39;');
   }
 
+  function obtenerNumeroSensor(valor) {
+    if (valor == null) {
+      return null;
+    }
+
+    const { numero } = parseValorSensor(String(valor));
+    if (!numero || numero === '--') {
+      return null;
+    }
+
+    const baseNumero = Number(String(numero).replace(',', '.'));
+    return Number.isFinite(baseNumero) ? baseNumero : null;
+  }
+
+  function calcularEstadoSensor(tipoSensor, valor) {
+    const baseNumero = obtenerNumeroSensor(valor);
+    if (baseNumero == null) {
+      return '';
+    }
+
+    const rangos = {
+      'Temperatura Ambiental': [15, 18, 30, 35],
+      'Humedad Ambiental': [50, 60, 85, 92],
+      'Humedad del Suelo': [30, 45, 75, 85],
+      'Intensidad de Luz Solar': [5000, 10000, 30000, 40000],
+      'pH del Suelo': [5.0, 5.5, 7.0, 7.5],
+      'Conductividad Electrica': [0.3, 0.5, 2.0, 3.0],
+      'Conductividad Eléctrica': [0.3, 0.5, 2.0, 3.0],
+      'Nitrogeno (N)': [50, 100, 200, 280],
+      'Nitrógeno (N)': [50, 100, 200, 280],
+      'Fosforo (P)': [10, 25, 80, 120],
+      'Fósforo (P)': [10, 25, 80, 120],
+      'Potasio (K)': [80, 120, 300, 400]
+    };
+
+    const rango = rangos[tipoSensor];
+    if (!rango) {
+      return '';
+    }
+
+    const [criticoBajoMax, idealMin, idealMax, criticoAltoMin] = rango;
+    if (baseNumero < criticoBajoMax || baseNumero > criticoAltoMin) {
+      return 'estado-critico';
+    }
+
+    if (baseNumero >= idealMin && baseNumero <= idealMax) {
+      return 'estado-ideal';
+    }
+
+    return 'estado-advertencia';
+  }
+
   function calcularProgreso(sensor) {
-    if (!sensor || !sensor.valor || sensor.valor === '--') {
+    if (!sensor || !sensor.valor) {
       return 0;
     }
 
-    const { numero } = parseValorSensor(sensor.valor);
-    const baseNumero = Number(String(numero).replace(',', '.'));
-    if (!Number.isFinite(baseNumero)) {
+    const baseNumero = obtenerNumeroSensor(sensor.valor);
+    if (baseNumero == null) {
       return 0;
     }
 
@@ -162,9 +213,12 @@
     const { numero, unidad } = parseValorSensor(sensor.valor);
     const progreso = calcularProgreso(sensor);
     const mostrarBarra = sensor.tipoSensor === 'Humedad del Suelo' || sensor.tipoSensor === 'Intensidad de Luz Solar';
+    const estadoSensor = calcularEstadoSensor(sensor.tipoSensor, sensor.valor);
+    const clasesSensor = ['sensor-row', estadoSensor, sensor.activo ? '' : 'inactivo'].filter(Boolean).join(' ');
+    const rawValor = numero === '--' ? '--' : String(numero).replace(',', '.');
 
     return `
-      <div class="sensor-row${sensor.activo ? '' : ' inactivo'}">
+      <div class="${clasesSensor}" data-sensor-tipo="${escapeHtml(sensor.tipoSensor)}" data-sensor-valor="${escapeHtml(rawValor)}">
         <div class="sensor-main">
           <div class="sensor-info">
             <span class="sensor-icon">${escapeHtml(obtenerIconoSensor(sensor.tipoSensor))}</span>

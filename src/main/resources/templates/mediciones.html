@@ -202,6 +202,30 @@
             opacity:.55;
             background:#f8fafc;
         }
+        .sensor-row.estado-ideal{
+            background: rgba(34, 197, 94, 0.06);
+            border: 1px solid rgba(34, 197, 94, 0.18);
+        }
+        .sensor-row.estado-advertencia{
+            background: rgba(245, 158, 11, 0.07);
+            border: 1px solid rgba(245, 158, 11, 0.18);
+        }
+        .sensor-row.estado-critico{
+            background: rgba(239, 68, 68, 0.08);
+            border: 1px solid rgba(239, 68, 68, 0.18);
+        }
+        .sensor-row.estado-ideal:hover{
+            background: rgba(34, 197, 94, 0.10);
+            border-color: rgba(34, 197, 94, 0.28);
+        }
+        .sensor-row.estado-advertencia:hover{
+            background: rgba(245, 158, 11, 0.11);
+            border-color: rgba(245, 158, 11, 0.28);
+        }
+        .sensor-row.estado-critico:hover{
+            background: rgba(239, 68, 68, 0.12);
+            border-color: rgba(239, 68, 68, 0.28);
+        }
         .sensor-badge-off{
             margin-left:8px;
             font-size:10px;
@@ -374,12 +398,32 @@
                 <div class="sensor-list">
                     <div class="sensor-row"
                          th:each="sensor : ${estacion.sensores}"
-                         th:classappend="${sensor.activo} ? '' : ' inactivo'"
+                         th:classappend="${(sensor.activo ? '' : ' inactivo') + ' ' + estadoSensor}"
                          th:with="valorNumero=${sensor.valor != '--' ? #strings.substringBefore(sensor.valor, ' ') : '--'},
                                   unidad=${sensor.valor != '--' and #strings.contains(sensor.valor, ' ') ? #strings.substringAfter(sensor.valor, ' ') : ''},
-                                  rawValor=${sensor.valor != '--' ? #strings.replace(valorNumero, ',', '.') : '0'},
-                                  baseNumero=${T(java.lang.Double).parseDouble(rawValor)},
-                                  progreso=${sensor.tipoSensor == 'Intensidad de Luz Solar' ? T(java.lang.Math).min(100d, T(java.lang.Math).max(0d, baseNumero / 10d)) : T(java.lang.Math).min(100d, T(java.lang.Math).max(0d, baseNumero))}">
+                                  rawValor=${valorNumero != '--' ? #strings.replace(valorNumero, ',', '.') : '--'},
+                                  baseNumero=${rawValor != '--' ? T(java.lang.Double).parseDouble(rawValor) : 0d},
+                                  estadoSensor=${rawValor == '--' ? '' :
+                                      ((sensor.tipoSensor == 'Temperatura Ambiental' and (baseNumero < 15d or baseNumero > 35d)) or
+                                       (sensor.tipoSensor == 'Humedad Ambiental' and (baseNumero < 50d or baseNumero > 92d)) or
+                                       (sensor.tipoSensor == 'Humedad del Suelo' and (baseNumero < 30d or baseNumero > 85d)) or
+                                       (sensor.tipoSensor == 'Intensidad de Luz Solar' and (baseNumero < 5000d or baseNumero > 40000d)) or
+                                       (sensor.tipoSensor == 'pH del Suelo' and (baseNumero < 5.0d or baseNumero > 7.5d)) or
+                                       ((sensor.tipoSensor == 'Conductividad Electrica' or sensor.tipoSensor == 'Conductividad Eléctrica') and (baseNumero < 0.3d or baseNumero > 3.0d)) or
+                                       ((sensor.tipoSensor == 'Nitrogeno (N)' or sensor.tipoSensor == 'Nitrógeno (N)') and (baseNumero < 50d or baseNumero > 280d)) or
+                                       ((sensor.tipoSensor == 'Fosforo (P)' or sensor.tipoSensor == 'Fósforo (P)') and (baseNumero < 10d or baseNumero > 120d)) or
+                                       (sensor.tipoSensor == 'Potasio (K)' and (baseNumero < 80d or baseNumero > 400d)) ? 'estado-critico' :
+                                      ((sensor.tipoSensor == 'Temperatura Ambiental' and baseNumero >= 18d and baseNumero <= 30d) or
+                                       (sensor.tipoSensor == 'Humedad Ambiental' and baseNumero >= 60d and baseNumero <= 85d) or
+                                       (sensor.tipoSensor == 'Humedad del Suelo' and baseNumero >= 45d and baseNumero <= 75d) or
+                                       (sensor.tipoSensor == 'Intensidad de Luz Solar' and baseNumero >= 10000d and baseNumero <= 30000d) or
+                                       (sensor.tipoSensor == 'pH del Suelo' and baseNumero >= 5.5d and baseNumero <= 7.0d) or
+                                       ((sensor.tipoSensor == 'Conductividad Electrica' or sensor.tipoSensor == 'Conductividad Eléctrica') and baseNumero >= 0.5d and baseNumero <= 2.0d) or
+                                       ((sensor.tipoSensor == 'Nitrogeno (N)' or sensor.tipoSensor == 'Nitrógeno (N)') and baseNumero >= 100d and baseNumero <= 200d) or
+                                       ((sensor.tipoSensor == 'Fosforo (P)' or sensor.tipoSensor == 'Fósforo (P)') and baseNumero >= 25d and baseNumero <= 80d) or
+                                       (sensor.tipoSensor == 'Potasio (K)' and baseNumero >= 120d and baseNumero <= 300d) ? 'estado-ideal' : 'estado-advertencia'))},
+                                  progreso=${sensor.tipoSensor == 'Intensidad de Luz Solar' ? T(java.lang.Math).min(100d, T(java.lang.Math).max(0d, baseNumero / 10d)) : T(java.lang.Math).min(100d, T(java.lang.Math).max(0d, baseNumero))}"
+                         th:attr="data-sensor-tipo=${sensor.tipoSensor},data-sensor-valor=${rawValor}">
                         <div class="sensor-main">
                             <div class="sensor-info">
                                 <span class="sensor-icon" th:switch="${sensor.tipoSensor}">
