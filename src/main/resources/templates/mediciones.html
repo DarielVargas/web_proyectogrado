@@ -180,6 +180,165 @@
         .estado-ok{ color:#166534; background:#dcfce7; border-color:#bbf7d0; }
         .estado-alerta{ color:#854d0e; background:#fef9c3; border-color:#fde68a; }
         .estado-off{ color:#374151; background:#e5e7eb; border-color:#d1d5db; }
+        .estacion-status-wrap{
+            display:inline-flex;
+            align-items:center;
+            gap:7px;
+            flex-shrink:0;
+        }
+        .btn-info-rangos{
+            width:24px;
+            height:24px;
+            border-radius:999px;
+            border:1px solid #dbeafe;
+            background:#f8fbff;
+            color:#2563eb;
+            display:inline-flex;
+            align-items:center;
+            justify-content:center;
+            font-size:12px;
+            font-weight:900;
+            line-height:1;
+            cursor:pointer;
+            box-shadow: 0 6px 14px rgba(37, 99, 235, .10);
+            transition: background-color .2s ease, border-color .2s ease, color .2s ease, transform .2s ease, box-shadow .2s ease;
+        }
+        .btn-info-rangos:hover,
+        .btn-info-rangos:focus-visible,
+        .btn-info-rangos.is-open{
+            background:#eff6ff;
+            border-color:#bfdbfe;
+            color:#1d4ed8;
+            transform: translateY(-1px);
+            box-shadow: 0 10px 20px rgba(37, 99, 235, .16);
+            outline:none;
+        }
+        .rangos-popover{
+            position:fixed;
+            z-index:1200;
+            width:min(420px, calc(100vw - 28px));
+            max-height:min(72vh, 620px);
+            overflow:hidden;
+            border:1px solid rgba(226, 232, 240, .95);
+            border-radius:18px;
+            background:#fff;
+            box-shadow: 0 24px 70px rgba(15, 23, 42, .20);
+            opacity:0;
+            transform: translateY(8px) scale(.98);
+            transform-origin: top right;
+            pointer-events:none;
+            transition: opacity .18s ease, transform .18s ease;
+        }
+        .rangos-popover.is-open{
+            opacity:1;
+            transform: translateY(0) scale(1);
+            pointer-events:auto;
+        }
+        .rangos-popover-head{
+            display:flex;
+            align-items:flex-start;
+            justify-content:space-between;
+            gap:12px;
+            padding:16px 16px 12px;
+            border-bottom:1px solid #eef2f7;
+            background:linear-gradient(135deg, #ffffff, #f8fbff);
+        }
+        .rangos-popover-title{
+            margin:0;
+            font-size:16px;
+            font-weight:900;
+            color:#0f172a;
+        }
+        .rangos-popover-sub{
+            margin:4px 0 0;
+            color:#64748b;
+            font-size:12px;
+            font-weight:700;
+            line-height:1.4;
+        }
+        .rangos-popover-close{
+            width:28px;
+            height:28px;
+            border-radius:999px;
+            border:1px solid #e2e8f0;
+            background:#fff;
+            color:#64748b;
+            font-size:18px;
+            line-height:1;
+            cursor:pointer;
+            transition: background-color .2s ease, color .2s ease, transform .2s ease;
+        }
+        .rangos-popover-close:hover{
+            background:#f8fafc;
+            color:#0f172a;
+            transform: rotate(90deg);
+        }
+        .rangos-popover-body{
+            max-height:calc(min(72vh, 620px) - 76px);
+            overflow:auto;
+            padding:14px 16px 16px;
+        }
+        .rangos-leyenda{
+            display:grid;
+            gap:10px;
+            margin-bottom:14px;
+        }
+        .rango-leyenda-item{
+            display:grid;
+            grid-template-columns:24px 1fr;
+            gap:10px;
+            padding:10px;
+            border-radius:14px;
+            background:#f8fafc;
+            border:1px solid #eef2f7;
+        }
+        .rango-dot{
+            width:14px;
+            height:14px;
+            margin-top:3px;
+            border-radius:999px;
+        }
+        .rango-dot.ideal{ background:#22c55e; box-shadow:0 0 0 5px rgba(34,197,94,.10); }
+        .rango-dot.advertencia{ background:#f59e0b; box-shadow:0 0 0 5px rgba(245,158,11,.12); }
+        .rango-dot.critico{ background:#ef4444; box-shadow:0 0 0 5px rgba(239,68,68,.12); }
+        .rango-leyenda-item strong{
+            display:block;
+            color:#0f172a;
+            font-size:13px;
+            font-weight:900;
+            margin-bottom:2px;
+        }
+        .rango-leyenda-item p{
+            margin:0;
+            color:#64748b;
+            font-size:12px;
+            font-weight:650;
+            line-height:1.45;
+        }
+        .rangos-parametros{
+            display:grid;
+            gap:10px;
+        }
+        .rango-parametro{
+            padding:11px 12px;
+            border-radius:14px;
+            border:1px solid #edf2f7;
+            background:#fff;
+        }
+        .rango-parametro h4{
+            margin:0 0 7px;
+            color:#0f172a;
+            font-size:13px;
+            font-weight:900;
+        }
+        .rango-parametro ul{
+            margin:0;
+            padding-left:17px;
+            color:#475569;
+            font-size:12px;
+            font-weight:700;
+            line-height:1.55;
+        }
 
         .sensor-list{
             display:flex;
@@ -390,9 +549,17 @@
                         <h2 class="estacion-title" th:text="${estacion.estacionCodigo}">EST-000</h2>
                         <p class="estacion-sub" th:text="${estacion.estacionDescripcion}">Nombre estación</p>
                     </div>
-                    <span class="estado-tag"
-                          th:classappend="${estacion.activa} ? ' estado-ok' : ' estado-off'"
-                          th:text="${estacion.activa} ? 'Operativa' : 'Inactiva'">Operativa</span>
+                    <div class="estacion-status-wrap">
+                        <span class="estado-tag"
+                              th:classappend="${estacion.activa} ? ' estado-ok' : ' estado-off'"
+                              th:text="${estacion.activa} ? 'Operativa' : 'Inactiva'">Operativa</span>
+                        <button type="button"
+                                class="btn-info-rangos"
+                                data-rangos-toggle
+                                aria-label="Ver guía de colores y rangos de sensores"
+                                aria-controls="rangos-sensores-popover"
+                                aria-expanded="false">i</button>
+                    </div>
                 </div>
 
                 <div class="sensor-list">
@@ -458,6 +625,113 @@
                 </div>
             </article>
         </section>
+
+        <div id="rangos-sensores-popover"
+             class="rangos-popover"
+             data-rangos-popover
+             role="dialog"
+             aria-modal="false"
+             aria-labelledby="rangos-popover-title"
+             hidden>
+            <div class="rangos-popover-head">
+                <div>
+                    <h3 id="rangos-popover-title" class="rangos-popover-title">Guía de colores y rangos</h3>
+                    <p class="rangos-popover-sub">Interpretación rápida del estado visual de los sensores.</p>
+                </div>
+                <button type="button" class="rangos-popover-close" data-rangos-close aria-label="Cerrar guía de rangos">×</button>
+            </div>
+            <div class="rangos-popover-body">
+                <div class="rangos-leyenda">
+                    <div class="rango-leyenda-item">
+                        <span class="rango-dot ideal" aria-hidden="true"></span>
+                        <p><strong>Verde</strong>Estado ideal para el cultivo. El valor se encuentra dentro del rango óptimo recomendado.</p>
+                    </div>
+                    <div class="rango-leyenda-item">
+                        <span class="rango-dot advertencia" aria-hidden="true"></span>
+                        <p><strong>Amarillo</strong>Estado de advertencia. El valor se está acercando a una zona de riesgo.</p>
+                    </div>
+                    <div class="rango-leyenda-item">
+                        <span class="rango-dot critico" aria-hidden="true"></span>
+                        <p><strong>Rojo</strong>Estado crítico. El valor puede afectar negativamente el cultivo.</p>
+                    </div>
+                </div>
+
+                <div class="rangos-parametros">
+                    <div class="rango-parametro">
+                        <h4>Temperatura Ambiental</h4>
+                        <ul>
+                            <li>Ideal: 18 °C – 30 °C</li>
+                            <li>Advertencia: 15 °C – 18 °C y 30 °C – 35 °C</li>
+                            <li>Crítico: menor a 15 °C o mayor a 35 °C</li>
+                        </ul>
+                    </div>
+                    <div class="rango-parametro">
+                        <h4>Humedad Ambiental</h4>
+                        <ul>
+                            <li>Ideal: 60 % – 85 %</li>
+                            <li>Advertencia: 50 % – 60 % y 85 % – 92 %</li>
+                            <li>Crítico: menor a 50 % o mayor a 92 %</li>
+                        </ul>
+                    </div>
+                    <div class="rango-parametro">
+                        <h4>Humedad del Suelo</h4>
+                        <ul>
+                            <li>Ideal: 45 % – 75 %</li>
+                            <li>Advertencia: 30 % – 45 % y 75 % – 85 %</li>
+                            <li>Crítico: menor a 30 % o mayor a 85 %</li>
+                        </ul>
+                    </div>
+                    <div class="rango-parametro">
+                        <h4>Intensidad de Luz Solar</h4>
+                        <ul>
+                            <li>Ideal: 10000 – 30000 Lux</li>
+                            <li>Advertencia: 5000 – 10000 Lux y 30000 – 40000 Lux</li>
+                            <li>Crítico: menor a 5000 Lux o mayor a 40000 Lux</li>
+                        </ul>
+                    </div>
+                    <div class="rango-parametro">
+                        <h4>pH del Suelo</h4>
+                        <ul>
+                            <li>Ideal: 5.5 – 7.0</li>
+                            <li>Advertencia: 5.0 – 5.5 y 7.0 – 7.5</li>
+                            <li>Crítico: menor a 5.0 o mayor a 7.5</li>
+                        </ul>
+                    </div>
+                    <div class="rango-parametro">
+                        <h4>Conductividad Eléctrica</h4>
+                        <ul>
+                            <li>Ideal: 0.5 – 2.0 dS/m</li>
+                            <li>Advertencia: 0.3 – 0.5 dS/m y 2.0 – 3.0 dS/m</li>
+                            <li>Crítico: menor a 0.3 dS/m o mayor a 3.0 dS/m</li>
+                        </ul>
+                    </div>
+                    <div class="rango-parametro">
+                        <h4>Nitrógeno (N)</h4>
+                        <ul>
+                            <li>Ideal: 100 – 200 mg/kg</li>
+                            <li>Advertencia: 50 – 100 mg/kg y 200 – 280 mg/kg</li>
+                            <li>Crítico: menor a 50 mg/kg o mayor a 280 mg/kg</li>
+                        </ul>
+                    </div>
+                    <div class="rango-parametro">
+                        <h4>Fósforo (P)</h4>
+                        <ul>
+                            <li>Ideal: 25 – 80 mg/kg</li>
+                            <li>Advertencia: 10 – 25 mg/kg y 80 – 120 mg/kg</li>
+                            <li>Crítico: menor a 10 mg/kg o mayor a 120 mg/kg</li>
+                        </ul>
+                    </div>
+                    <div class="rango-parametro">
+                        <h4>Potasio (K)</h4>
+                        <ul>
+                            <li>Ideal: 120 – 300 mg/kg</li>
+                            <li>Advertencia: 80 – 120 mg/kg y 300 – 400 mg/kg</li>
+                            <li>Crítico: menor a 80 mg/kg o mayor a 400 mg/kg</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
 
     </main>
 </div>

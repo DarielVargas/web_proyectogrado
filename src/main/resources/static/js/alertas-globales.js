@@ -245,7 +245,10 @@
             <h2 class="estacion-title">${escapeHtml(estacion.estacionCodigo)}</h2>
             <p class="estacion-sub">${escapeHtml(estacion.estacionDescripcion)}</p>
           </div>
-          <span class="estado-tag ${estacion.activa ? 'estado-ok' : 'estado-off'}">${estacion.activa ? 'Operativa' : 'Inactiva'}</span>
+          <div class="estacion-status-wrap">
+            <span class="estado-tag ${estacion.activa ? 'estado-ok' : 'estado-off'}">${estacion.activa ? 'Operativa' : 'Inactiva'}</span>
+            <button type="button" class="btn-info-rangos" data-rangos-toggle aria-label="Ver guía de colores y rangos de sensores" aria-controls="rangos-sensores-popover" aria-expanded="false">i</button>
+          </div>
         </div>
         <div class="sensor-list">${(estacion.sensores || []).map(renderSensor).join('')}</div>
       </article>`;
@@ -358,6 +361,127 @@
     }
   }
 
+  function obtenerPopoverRangos() {
+    return document.querySelector('[data-rangos-popover]');
+  }
+
+  function obtenerBotonRangosActivo() {
+    return document.querySelector('[data-rangos-toggle].is-open');
+  }
+
+  function posicionarPopoverRangos(button, popover) {
+    const margen = 14;
+    const rect = button.getBoundingClientRect();
+    const ancho = popover.offsetWidth || 420;
+    const alto = popover.offsetHeight || 520;
+    const topPreferido = rect.bottom + 10;
+    const espacioInferior = window.innerHeight - topPreferido - margen;
+    const top = espacioInferior < Math.min(alto, 360)
+      ? Math.max(margen, rect.top - alto - 10)
+      : topPreferido;
+    const left = Math.min(
+      Math.max(margen, rect.right - ancho),
+      window.innerWidth - ancho - margen
+    );
+
+    popover.style.top = `${top}px`;
+    popover.style.left = `${left}px`;
+  }
+
+  function cerrarPopoverRangos() {
+    const popover = obtenerPopoverRangos();
+    if (!popover || popover.hidden) {
+      return;
+    }
+
+    document.querySelectorAll('[data-rangos-toggle].is-open').forEach((button) => {
+      button.classList.remove('is-open');
+      button.setAttribute('aria-expanded', 'false');
+    });
+    popover.classList.remove('is-open');
+
+    window.setTimeout(() => {
+      if (!popover.classList.contains('is-open')) {
+        popover.hidden = true;
+      }
+    }, 180);
+  }
+
+  function abrirPopoverRangos(button) {
+    const popover = obtenerPopoverRangos();
+    if (!button || !popover) {
+      return;
+    }
+
+    document.querySelectorAll('[data-rangos-toggle].is-open').forEach((otroBoton) => {
+      if (otroBoton !== button) {
+        otroBoton.classList.remove('is-open');
+        otroBoton.setAttribute('aria-expanded', 'false');
+      }
+    });
+
+    popover.hidden = false;
+    posicionarPopoverRangos(button, popover);
+    window.requestAnimationFrame(() => {
+      popover.classList.add('is-open');
+      button.classList.add('is-open');
+      button.setAttribute('aria-expanded', 'true');
+    });
+  }
+
+  function alternarPopoverRangos(button) {
+    const popover = obtenerPopoverRangos();
+    if (!popover) {
+      return;
+    }
+
+    if (!popover.hidden && button.classList.contains('is-open')) {
+      cerrarPopoverRangos();
+      return;
+    }
+
+    abrirPopoverRangos(button);
+  }
+
+  function configurarPopoverRangos() {
+    document.addEventListener('click', (event) => {
+      const toggle = event.target.closest('[data-rangos-toggle]');
+      if (toggle) {
+        event.preventDefault();
+        event.stopPropagation();
+        alternarPopoverRangos(toggle);
+        return;
+      }
+
+      if (event.target.closest('[data-rangos-close]')) {
+        event.preventDefault();
+        cerrarPopoverRangos();
+        return;
+      }
+
+      const popover = obtenerPopoverRangos();
+      if (popover && !popover.hidden && !event.target.closest('[data-rangos-popover]')) {
+        cerrarPopoverRangos();
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape') {
+        cerrarPopoverRangos();
+      }
+    });
+
+    ['resize', 'scroll'].forEach((evento) => {
+      window.addEventListener(evento, () => {
+        const popover = obtenerPopoverRangos();
+        const button = obtenerBotonRangosActivo();
+        if (popover && button && !popover.hidden) {
+          posicionarPopoverRangos(button, popover);
+        }
+      }, { passive: true });
+    });
+  }
+
   function conectarWebSocket() {
     if (!('WebSocket' in window)) {
       return;
@@ -418,6 +542,7 @@
 
   document.addEventListener('DOMContentLoaded', () => {
     ensureContainer();
+    configurarPopoverRangos();
     cargarAlertas();
     cargarEstadosEstacion();
     cargarDashboard();
