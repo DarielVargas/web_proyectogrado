@@ -198,26 +198,6 @@
             border-color:#bbf7d0;
             color:#166534;
         }
-        .progress-track{
-            margin-top:8px;
-            height:7px;
-            border-radius:999px;
-            background:#e8eef6;
-            overflow:hidden;
-        }
-        .progress-fill{
-            height:100%;
-            border-radius:999px;
-            background: linear-gradient(90deg, #22c55e, #16a34a);
-        }
-        .progress-fill.luz{
-            background: linear-gradient(90deg, #facc15, #f59e0b);
-        }
-        .progress-fill{
-            width:0;
-            transition: width 1.2s cubic-bezier(.22,1,.36,1);
-        }
-
 
         .alert-exito{
             margin:0 0 14px;
@@ -343,10 +323,7 @@
                 <div class="sensor-row"
                      th:each="sensor : ${sensores}"
                      th:with="valorNumero=${sensor.valor != '--' ? #strings.substringBefore(sensor.valor, ' ') : '--'},
-                                  unidad=${sensor.valor != '--' and #strings.contains(sensor.valor, ' ') ? #strings.substringAfter(sensor.valor, ' ') : ''},
-                                  rawValor=${sensor.valor != '--' ? #strings.replace(valorNumero, ',', '.') : '0'},
-                                  baseNumero=${T(java.lang.Double).parseDouble(rawValor)},
-                                  progreso=${sensor.tipoSensor == 'Intensidad de Luz Solar' ? T(java.lang.Math).min(100d, T(java.lang.Math).max(0d, baseNumero / 10d)) : T(java.lang.Math).min(100d, T(java.lang.Math).max(0d, baseNumero))}">
+                                  unidad=${sensor.valor != '--' and #strings.contains(sensor.valor, ' ') ? #strings.substringAfter(sensor.valor, ' ') : ''}">
                     <div class="sensor-main">
                         <div class="sensor-info">
                             <span class="sensor-name" th:text="${sensor.tipoSensor}">Tipo sensor</span>
@@ -368,14 +345,6 @@
                                         th:classappend="${sensor.activo} ? ' on' : ' off'"
                                         th:text="${sensor.activo} ? 'Desactivar' : 'Activar'">Desactivar</button>
                             </form>
-                        </div>
-                    </div>
-
-                    <div class="progress-track"
-                         th:if="${sensor.tipoSensor == 'Humedad del Suelo' or sensor.tipoSensor == 'Intensidad de Luz Solar'}">
-                        <div class="progress-fill"
-                             th:classappend="${sensor.tipoSensor == 'Intensidad de Luz Solar'} ? ' luz' : ''"
-                             th:style="|--target-width:${#numbers.formatDecimal(progreso, 1, 0)}%|">
                         </div>
                     </div>
                 </div>
@@ -407,14 +376,6 @@
         const animatedItems = document.querySelectorAll('.animate-item');
         animatedItems.forEach((el, index) => {
             setTimeout(() => el.classList.add('is-visible'), 70 * index);
-        });
-
-        const progressBars = document.querySelectorAll('.progress-fill');
-        requestAnimationFrame(() => {
-            progressBars.forEach((bar) => {
-                const target = bar.style.getPropertyValue('--target-width') || '0%';
-                bar.style.width = target;
-            });
         });
 
         const confirmacionInput = document.getElementById('confirmacionInput');

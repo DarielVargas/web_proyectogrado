@@ -448,26 +448,6 @@
             color:#64748b;
             font-weight:700;
         }
-        .progress-track{
-            margin-top:8px;
-            height:7px;
-            border-radius:999px;
-            background:#e8eef6;
-            overflow:hidden;
-        }
-        .progress-fill{
-            height:100%;
-            border-radius:999px;
-            background: linear-gradient(90deg, #22c55e, #16a34a);
-        }
-        .progress-fill.luz{
-            background: linear-gradient(90deg, #facc15, #f59e0b);
-        }
-        .progress-fill{
-            width:0;
-            transition: width 1.2s cubic-bezier(.22,1,.36,1);
-        }
-
         .animate-item{
             opacity:0;
             transform: translateY(18px);
@@ -594,8 +574,7 @@
                                        ((sensor.tipoSensor == 'Conductividad Electrica' or sensor.tipoSensor == 'Conductividad Eléctrica') and baseNumero >= 0.5d and baseNumero <= 2.0d) or
                                        ((sensor.tipoSensor == 'Nitrogeno (N)' or sensor.tipoSensor == 'Nitrógeno (N)') and baseNumero >= 100d and baseNumero <= 200d) or
                                        ((sensor.tipoSensor == 'Fosforo (P)' or sensor.tipoSensor == 'Fósforo (P)') and baseNumero >= 25d and baseNumero <= 80d) or
-                                       (sensor.tipoSensor == 'Potasio (K)' and baseNumero >= 120d and baseNumero <= 300d) ? 'estado-ideal' : 'estado-advertencia'))},
-                                  progreso=${sensor.tipoSensor == 'Intensidad de Luz Solar' ? T(java.lang.Math).min(100d, T(java.lang.Math).max(0d, baseNumero / 10d)) : T(java.lang.Math).min(100d, T(java.lang.Math).max(0d, baseNumero))}"
+                                       (sensor.tipoSensor == 'Potasio (K)' and baseNumero >= 120d and baseNumero <= 300d) ? 'estado-ideal' : 'estado-advertencia'))}"
                          th:attr="data-sensor-tipo=${sensor.tipoSensor},data-sensor-valor=${rawValor}">
                         <div class="sensor-main">
                             <div class="sensor-info">
@@ -617,14 +596,6 @@
                             <div class="sensor-value-wrap">
                                 <span class="sensor-value" th:text="${valorNumero}">--</span>
                                 <span class="sensor-unit" th:if="${unidad != ''}" th:text="${unidad}">%</span>
-                            </div>
-                        </div>
-
-                        <div class="progress-track"
-                             th:if="${sensor.tipoSensor == 'Humedad del Suelo' or sensor.tipoSensor == 'Intensidad de Luz Solar'}">
-                            <div class="progress-fill"
-                                 th:classappend="${sensor.tipoSensor == 'Intensidad de Luz Solar'} ? ' luz' : ''"
-                                 th:style="|--target-width:${#numbers.formatDecimal(progreso, 1, 0)}%|">
                             </div>
                         </div>
                     </div>
@@ -746,14 +717,6 @@
         const animatedItems = document.querySelectorAll('.animate-item');
         animatedItems.forEach((el, index) => {
             setTimeout(() => el.classList.add('is-visible'), 70 * index);
-        });
-
-        const progressBars = document.querySelectorAll('.progress-fill');
-        requestAnimationFrame(() => {
-            progressBars.forEach((bar) => {
-                const target = bar.style.getPropertyValue('--target-width') || '0%';
-                bar.style.width = target;
-            });
         });
 
         const countUpElements = document.querySelectorAll('.card-value, .sensor-value');
