@@ -6,6 +6,7 @@ import com.dv.agro_web.entidades.TipoSensor;
 import com.dv.agro_web.repositorios.EstacionRepository;
 import com.dv.agro_web.repositorios.SensorRepository;
 import com.dv.agro_web.repositorios.TipoSensorRepository;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -29,6 +30,10 @@ public class EstacionService {
 
     public List<Estacion> obtenerEstacionesActivas() {
         return estacionRepository.findAllActivas();
+    }
+
+    public List<Estacion> obtenerEstacionesRegistradas() {
+        return estacionRepository.findAll(Sort.by("id"));
     }
 
     public Optional<Estacion> obtenerEstacionActivaPorId(Long id) {
