@@ -1,7 +1,10 @@
 <!DOCTYPE html>
 <html lang="es" xmlns:th="http://www.thymeleaf.org">
 <body>
-<aside class="sidebar" th:fragment="appSidebar(activeMenu)">
+<aside class="sidebar" th:fragment="appSidebar(activeMenu)" data-sidebar>
+    <button class="sidebar-toggle" type="button" aria-label="Contraer barra lateral" aria-expanded="true" data-sidebar-toggle>
+        <span class="sidebar-toggle-icon" aria-hidden="true">←</span>
+    </button>
     <div class="brand">
         <span class="brand-icon">☁️</span>
         <span class="brand-title">AGRO IOT</span>
@@ -38,6 +41,35 @@
             <button type="submit" class="btn btn-logout" style="width:100%;">Cerrar Sesión</button>
         </form>
     </div>
+    <script>
+        (function () {
+            const storageKey = 'agroIoT.sidebarCollapsed';
+            const sidebar = document.querySelector('[data-sidebar]');
+            const layout = sidebar ? sidebar.closest('.layout') : null;
+            const toggle = sidebar ? sidebar.querySelector('[data-sidebar-toggle]') : null;
+            const icon = toggle ? toggle.querySelector('.sidebar-toggle-icon') : null;
+
+            if (!sidebar || !layout || !toggle || !icon) {
+                return;
+            }
+
+            const setCollapsed = function (collapsed) {
+                sidebar.classList.toggle('is-collapsed', collapsed);
+                layout.classList.toggle('sidebar-collapsed', collapsed);
+                toggle.setAttribute('aria-expanded', String(!collapsed));
+                toggle.setAttribute('aria-label', collapsed ? 'Expandir barra lateral' : 'Contraer barra lateral');
+                icon.textContent = collapsed ? '→' : '←';
+            };
+
+            setCollapsed(localStorage.getItem(storageKey) === 'true');
+
+            toggle.addEventListener('click', function () {
+                const collapsed = !sidebar.classList.contains('is-collapsed');
+                setCollapsed(collapsed);
+                localStorage.setItem(storageKey, String(collapsed));
+            });
+        }());
+    </script>
 </aside>
 </body>
 </html>

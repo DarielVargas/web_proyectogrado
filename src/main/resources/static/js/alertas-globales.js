@@ -192,27 +192,8 @@
     return 'estado-advertencia';
   }
 
-  function calcularProgreso(sensor) {
-    if (!sensor || !sensor.valor) {
-      return 0;
-    }
-
-    const baseNumero = obtenerNumeroSensor(sensor.valor);
-    if (baseNumero == null) {
-      return 0;
-    }
-
-    if (sensor.tipoSensor === 'Intensidad de Luz Solar') {
-      return Math.min(100, Math.max(0, baseNumero / 10));
-    }
-
-    return Math.min(100, Math.max(0, baseNumero));
-  }
-
   function renderSensor(sensor) {
     const { numero, unidad } = parseValorSensor(sensor.valor);
-    const progreso = calcularProgreso(sensor);
-    const mostrarBarra = sensor.tipoSensor === 'Humedad del Suelo' || sensor.tipoSensor === 'Intensidad de Luz Solar';
     const estadoSensor = calcularEstadoSensor(sensor.tipoSensor, sensor.valor);
     const clasesSensor = ['sensor-row', estadoSensor, sensor.activo ? '' : 'inactivo'].filter(Boolean).join(' ');
     const rawValor = numero === '--' ? '--' : String(numero).replace(',', '.');
@@ -230,10 +211,6 @@
             ${unidad ? `<span class="sensor-unit">${escapeHtml(unidad)}</span>` : ''}
           </div>
         </div>
-        ${mostrarBarra ? `
-          <div class="progress-track">
-            <div class="progress-fill${sensor.tipoSensor === 'Intensidad de Luz Solar' ? ' luz' : ''}" style="--target-width:${progreso.toFixed(0)}%; width:${progreso.toFixed(0)}%"></div>
-          </div>` : ''}
       </div>`;
   }
 
