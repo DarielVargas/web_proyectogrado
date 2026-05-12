@@ -2,10 +2,12 @@
   const DURACION_MS = 10000;
   const POLL_MS = 12000;
   const STORAGE_KEY_ESTADOS = 'alertas-globales-estados-estacion';
+  const STORAGE_KEY_SENSOR_ESTADOS = 'alertas-globales-estados-sensor';
   const vistos = new Set();
   const ultimoEstadoNotificado = new Map();
   let websocket = null;
   let reconnectTimer = null;
+  let estadosSensoresFallback = {};
 
   function ensureContainer() {
     let container = document.getElementById('alertas-globales-container');
@@ -13,6 +15,17 @@
       container = document.createElement('div');
       container.id = 'alertas-globales-container';
       container.className = 'alertas-globales-container';
+      document.body.appendChild(container);
+    }
+    return container;
+  }
+
+  function ensureAutomaticasContainer() {
+    let container = document.getElementById('alertas-automaticas-container');
+    if (!container) {
+      container = document.createElement('div');
+      container.id = 'alertas-automaticas-container';
+      container.className = 'alertas-automaticas-container';
       document.body.appendChild(container);
     }
     return container;
@@ -32,19 +45,57 @@
       });
   }
 
-  function mostrarToast({ mensaje, idUnico, variante = 'alerta' }) {
-    if (!mensaje || !idUnico || vistos.has(idUnico)) {
+  function mostrarToast({ mensaje, idUnico, variante = 'alerta', titulo, detalle, valor, icono, estado }) {
+    if ((!mensaje && !titulo && !detalle) || !idUnico || vistos.has(idUnico)) {
       return;
     }
     vistos.add(idUnico);
 
-    const container = ensureContainer();
+    const esAutomatica = variante === 'sensor-automatico';
+    const container = esAutomatica ? ensureAutomaticasContainer() : ensureContainer();
     const toast = document.createElement('div');
     toast.className = 'alerta-global-toast';
     if (variante === 'estado-estacion') {
       toast.classList.add('estado-estacion');
     }
-    toast.textContent = mensaje;
+
+    if (esAutomatica) {
+      toast.classList.add('sensor-automatico');
+      if (estado) {
+        toast.classList.add(estado);
+      }
+
+      const iconoEl = document.createElement('span');
+      iconoEl.className = 'alerta-auto-icon';
+      iconoEl.textContent = icono || '•';
+
+      const contenidoEl = document.createElement('div');
+      contenidoEl.className = 'alerta-auto-content';
+
+      const tituloEl = document.createElement('strong');
+      tituloEl.className = 'alerta-auto-title';
+      tituloEl.textContent = titulo || 'Cambio de estado detectado';
+      contenidoEl.appendChild(tituloEl);
+
+      if (detalle) {
+        const detalleEl = document.createElement('span');
+        detalleEl.className = 'alerta-auto-detail';
+        detalleEl.textContent = detalle;
+        contenidoEl.appendChild(detalleEl);
+      }
+
+      if (valor) {
+        const valorEl = document.createElement('span');
+        valorEl.className = 'alerta-auto-value';
+        valorEl.textContent = `Valor actual: ${valor}`;
+        contenidoEl.appendChild(valorEl);
+      }
+
+      toast.append(iconoEl, contenidoEl);
+    } else {
+      toast.textContent = mensaje;
+    }
+
     container.appendChild(toast);
 
     setTimeout(() => {
@@ -69,6 +120,26 @@
       window.sessionStorage.setItem(STORAGE_KEY_ESTADOS, JSON.stringify(estados));
     } catch (_) {
       // Ignorar si el storage no está disponible.
+    }
+  }
+
+  function obtenerEstadosSensoresGuardados() {
+    try {
+      const raw = window.sessionStorage.getItem(STORAGE_KEY_SENSOR_ESTADOS);
+      if (!raw) return estadosSensoresFallback;
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : estadosSensoresFallback;
+    } catch (_) {
+      return estadosSensoresFallback;
+    }
+  }
+
+  function guardarEstadosSensores(estados) {
+    estadosSensoresFallback = estados;
+    try {
+      window.sessionStorage.setItem(STORAGE_KEY_SENSOR_ESTADOS, JSON.stringify(estados));
+    } catch (_) {
+      // Mantener fallback en memoria si el storage no está disponible.
     }
   }
 
@@ -192,6 +263,108 @@
     return 'estado-advertencia';
   }
 
+  function obtenerEtiquetaEstado(estadoSensor) {
+    switch (estadoSensor) {
+      case 'estado-ideal': return 'Ideal';
+      case 'estado-advertencia': return 'Advertencia';
+      case 'estado-critico': return 'Crítico';
+      default: return '';
+    }
+  }
+
+  function construirClaveSensor(estacionCodigo, tipoSensor) {
+    return `${estacionCodigo || 'sin-estacion'}::${tipoSensor || 'sin-sensor'}`;
+  }
+
+  function construirAlertaCambioSensor({ estacionCodigo, tipoSensor, valor, estadoNuevo, estadoAnterior }) {
+    const etiqueta = obtenerEtiquetaEstado(estadoNuevo);
+    if (!etiqueta) {
+      return null;
+    }
+
+    const config = {
+      'estado-ideal': {
+        icono: '🟢',
+        titulo: 'Sensor estabilizado',
+        detalle: `${tipoSensor} volvió a estado Ideal`
+      },
+      'estado-advertencia': {
+        icono: '🟡',
+        titulo: 'Cambio de estado detectado',
+        detalle: `${tipoSensor} pasó a estado de Advertencia`
+      },
+      'estado-critico': {
+        icono: '🔴',
+        titulo: 'Cambio crítico detectado',
+        detalle: `${tipoSensor} pasó a estado Crítico`
+      }
+    }[estadoNuevo];
+
+    if (!config) {
+      return null;
+    }
+
+    return {
+      ...config,
+      valor,
+      estado: estadoNuevo.replace('estado-', 'auto-'),
+      idUnico: `sensor-auto-${construirClaveSensor(estacionCodigo, tipoSensor)}-${estadoAnterior}-${estadoNuevo}-${Date.now()}`
+    };
+  }
+
+  function detectarCambiosEstadoSensores(snapshot) {
+    if (!snapshot || !Array.isArray(snapshot.estaciones)) {
+      return;
+    }
+
+    const estadosPrevios = obtenerEstadosSensoresGuardados() || {};
+    const estadosActuales = {};
+
+    snapshot.estaciones.forEach((estacion) => {
+      const estacionCodigo = estacion?.estacionCodigo || '';
+      (estacion?.sensores || []).forEach((sensor) => {
+        if (!sensor || sensor.activo === false) {
+          return;
+        }
+
+        const estadoNuevo = calcularEstadoSensor(sensor.tipoSensor, sensor.valor);
+        if (!estadoNuevo) {
+          return;
+        }
+
+        const clave = construirClaveSensor(estacionCodigo, sensor.tipoSensor);
+        const estadoAnterior = estadosPrevios[clave]?.estado;
+        estadosActuales[clave] = {
+          estado: estadoNuevo,
+          valor: sensor.valor,
+          tipoSensor: sensor.tipoSensor,
+          estacionCodigo
+        };
+
+        if (!estadoAnterior || estadoAnterior === estadoNuevo) {
+          return;
+        }
+
+        const alerta = construirAlertaCambioSensor({
+          estacionCodigo,
+          tipoSensor: sensor.tipoSensor,
+          valor: sensor.valor,
+          estadoNuevo,
+          estadoAnterior
+        });
+
+        if (alerta) {
+          mostrarToast({
+            ...alerta,
+            variante: 'sensor-automatico'
+          });
+        }
+      });
+    });
+
+    guardarEstadosSensores(estadosActuales);
+  }
+
   function calcularProgreso(sensor) {
     if (!sensor || !sensor.valor) {
       return 0;
@@ -269,6 +442,7 @@
     if (tempEl) tempEl.textContent = snapshot.tempPromedioTxt || '--';
     if (humEl) humEl.textContent = snapshot.humPromedioTxt || '--';
     if (alertasEl) alertasEl.textContent = String(snapshot.totalAlertasConfiguradas ?? 0);
+    detectarCambiosEstadoSensores(snapshot);
     if (estacionesEl && Array.isArray(snapshot.estaciones)) {
       estacionesEl.innerHTML = snapshot.estaciones.map(renderEstacionDashboard).join('');
     }
