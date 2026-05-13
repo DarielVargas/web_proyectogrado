@@ -10,6 +10,7 @@ import org.springframework.ui.Model;
 import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -17,6 +18,8 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.Locale;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 @Controller
 public class InformacionCultivoController {
@@ -32,9 +35,10 @@ public class InformacionCultivoController {
 
     @GetMapping("/informacion-cultivo")
     public String verInformacionCultivo(Model model) {
-        InformacionCultivoForm form = informacionCultivoService.obtenerFormularioActual();
-        model.addAttribute("informacionCultivoForm", form);
-        agregarAtributosVista(model, form);
+        if (!model.containsAttribute("informacionCultivoForm")) {
+            model.addAttribute("informacionCultivoForm", new InformacionCultivoForm());
+        }
+        agregarAtributosVista(model);
         return "informacion-cultivo";
     }
 
@@ -44,15 +48,19 @@ public class InformacionCultivoController {
                                             Model model,
                                             RedirectAttributes redirectAttributes) {
         if (bindingResult.hasErrors()) {
-            agregarAtributosVista(model, form);
+            model.addAttribute("modalAbierto", form.getId() == null ? "nuevo" : "editar-" + form.getId());
+            model.addAttribute("mensajeFormulario", "Revisa los campos obligatorios antes de guardar.");
+            agregarAtributosVista(model);
             return "informacion-cultivo";
         }
 
         try {
             informacionCultivoService.guardar(form);
         } catch (IllegalArgumentException ex) {
-            bindingResult.rejectValue("estacionId", "estacion.invalida", ex.getMessage());
-            agregarAtributosVista(model, form);
+            bindingResult.reject("cultivo.invalido", ex.getMessage());
+            model.addAttribute("modalAbierto", form.getId() == null ? "nuevo" : "editar-" + form.getId());
+            model.addAttribute("mensajeFormulario", ex.getMessage());
+            agregarAtributosVista(model);
             return "informacion-cultivo";
         }
 
@@ -60,21 +68,38 @@ public class InformacionCultivoController {
         return "redirect:/informacion-cultivo";
     }
 
-    private void agregarAtributosVista(Model model, InformacionCultivoForm form) {
-        LocalDate fechaInicio = form.getFechaInicio();
-        LocalDate fechaCosecha = form.getFechaCosechaEstimada();
-        if (fechaCosecha == null && fechaInicio != null) {
-            fechaCosecha = fechaInicio.plusMonths(10);
-            form.setFechaCosechaEstimada(fechaCosecha);
+    @PostMapping("/informacion-cultivo/{id}/supervision")
+    public String registrarSupervision(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            informacionCultivoService.registrarSupervision(id);
+            redirectAttributes.addFlashAttribute("mensajeExito", "Última supervisión registrada correctamente.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("mensajeError", ex.getMessage());
         }
+        return "redirect:/informacion-cultivo";
+    }
 
-        LocalDateTime ultimaSupervision = informacionCultivoService.obtenerInformacionPrincipal()
-                .map(InformacionCultivo::getUltimaSupervision)
-                .orElse(null);
+    @PostMapping("/informacion-cultivo/{id}/eliminar")
+    public String eliminarCultivo(@PathVariable Long id, RedirectAttributes redirectAttributes) {
+        try {
+            informacionCultivoService.eliminar(id);
+            redirectAttributes.addFlashAttribute("mensajeExito", "Cultivo eliminado correctamente.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("mensajeError", ex.getMessage());
+        }
+        return "redirect:/informacion-cultivo";
+    }
 
+    private void agregarAtributosVista(Model model) {
+        var cultivos = informacionCultivoService.obtenerCultivos();
+        Map<Long, String> supervisionesTexto = cultivos.stream()
+                .collect(Collectors.toMap(InformacionCultivo::getId, cultivo -> formatearUltimaSupervision(cultivo.getUltimaSupervision())));
+
+        model.addAttribute("cultivos", cultivos);
+        model.addAttribute("supervisionesTexto", supervisionesTexto);
         model.addAttribute("estacionesCultivo", estacionService.obtenerEstacionesRegistradas());
-        model.addAttribute("lotesCultivo", informacionCultivoService.obtenerLotesDisponibles(form.getLoteArea()));
-        model.addAttribute("ultimaSupervisionTexto", formatearUltimaSupervision(ultimaSupervision));
+        model.addAttribute("lotesCultivo", informacionCultivoService.obtenerLotesDisponibles());
+        model.addAttribute("fechaActual", LocalDate.now());
     }
 
     private String formatearUltimaSupervision(LocalDateTime fecha) {

@@ -15,14 +15,7 @@ import java.util.Optional;
 @Service
 public class InformacionCultivoService {
 
-    private static final List<String> LOTES_DISPONIBLES = List.of(
-            "Lote Norte",
-            "Lote Sur",
-            "Lote Oriente",
-            "Lote Occidente",
-            "Invernadero Principal",
-            "Parcela Experimental"
-    );
+    private static final List<String> LOTES_DISPONIBLES = List.of("Norte", "Sur", "Este", "Oeste");
 
     private final InformacionCultivoRepository informacionCultivoRepository;
     private final EstacionRepository estacionRepository;
@@ -39,6 +32,11 @@ public class InformacionCultivoService {
     }
 
     @Transactional(readOnly = true)
+    public List<InformacionCultivo> obtenerCultivos() {
+        return informacionCultivoRepository.findAllByOrderByIdDesc();
+    }
+
+    @Transactional(readOnly = true)
     public InformacionCultivoForm obtenerFormularioActual() {
         return obtenerInformacionPrincipal()
                 .map(this::aFormulario)
@@ -47,18 +45,22 @@ public class InformacionCultivoService {
 
     @Transactional(readOnly = true)
     public List<String> obtenerLotesDisponibles(String loteActual) {
-        if (loteActual == null || loteActual.isBlank() || LOTES_DISPONIBLES.contains(loteActual)) {
-            return LOTES_DISPONIBLES;
-        }
+        return LOTES_DISPONIBLES;
+    }
 
-        return java.util.stream.Stream.concat(java.util.stream.Stream.of(loteActual), LOTES_DISPONIBLES.stream())
-                .toList();
+    @Transactional(readOnly = true)
+    public List<String> obtenerLotesDisponibles() {
+        return LOTES_DISPONIBLES;
     }
 
     @Transactional
     public InformacionCultivo guardar(InformacionCultivoForm form) {
-        InformacionCultivo informacion = obtenerInformacionPrincipal()
-                .orElseGet(InformacionCultivo::new);
+        validarLote(form.getLoteArea());
+
+        InformacionCultivo informacion = form.getId() != null
+                ? informacionCultivoRepository.findById(form.getId())
+                    .orElseThrow(() -> new IllegalArgumentException("El cultivo seleccionado no existe"))
+                : new InformacionCultivo();
 
         Estacion estacion = estacionRepository.findById(form.getEstacionId())
                 .orElseThrow(() -> new IllegalArgumentException("La estación seleccionada no existe"));
@@ -72,9 +74,27 @@ public class InformacionCultivoService {
                 form.getFechaCosechaEstimada() != null ? form.getFechaCosechaEstimada() : form.getFechaInicio().plusMonths(10)
         );
         informacion.setObservaciones(form.getObservaciones());
-        informacion.setUltimaSupervision(LocalDateTime.now());
+        if (informacion.getUltimaSupervision() == null) {
+            informacion.setUltimaSupervision(LocalDateTime.now());
+        }
 
         return informacionCultivoRepository.save(informacion);
+    }
+
+    @Transactional
+    public void registrarSupervision(Long id) {
+        InformacionCultivo informacion = informacionCultivoRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("El cultivo seleccionado no existe"));
+        informacion.setUltimaSupervision(LocalDateTime.now());
+        informacionCultivoRepository.save(informacion);
+    }
+
+    @Transactional
+    public void eliminar(Long id) {
+        if (!informacionCultivoRepository.existsById(id)) {
+            throw new IllegalArgumentException("El cultivo seleccionado no existe");
+        }
+        informacionCultivoRepository.deleteById(id);
     }
 
     public InformacionCultivoForm aFormulario(InformacionCultivo informacion) {
@@ -88,5 +108,11 @@ public class InformacionCultivoService {
         form.setFechaCosechaEstimada(informacion.getFechaCosechaEstimada());
         form.setObservaciones(informacion.getObservaciones());
         return form;
+    }
+
+    private void validarLote(String loteArea) {
+        if (!LOTES_DISPONIBLES.contains(loteArea)) {
+            throw new IllegalArgumentException("Seleccione un lote válido: Norte, Sur, Este u Oeste");
+        }
     }
 }
