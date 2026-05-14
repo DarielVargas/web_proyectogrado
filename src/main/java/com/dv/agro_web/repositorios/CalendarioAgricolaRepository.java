@@ -1,0 +1,24 @@
+package com.dv.agro_web.repositorios;
+
+import com.dv.agro_web.entidades.CalendarioAgricola;
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+public interface CalendarioAgricolaRepository extends JpaRepository<CalendarioAgricola, Long> {
+
+    List<CalendarioAgricola> findAllByOrderByFechaHoraAscIdAsc();
+
+    List<CalendarioAgricola> findAllByCompletadaFalseAndFechaHoraGreaterThanEqualOrderByFechaHoraAscIdAsc(LocalDateTime fechaHora);
+
+    List<CalendarioAgricola> findAllByCompletadaFalseAndFechaHoraBeforeOrderByFechaHoraAscIdAsc(LocalDateTime fechaHora);
+
+    List<CalendarioAgricola> findAllByCompletadaTrueOrderByFechaCompletadaDescFechaHoraDescIdDesc();
+
+    long countByCompletadaTrue();
+
+    long countByCompletadaFalseAndFechaHoraGreaterThanEqual(LocalDateTime fechaHora);
+
+    long countByCompletadaFalseAndFechaHoraBefore(LocalDateTime fechaHora);
+}

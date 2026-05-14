@@ -110,18 +110,18 @@
                     </div>
                 </div>
 
-                <button class="btn btn-generate" type="submit">Generar Reporte</button>
+                <button class="btn btn-generate" type="submit">Generar reporte</button>
             </form>
         </section>
 
         <section class="card animate-item">
-            <h2 class="card-title">Reportes Recientes</h2>
+            <h2 class="card-title">Reportes recientes</h2>
             <p class="card-sub">Últimos reportes guardados en el sistema. Haga clic en un reporte para abrir su vista en una página independiente.</p>
 
             <div class="recent-list" th:if="${!#lists.isEmpty(reportesRecientes)}">
                 <article class="recent-item" th:each="r : ${reportesRecientes}">
                     <a class="recent-link" th:href="@{/reportes/{id}(id=${r.idReporte})}">
-                        <p class="recent-name" th:text="${r.nombreReporte}">Reporte Diario - 2026-03-07</p>
+                        <p class="recent-name" th:text="${r.nombreReporte}">Reporte diario - 2026-03-07</p>
                         <p class="recent-meta"
                            th:text="|Estación: ${r.estacionCodigo != null ? r.estacionCodigo : 'N/A'}${r.estacionDescripcion != null ? ' - ' + r.estacionDescripcion : ''} · Rango: ${r.fechaInicio} a ${r.fechaFin} · Generado: ${r.fechaGenerado}|">
                             Estación y fechas

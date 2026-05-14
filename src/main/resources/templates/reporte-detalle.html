@@ -100,14 +100,14 @@
                             th:each="grupo,iter : ${detalleAgrupadoPorSensor}"
                             th:classappend="${iter.first} ? ' active' : ''"
                             th:attr="data-tab-target='sensor-panel-' + ${iter.index},data-chart-labels=${grupo.chartLabelsCsv},data-chart-values=${grupo.chartValuesCsv},data-chart-unit=${grupo.chartUnidad},data-chart-sensor=${grupo.tipoSensor}"
-                            th:text="${grupo.tipoSensor}">Temperatura Ambiental</button>
+                            th:text="${grupo.tipoSensor}">Temperatura ambiental</button>
                 </div>
 
                 <section class="sensor-block sensor-panel"
                          th:each="grupo,iter : ${detalleAgrupadoPorSensor}"
                          th:id="|sensor-panel-${iter.index}|"
                          th:classappend="${iter.first} ? ' active' : ''">
-                    <h3 class="sensor-title" th:text="${grupo.tipoSensor}">Temperatura Ambiental</h3>
+                    <h3 class="sensor-title" th:text="${grupo.tipoSensor}">Temperatura ambiental</h3>
 
                     <table class="results-table">
                         <thead>
