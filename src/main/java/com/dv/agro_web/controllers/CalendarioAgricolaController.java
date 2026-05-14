@@ -54,12 +54,48 @@ public class CalendarioAgricolaController {
         return "redirect:/calendario";
     }
 
+    @PostMapping("/calendario/editar/{id}")
+    public String editarTarea(@PathVariable("id") Long id,
+                              @RequestParam("titulo") String titulo,
+                              @RequestParam(value = "descripcion", required = false) String descripcion,
+                              @RequestParam("tipo") String tipo,
+                              @RequestParam("fechaHora") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime fechaHora,
+                              @RequestParam(value = "asignadoA", required = false) String asignadoA,
+                              @RequestParam(value = "duracionMinutos", required = false) Integer duracionMinutos,
+                              @RequestParam(value = "estado", required = false) String estado,
+                              RedirectAttributes redirectAttributes) {
+        try {
+            calendarioAgricolaService.editarTarea(id, titulo, descripcion, tipo, fechaHora, asignadoA, duracionMinutos);
+            redirectAttributes.addFlashAttribute("mensajeExito", "Tarea actualizada correctamente.");
+        } catch (IllegalArgumentException ex) {
+            redirectAttributes.addFlashAttribute("mensajeError", ex.getMessage());
+        }
+        return redirigirCalendario(estado);
+    }
+
+    @PostMapping("/calendario/eliminar/{id}")
+    public String eliminarTarea(@PathVariable("id") Long id,
+                                @RequestParam(value = "estado", required = false) String estado,
+                                RedirectAttributes redirectAttributes) {
+        calendarioAgricolaService.eliminarTarea(id);
+        redirectAttributes.addFlashAttribute("mensajeExito", "Tarea eliminada correctamente.");
+        return redirigirCalendario(estado);
+    }
+
     @PostMapping("/calendario/completar/{id}")
-    public String completarTarea(@PathVariable("id") Long id,
-                                 @RequestParam(value = "estado", required = false) String estado,
-                                 RedirectAttributes redirectAttributes) {
-        calendarioAgricolaService.marcarComoCompletada(id);
-        redirectAttributes.addFlashAttribute("mensajeExito", "Tarea marcada como completada.");
+    public String actualizarEstadoTarea(@PathVariable("id") Long id,
+                                        @RequestParam(value = "completada", defaultValue = "false") boolean completada,
+                                        @RequestParam(value = "estado", required = false) String estado,
+                                        RedirectAttributes redirectAttributes) {
+        calendarioAgricolaService.actualizarEstadoCompletada(id, completada);
+        redirectAttributes.addFlashAttribute(
+                "mensajeExito",
+                completada ? "Tarea marcada como completada." : "Tarea reabierta correctamente."
+        );
+        return redirigirCalendario(estado);
+    }
+
+    private String redirigirCalendario(String estado) {
         return "redirect:/calendario?estado=" + calendarioAgricolaService.normalizarEstado(estado);
     }
 }

@@ -69,6 +69,14 @@
         .task-head{ display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; }
         .task-title{ margin:0; font-size:18px; line-height:1.25; color:#102019; font-weight:950; letter-spacing:-.015em; }
         .task-type{ color:#0f6b3a; background:#f0fdf4; border:1px solid #d9f7e4; border-radius:999px; padding:6px 10px; font-size:12px; font-weight:900; }
+        .task-actions{ display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+        .btn-card{ min-height:34px; padding:7px 10px; border-radius:11px; background:#fff; border:1px solid #dbe3ee; color:#475569; font-size:12px; font-weight:900; box-shadow:0 8px 16px rgba(15,23,42,.05); }
+        .btn-card:hover{ transform:translateY(-1px); box-shadow:0 12px 20px rgba(15,23,42,.09); }
+        .btn-edit:hover{ border-color:#bbf7d0; color:#166534; background:#f0fdf4; }
+        .btn-delete{ border-color:#fecaca; color:#b91c1c; }
+        .btn-delete:hover{ border-color:#fca5a5; background:#fff5f5; color:#991b1b; }
+        .btn-danger{ background:#b91c1c; color:#fff; border-color:#b91c1c; box-shadow:0 14px 28px rgba(185,28,28,.18); }
+        .btn-danger:hover{ transform:translateY(-2px); filter:brightness(1.04); box-shadow:0 18px 34px rgba(185,28,28,.24); }
         .task-description{ margin:0; color:#64748b; font-size:14px; font-weight:600; line-height:1.45; }
         .task-meta{ display:flex; align-items:center; gap:8px 14px; flex-wrap:wrap; color:#475569; font-size:13px; font-weight:800; }
         .task-meta span{ display:inline-flex; align-items:center; gap:6px; }
@@ -139,18 +147,32 @@
             <article class="task-card"
                      th:each="tarea : ${tareasCalendario}"
                      th:with="atrasada=${calendarioService.esAtrasada(tarea)}"
-                     th:classappend="${tarea.completada} ? ' is-completed' : (${atrasada} ? ' is-overdue' : '')">
+                     th:classappend="${tarea.completada} ? ' is-completed' : (${atrasada} ? ' is-overdue' : '')"
+                     th:data-id="${tarea.id}"
+                     th:data-titulo="${tarea.titulo}"
+                     th:data-descripcion="${tarea.descripcion ?: ''}"
+                     th:data-tipo="${tarea.tipo}"
+                     th:data-fecha-hora="${#temporals.format(tarea.fechaHora, 'yyyy-MM-dd''T''HH:mm')}"
+                     th:data-asignado-a="${tarea.asignadoA ?: ''}"
+                     th:data-duracion-minutos="${tarea.duracionMinutos ?: 60}"
+                     th:data-update-url="@{/calendario/editar/{id}(id=${tarea.id})}"
+                     th:data-delete-url="@{/calendario/eliminar/{id}(id=${tarea.id})}">
                 <form class="task-check-form" method="post" th:action="@{/calendario/completar/{id}(id=${tarea.id})}">
                     <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
                     <input type="hidden" name="estado" th:value="${estadoActivo}" />
-                    <input class="task-check" type="checkbox" aria-label="Marcar tarea como completada"
-                           th:checked="${tarea.completada}" th:disabled="${tarea.completada}" />
+                    <input type="hidden" name="completada" th:value="${tarea.completada}" data-completada-value />
+                    <input class="task-check" type="checkbox" aria-label="Cambiar estado de completado"
+                           th:checked="${tarea.completada}" />
                 </form>
 
                 <div class="task-content">
                     <div class="task-head">
                         <h2 class="task-title" th:text="${tarea.titulo}">Revisión de riego</h2>
-                        <span class="task-type" th:text="${tarea.tipo}">Riego</span>
+                        <div class="task-actions">
+                            <span class="task-type" th:text="${tarea.tipo}">Riego</span>
+                            <button class="btn btn-card btn-edit" type="button" data-open-edit-modal>✏️ Editar</button>
+                            <button class="btn btn-card btn-delete" type="button" data-open-delete-modal>🗑️ Eliminar</button>
+                        </div>
                     </div>
                     <p class="task-description" th:text="${#strings.abbreviate(tarea.descripcion ?: 'Sin descripción adicional', 150)}">
                         Verificar caudal y humedad del suelo en la zona norte.
@@ -220,43 +242,163 @@
     </div>
 </div>
 
+<div class="modal-backdrop" data-edit-modal>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalEditarTareaTitulo">
+        <div class="modal-head">
+            <div>
+                <h2 class="modal-title" id="modalEditarTareaTitulo">Editar Tarea</h2>
+                <p class="modal-subtitle">Actualiza los detalles de la actividad agrícola seleccionada.</p>
+            </div>
+            <button class="modal-close" type="button" aria-label="Cerrar modal" data-close-edit-modal>×</button>
+        </div>
+
+        <form method="post" data-edit-form>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <input type="hidden" name="estado" th:value="${estadoActivo}" />
+            <div class="form-grid">
+                <div class="field">
+                    <label for="editarTitulo">📝 Título</label>
+                    <input id="editarTitulo" name="titulo" type="text" maxlength="150" required>
+                </div>
+                <div class="field">
+                    <label for="editarTipo">📂 Tipo</label>
+                    <select id="editarTipo" name="tipo" required>
+                        <option th:each="tipo : ${tiposTarea}" th:value="${tipo}" th:text="${tipo}">Riego</option>
+                    </select>
+                </div>
+                <div class="field full">
+                    <label for="editarDescripcion">📄 Descripción</label>
+                    <textarea id="editarDescripcion" name="descripcion" placeholder="Describe brevemente la actividad a realizar"></textarea>
+                </div>
+                <div class="field">
+                    <label for="editarFechaHora">📅 Fecha y Hora</label>
+                    <input id="editarFechaHora" name="fechaHora" type="datetime-local" required>
+                </div>
+                <div class="field">
+                    <label for="editarAsignadoA">👨‍🌾 Asignado a</label>
+                    <input id="editarAsignadoA" name="asignadoA" type="text" maxlength="120" placeholder="Responsable o equipo">
+                </div>
+                <div class="field">
+                    <label for="editarDuracionMinutos">⏱️ Duración estimada</label>
+                    <input id="editarDuracionMinutos" name="duracionMinutos" type="number" min="1" step="1" required>
+                </div>
+            </div>
+            <div class="modal-actions">
+                <button class="btn btn-secondary" type="button" data-close-edit-modal>Cancelar</button>
+                <button class="btn btn-primary" type="submit">Guardar Cambios</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal-backdrop" data-delete-modal>
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalEliminarTareaTitulo">
+        <div class="modal-head">
+            <div>
+                <h2 class="modal-title" id="modalEliminarTareaTitulo">Eliminar Tarea</h2>
+                <p class="modal-subtitle">¿Deseas eliminar esta tarea?</p>
+            </div>
+            <button class="modal-close" type="button" aria-label="Cerrar modal" data-close-delete-modal>×</button>
+        </div>
+        <p class="task-description" data-delete-task-title></p>
+        <form method="post" data-delete-form>
+            <input type="hidden" th:name="${_csrf.parameterName}" th:value="${_csrf.token}" />
+            <input type="hidden" name="estado" th:value="${estadoActivo}" />
+            <div class="modal-actions">
+                <button class="btn btn-secondary" type="button" data-close-delete-modal>Cancelar</button>
+                <button class="btn btn-danger" type="submit">Eliminar</button>
+            </div>
+        </form>
+    </div>
+</div>
+
 <script>
     (function () {
-        const modal = document.querySelector('[data-task-modal]');
-        const openButtons = document.querySelectorAll('[data-open-task-modal]');
-        const closeButtons = document.querySelectorAll('[data-close-task-modal]');
-        const checks = document.querySelectorAll('.task-check:not(:disabled)');
+        const taskModal = document.querySelector('[data-task-modal]');
+        const editModal = document.querySelector('[data-edit-modal]');
+        const deleteModal = document.querySelector('[data-delete-modal]');
+        const editForm = document.querySelector('[data-edit-form]');
+        const deleteForm = document.querySelector('[data-delete-form]');
+        const deleteTaskTitle = document.querySelector('[data-delete-task-title]');
+        const openTaskButtons = document.querySelectorAll('[data-open-task-modal]');
+        const openEditButtons = document.querySelectorAll('[data-open-edit-modal]');
+        const openDeleteButtons = document.querySelectorAll('[data-open-delete-modal]');
+        const closeTaskButtons = document.querySelectorAll('[data-close-task-modal]');
+        const closeEditButtons = document.querySelectorAll('[data-close-edit-modal]');
+        const closeDeleteButtons = document.querySelectorAll('[data-close-delete-modal]');
+        const checks = document.querySelectorAll('.task-check');
 
-        const openModal = function () {
+        const openModal = function (modal) {
             if (modal) {
                 modal.classList.add('open');
             }
         };
 
-        const closeModal = function () {
+        const closeModal = function (modal) {
             if (modal) {
                 modal.classList.remove('open');
             }
         };
 
-        openButtons.forEach(button => button.addEventListener('click', openModal));
-        closeButtons.forEach(button => button.addEventListener('click', closeModal));
-
-        if (modal) {
+        const bindBackdropClose = function (modal) {
+            if (!modal) {
+                return;
+            }
             modal.addEventListener('click', function (event) {
                 if (event.target === modal) {
-                    closeModal();
+                    closeModal(modal);
                 }
             });
-        }
+        };
+
+        openTaskButtons.forEach(button => button.addEventListener('click', () => openModal(taskModal)));
+        closeTaskButtons.forEach(button => button.addEventListener('click', () => closeModal(taskModal)));
+        closeEditButtons.forEach(button => button.addEventListener('click', () => closeModal(editModal)));
+        closeDeleteButtons.forEach(button => button.addEventListener('click', () => closeModal(deleteModal)));
+
+        bindBackdropClose(taskModal);
+        bindBackdropClose(editModal);
+        bindBackdropClose(deleteModal);
+
+        openEditButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const card = button.closest('.task-card');
+                if (!card || !editForm) {
+                    return;
+                }
+                editForm.action = card.dataset.updateUrl;
+                editForm.querySelector('#editarTitulo').value = card.dataset.titulo || '';
+                editForm.querySelector('#editarDescripcion').value = card.dataset.descripcion || '';
+                editForm.querySelector('#editarTipo').value = card.dataset.tipo || '';
+                editForm.querySelector('#editarFechaHora').value = card.dataset.fechaHora || '';
+                editForm.querySelector('#editarAsignadoA').value = card.dataset.asignadoA || '';
+                editForm.querySelector('#editarDuracionMinutos').value = card.dataset.duracionMinutos || '60';
+                openModal(editModal);
+            });
+        });
+
+        openDeleteButtons.forEach(button => {
+            button.addEventListener('click', function () {
+                const card = button.closest('.task-card');
+                if (!card || !deleteForm) {
+                    return;
+                }
+                deleteForm.action = card.dataset.deleteUrl;
+                if (deleteTaskTitle) {
+                    deleteTaskTitle.textContent = card.dataset.titulo ? `“${card.dataset.titulo}”` : '';
+                }
+                openModal(deleteModal);
+            });
+        });
 
         checks.forEach(check => {
             check.addEventListener('change', function () {
-                if (!check.checked) {
-                    return;
-                }
                 const card = check.closest('.task-card');
                 const form = check.closest('form');
+                const completadaInput = form ? form.querySelector('[data-completada-value]') : null;
+                if (completadaInput) {
+                    completadaInput.value = String(check.checked);
+                }
                 if (card) {
                     card.classList.add('is-submitting');
                 }

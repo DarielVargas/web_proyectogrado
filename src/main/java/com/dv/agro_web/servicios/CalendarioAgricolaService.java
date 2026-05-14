@@ -55,22 +55,38 @@ public class CalendarioAgricolaService {
                                          String asignadoA,
                                          Integer duracionMinutos) {
         CalendarioAgricola tarea = new CalendarioAgricola();
-        tarea.setTitulo(limpiar(titulo));
-        tarea.setDescripcion(limpiarOpcional(descripcion));
-        tarea.setTipo(validarTipo(tipo));
-        tarea.setFechaHora(fechaHora);
-        tarea.setAsignadoA(limpiarOpcional(asignadoA));
-        tarea.setDuracionMinutos(duracionMinutos == null || duracionMinutos <= 0 ? 60 : duracionMinutos);
+        aplicarDatosEditables(tarea, titulo, descripcion, tipo, fechaHora, asignadoA, duracionMinutos);
         tarea.setCompletada(false);
         tarea.setFechaCompletada(null);
         return calendarioAgricolaRepository.save(tarea);
     }
 
     @Transactional
-    public void marcarComoCompletada(Long id) {
+    public CalendarioAgricola editarTarea(Long id,
+                                          String titulo,
+                                          String descripcion,
+                                          String tipo,
+                                          LocalDateTime fechaHora,
+                                          String asignadoA,
+                                          Integer duracionMinutos) {
+        CalendarioAgricola tarea = calendarioAgricolaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("La tarea seleccionada no existe."));
+        aplicarDatosEditables(tarea, titulo, descripcion, tipo, fechaHora, asignadoA, duracionMinutos);
+        return calendarioAgricolaRepository.save(tarea);
+    }
+
+    @Transactional
+    public void eliminarTarea(Long id) {
+        if (calendarioAgricolaRepository.existsById(id)) {
+            calendarioAgricolaRepository.deleteById(id);
+        }
+    }
+
+    @Transactional
+    public void actualizarEstadoCompletada(Long id, boolean completada) {
         calendarioAgricolaRepository.findById(id).ifPresent(tarea -> {
-            tarea.setCompletada(true);
-            tarea.setFechaCompletada(LocalDateTime.now());
+            tarea.setCompletada(completada);
+            tarea.setFechaCompletada(completada ? LocalDateTime.now() : null);
             calendarioAgricolaRepository.save(tarea);
         });
     }
@@ -89,6 +105,24 @@ public class CalendarioAgricolaService {
         return List.of("todas", "pendientes", "atrasadas", "completadas").contains(estadoNormalizado)
                 ? estadoNormalizado
                 : "todas";
+    }
+
+    private void aplicarDatosEditables(CalendarioAgricola tarea,
+                                       String titulo,
+                                       String descripcion,
+                                       String tipo,
+                                       LocalDateTime fechaHora,
+                                       String asignadoA,
+                                       Integer duracionMinutos) {
+        if (fechaHora == null) {
+            throw new IllegalArgumentException("Seleccione la fecha y hora de la tarea.");
+        }
+        tarea.setTitulo(limpiar(titulo));
+        tarea.setDescripcion(limpiarOpcional(descripcion));
+        tarea.setTipo(validarTipo(tipo));
+        tarea.setFechaHora(fechaHora);
+        tarea.setAsignadoA(limpiarOpcional(asignadoA));
+        tarea.setDuracionMinutos(duracionMinutos == null || duracionMinutos <= 0 ? 60 : duracionMinutos);
     }
 
     private String validarTipo(String tipo) {
