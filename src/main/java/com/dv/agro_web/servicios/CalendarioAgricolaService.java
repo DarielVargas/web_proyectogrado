@@ -39,7 +39,8 @@ public class CalendarioAgricolaService {
                     .findAllByCompletadaFalseAndFechaHoraBeforeOrderByFechaHoraAscIdAsc(ahora);
             case "completadas" -> calendarioAgricolaRepository
                     .findAllByCompletadaTrueOrderByFechaCompletadaDescFechaHoraDescIdDesc();
-            default -> calendarioAgricolaRepository.findAllByOrderByFechaHoraAscIdAsc();
+            default -> calendarioAgricolaRepository
+                    .findAllByCompletadaFalseAndFechaHoraGreaterThanEqualOrderByFechaHoraAscIdAsc(ahora);
         };
     }
 
@@ -50,9 +51,10 @@ public class CalendarioAgricolaService {
                 ahora,
                 finDelDia
         );
+        long aTiempo = calendarioAgricolaRepository.countByCompletadaFalseAndFechaHoraGreaterThanEqual(ahora);
         long atrasadas = calendarioAgricolaRepository.countByCompletadaFalseAndFechaHoraBefore(ahora);
         long completadas = calendarioAgricolaRepository.countByCompletadaTrue();
-        return new ConteoTareas(calendarioAgricolaRepository.count(), pendientes, atrasadas, completadas);
+        return new ConteoTareas(aTiempo, pendientes, atrasadas, completadas);
     }
 
     @Transactional
@@ -91,12 +93,19 @@ public class CalendarioAgricolaService {
     }
 
     @Transactional
-    public void actualizarEstadoCompletada(Long id, boolean completada) {
-        calendarioAgricolaRepository.findById(id).ifPresent(tarea -> {
-            tarea.setCompletada(completada);
-            tarea.setFechaCompletada(completada ? LocalDateTime.now() : null);
-            calendarioAgricolaRepository.save(tarea);
-        });
+    public CalendarioAgricola actualizarEstadoCompletada(Long id, boolean completada) {
+        CalendarioAgricola tarea = calendarioAgricolaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("La tarea seleccionada no existe."));
+        tarea.setCompletada(completada);
+        tarea.setFechaCompletada(completada ? LocalDateTime.now() : null);
+        return calendarioAgricolaRepository.save(tarea);
+    }
+
+    public String estadoVisibleDespuesDeCheck(CalendarioAgricola tarea) {
+        if (Boolean.TRUE.equals(tarea.getCompletada())) {
+            return "completadas";
+        }
+        return esAtrasada(tarea) ? "atrasadas" : "todas";
     }
 
     public boolean esAtrasada(CalendarioAgricola tarea) {
