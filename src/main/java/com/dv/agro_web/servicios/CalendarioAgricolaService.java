@@ -28,9 +28,13 @@ public class CalendarioAgricolaService {
 
     public List<CalendarioAgricola> listarPorEstado(String estado) {
         LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime finDelDia = ahora.toLocalDate().plusDays(1).atStartOfDay();
         return switch (normalizarEstado(estado)) {
             case "pendientes" -> calendarioAgricolaRepository
-                    .findAllByCompletadaFalseAndFechaHoraGreaterThanEqualOrderByFechaHoraAscIdAsc(ahora);
+                    .findAllByCompletadaFalseAndFechaHoraGreaterThanEqualAndFechaHoraLessThanOrderByFechaHoraAscIdAsc(
+                            ahora,
+                            finDelDia
+                    );
             case "atrasadas" -> calendarioAgricolaRepository
                     .findAllByCompletadaFalseAndFechaHoraBeforeOrderByFechaHoraAscIdAsc(ahora);
             case "completadas" -> calendarioAgricolaRepository
@@ -41,10 +45,14 @@ public class CalendarioAgricolaService {
 
     public ConteoTareas contarPorEstado() {
         LocalDateTime ahora = LocalDateTime.now();
-        long pendientes = calendarioAgricolaRepository.countByCompletadaFalseAndFechaHoraGreaterThanEqual(ahora);
+        LocalDateTime finDelDia = ahora.toLocalDate().plusDays(1).atStartOfDay();
+        long pendientes = calendarioAgricolaRepository.countByCompletadaFalseAndFechaHoraGreaterThanEqualAndFechaHoraLessThan(
+                ahora,
+                finDelDia
+        );
         long atrasadas = calendarioAgricolaRepository.countByCompletadaFalseAndFechaHoraBefore(ahora);
         long completadas = calendarioAgricolaRepository.countByCompletadaTrue();
-        return new ConteoTareas(pendientes + atrasadas + completadas, pendientes, atrasadas, completadas);
+        return new ConteoTareas(calendarioAgricolaRepository.count(), pendientes, atrasadas, completadas);
     }
 
     @Transactional
