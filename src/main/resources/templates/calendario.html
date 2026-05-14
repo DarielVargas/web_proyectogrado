@@ -17,7 +17,7 @@
             padding:22px; border-radius:20px; border:1px solid var(--border);
             background:linear-gradient(135deg, #ffffff 0%, #f6fbf8 100%); box-shadow:var(--shadow-soft);
         }
-        .calendar-title h1{ margin:0; font-size:31px; line-height:1.08; font-weight:950; letter-spacing:-.03em; color:#0f3d25; }
+        .calendar-title h1{ margin:0; font-size:31px; line-height:1.08; font-weight:950; letter-spacing:-.03em; color:var(--primary-dark); }
         .calendar-title p{ margin:8px 0 0; color:#64748b; font-size:14px; font-weight:700; }
         .calendar-actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
         .btn{
@@ -25,8 +25,8 @@
             border-radius:14px; border:1px solid transparent; cursor:pointer; text-decoration:none; font-weight:900;
             transition:transform .22s ease, box-shadow .22s ease, background-color .22s ease, border-color .22s ease, filter .22s ease;
         }
-        .btn-primary{ background:#0f2419; color:#fff; border-color:#0f2419; box-shadow:0 14px 28px rgba(15,36,25,.20); }
-        .btn-primary:hover{ transform:translateY(-2px); filter:brightness(1.08); box-shadow:0 18px 34px rgba(15,36,25,.28); }
+        .btn-primary{ color:#fff; background:linear-gradient(135deg,#22c55e,#15803d); border-color:transparent; box-shadow:0 16px 34px rgba(21,128,61,.24); }
+        .btn-primary:hover{ transform:translateY(-1px); box-shadow:0 20px 40px rgba(21,128,61,.30); }
         .btn-secondary{ background:#fff; color:#0f172a; border-color:#dbe3ee; }
         .btn-secondary:hover{ background:#f8fafc; border-color:#b8c4d4; }
 
@@ -121,7 +121,7 @@
                 <p>Gestiona las tareas y actividades de tu finca</p>
             </div>
             <div class="calendar-actions">
-                <button class="btn btn-primary" type="button" data-open-task-modal>➕ Nueva Tarea</button>
+                <button class="btn btn-primary" type="button" data-open-task-modal>➕ Nueva tarea</button>
             </div>
         </section>
 
@@ -130,7 +130,7 @@
 
         <nav class="calendar-tabs" aria-label="Filtros del calendario agrícola">
             <a class="calendar-tab" th:href="@{/calendario(estado='todas')}" th:classappend="${estadoActivo == 'todas'} ? ' active' : ''">
-                Todas <span class="tab-count" th:text="${conteoTareas.todas}">0</span>
+                A tiempo <span class="tab-count" th:text="${conteoTareas.todas}">0</span>
             </a>
             <a class="calendar-tab" th:href="@{/calendario(estado='pendientes')}" th:classappend="${estadoActivo == 'pendientes'} ? ' active' : ''">
                 Pendientes <span class="tab-count" th:text="${conteoTareas.pendientes}">0</span>

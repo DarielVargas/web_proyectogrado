@@ -12,6 +12,11 @@ public interface CalendarioAgricolaRepository extends JpaRepository<CalendarioAg
 
     List<CalendarioAgricola> findAllByCompletadaFalseAndFechaHoraGreaterThanEqualOrderByFechaHoraAscIdAsc(LocalDateTime fechaHora);
 
+    List<CalendarioAgricola> findAllByCompletadaFalseAndFechaHoraGreaterThanEqualAndFechaHoraLessThanOrderByFechaHoraAscIdAsc(
+            LocalDateTime inicio,
+            LocalDateTime fin
+    );
+
     List<CalendarioAgricola> findAllByCompletadaFalseAndFechaHoraBeforeOrderByFechaHoraAscIdAsc(LocalDateTime fechaHora);
 
     List<CalendarioAgricola> findAllByCompletadaTrueOrderByFechaCompletadaDescFechaHoraDescIdDesc();
@@ -19,6 +24,11 @@ public interface CalendarioAgricolaRepository extends JpaRepository<CalendarioAg
     long countByCompletadaTrue();
 
     long countByCompletadaFalseAndFechaHoraGreaterThanEqual(LocalDateTime fechaHora);
+
+    long countByCompletadaFalseAndFechaHoraGreaterThanEqualAndFechaHoraLessThan(
+            LocalDateTime inicio,
+            LocalDateTime fin
+    );
 
     long countByCompletadaFalseAndFechaHoraBefore(LocalDateTime fechaHora);
 }

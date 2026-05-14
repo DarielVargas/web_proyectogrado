@@ -28,23 +28,33 @@ public class CalendarioAgricolaService {
 
     public List<CalendarioAgricola> listarPorEstado(String estado) {
         LocalDateTime ahora = LocalDateTime.now();
+        LocalDateTime finDelDia = ahora.toLocalDate().plusDays(1).atStartOfDay();
         return switch (normalizarEstado(estado)) {
             case "pendientes" -> calendarioAgricolaRepository
-                    .findAllByCompletadaFalseAndFechaHoraGreaterThanEqualOrderByFechaHoraAscIdAsc(ahora);
+                    .findAllByCompletadaFalseAndFechaHoraGreaterThanEqualAndFechaHoraLessThanOrderByFechaHoraAscIdAsc(
+                            ahora,
+                            finDelDia
+                    );
             case "atrasadas" -> calendarioAgricolaRepository
                     .findAllByCompletadaFalseAndFechaHoraBeforeOrderByFechaHoraAscIdAsc(ahora);
             case "completadas" -> calendarioAgricolaRepository
                     .findAllByCompletadaTrueOrderByFechaCompletadaDescFechaHoraDescIdDesc();
-            default -> calendarioAgricolaRepository.findAllByOrderByFechaHoraAscIdAsc();
+            default -> calendarioAgricolaRepository
+                    .findAllByCompletadaFalseAndFechaHoraGreaterThanEqualOrderByFechaHoraAscIdAsc(ahora);
         };
     }
 
     public ConteoTareas contarPorEstado() {
         LocalDateTime ahora = LocalDateTime.now();
-        long pendientes = calendarioAgricolaRepository.countByCompletadaFalseAndFechaHoraGreaterThanEqual(ahora);
+        LocalDateTime finDelDia = ahora.toLocalDate().plusDays(1).atStartOfDay();
+        long pendientes = calendarioAgricolaRepository.countByCompletadaFalseAndFechaHoraGreaterThanEqualAndFechaHoraLessThan(
+                ahora,
+                finDelDia
+        );
+        long aTiempo = calendarioAgricolaRepository.countByCompletadaFalseAndFechaHoraGreaterThanEqual(ahora);
         long atrasadas = calendarioAgricolaRepository.countByCompletadaFalseAndFechaHoraBefore(ahora);
         long completadas = calendarioAgricolaRepository.countByCompletadaTrue();
-        return new ConteoTareas(pendientes + atrasadas + completadas, pendientes, atrasadas, completadas);
+        return new ConteoTareas(aTiempo, pendientes, atrasadas, completadas);
     }
 
     @Transactional
@@ -83,12 +93,19 @@ public class CalendarioAgricolaService {
     }
 
     @Transactional
-    public void actualizarEstadoCompletada(Long id, boolean completada) {
-        calendarioAgricolaRepository.findById(id).ifPresent(tarea -> {
-            tarea.setCompletada(completada);
-            tarea.setFechaCompletada(completada ? LocalDateTime.now() : null);
-            calendarioAgricolaRepository.save(tarea);
-        });
+    public CalendarioAgricola actualizarEstadoCompletada(Long id, boolean completada) {
+        CalendarioAgricola tarea = calendarioAgricolaRepository.findById(id)
+                .orElseThrow(() -> new IllegalArgumentException("La tarea seleccionada no existe."));
+        tarea.setCompletada(completada);
+        tarea.setFechaCompletada(completada ? LocalDateTime.now() : null);
+        return calendarioAgricolaRepository.save(tarea);
+    }
+
+    public String estadoVisibleDespuesDeCheck(CalendarioAgricola tarea) {
+        if (Boolean.TRUE.equals(tarea.getCompletada())) {
+            return "completadas";
+        }
+        return esAtrasada(tarea) ? "atrasadas" : "todas";
     }
 
     public boolean esAtrasada(CalendarioAgricola tarea) {

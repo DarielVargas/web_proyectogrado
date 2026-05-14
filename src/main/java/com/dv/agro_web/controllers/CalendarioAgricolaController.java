@@ -85,14 +85,13 @@ public class CalendarioAgricolaController {
     @PostMapping("/calendario/completar/{id}")
     public String actualizarEstadoTarea(@PathVariable("id") Long id,
                                         @RequestParam(value = "completada", defaultValue = "false") boolean completada,
-                                        @RequestParam(value = "estado", required = false) String estado,
                                         RedirectAttributes redirectAttributes) {
-        calendarioAgricolaService.actualizarEstadoCompletada(id, completada);
+        CalendarioAgricola tarea = calendarioAgricolaService.actualizarEstadoCompletada(id, completada);
         redirectAttributes.addFlashAttribute(
                 "mensajeExito",
                 completada ? "Tarea marcada como completada." : "Tarea reabierta correctamente."
         );
-        return redirigirCalendario(estado);
+        return redirigirCalendario(calendarioAgricolaService.estadoVisibleDespuesDeCheck(tarea));
     }
 
     private String redirigirCalendario(String estado) {
