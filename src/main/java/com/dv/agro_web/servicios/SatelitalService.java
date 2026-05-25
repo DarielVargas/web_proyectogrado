@@ -6,6 +6,7 @@ import com.dv.agro_web.repositorios.IndiceSatelitalRepository;
 import org.springframework.stereotype.Service;
 
 import java.time.format.DateTimeFormatter;
+import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -35,6 +36,26 @@ public class SatelitalService {
 
     public List<IndiceSatelital> listarHistorial() {
         return indiceSatelitalRepository.findAllByOrderByFechaDescIdDesc();
+    }
+
+    public List<HistorialIndiceDto> listarHistorialPresentacion() {
+        List<HistorialIndiceDto> historial = new ArrayList<>();
+
+        for (IndiceSatelital indice : listarHistorial()) {
+            historial.add(new HistorialIndiceDto(
+                    indice.getId(),
+                    indice.getFecha() != null ? indice.getFecha().format(FORMATO_FECHA) : "N/A",
+                    indice.getNdvi(),
+                    indice.getNdwi(),
+                    valorTexto(indice.getEstadoVegetacion()),
+                    valorTexto(indice.getEstadoHidrico()),
+                    claseNdviPorValor(indice.getNdvi()),
+                    claseEstado(indice.getEstadoVegetacion()),
+                    claseEstado(indice.getEstadoHidrico())
+            ));
+        }
+
+        return historial;
     }
 
     public ResumenSatelitalDto obtenerResumenActual() {
@@ -134,6 +155,19 @@ public class SatelitalService {
         return "estado-neutral";
     }
 
+    private String claseNdviPorValor(Double ndvi) {
+        if (ndvi == null) {
+            return "estado-neutral";
+        }
+        if (ndvi >= 0.6) {
+            return "estado-bueno";
+        }
+        if (ndvi >= 0.3) {
+            return "estado-moderado";
+        }
+        return "estado-critico";
+    }
+
     public record ResumenSatelitalDto(
             String ndviTexto,
             String ndviNivel,
@@ -143,6 +177,19 @@ public class SatelitalService {
             String estadoHidrico,
             String estadoHidricoClase,
             String fechaTexto
+    ) {
+    }
+
+    public record HistorialIndiceDto(
+            Long id,
+            String fechaTexto,
+            Double ndvi,
+            Double ndwi,
+            String estadoVegetacion,
+            String estadoHidrico,
+            String ndviClase,
+            String estadoVegetacionClase,
+            String estadoHidricoClase
     ) {
     }
 }
