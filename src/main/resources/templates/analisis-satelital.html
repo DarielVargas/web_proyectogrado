@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="es" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" th:href="@{/css/styles.css}" href="/css/styles.css">
+    <title>Análisis Satelital - Agro IoT</title>
+    <style>
+        *{ box-sizing:border-box; }
+        body{ margin:0; font-family:Inter, "Segoe UI", Roboto, Arial, sans-serif; background:var(--bg-soft); color:var(--text-main); }
+        .layout{ min-height:100vh; display:grid; grid-template-columns:var(--sidebar-expanded-width) 1fr; }
+        .main{ padding:22px 22px 40px; display:flex; flex-direction:column; gap:14px; }
+        .topbar{ display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; padding:20px 22px; border-radius:18px; border:1px solid var(--border); background:linear-gradient(135deg,#fff,#f3f8ff); box-shadow:var(--shadow-soft); }
+        .header h1{ margin:0; font-size:30px; font-weight:900; color:var(--primary-dark); }
+        .header p{ margin:8px 0 0; color:#64748b; font-size:14px; font-weight:600; }
+        .cards{ display:grid; grid-template-columns:repeat(5,minmax(180px,1fr)); gap:12px; }
+        .card{ background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 12px 28px rgba(15,23,42,.08); padding:16px; }
+        .card .label{ color:#64748b; font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.2px; }
+        .card .value{ margin-top:8px; font-size:28px; font-weight:900; color:#0f172a; }
+        .card .sub{ margin-top:6px; font-size:12px; color:#64748b; font-weight:700; }
+        .chip{ display:inline-flex; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:800; border:1px solid transparent; }
+        .ok{ color:#166534; background:#dcfce7; border-color:#86efac; }
+        .warn{ color:#9a3412; background:#ffedd5; border-color:#fdba74; }
+        .bad{ color:#991b1b; background:#fee2e2; border-color:#fca5a5; }
+        .table-wrap{ background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 12px 28px rgba(15,23,42,.08); overflow:hidden; }
+        .table-head{ padding:14px 16px; border-bottom:1px solid #e2e8f0; font-size:18px; font-weight:900; }
+        .table-responsive{ overflow:auto; }
+        table{ width:100%; border-collapse:collapse; min-width:860px; }
+        th,td{ padding:12px 14px; border-bottom:1px solid #eef2f7; text-align:left; font-size:13px; }
+        th{ background:#f8fafc; color:#334155; font-size:12px; text-transform:uppercase; letter-spacing:.25px; }
+        .empty{ margin:14px; border:1px dashed #cbd5e1; background:#f8fafc; color:#64748b; padding:14px; border-radius:12px; font-weight:700; }
+        @media (max-width:1200px){ .cards{ grid-template-columns:repeat(3,minmax(180px,1fr)); } }
+        @media (max-width:900px){ .layout{ grid-template-columns:1fr; } .sidebar{ position:relative; height:auto; } .cards{ grid-template-columns:repeat(2,minmax(180px,1fr)); } }
+        @media (max-width:640px){ .cards{ grid-template-columns:1fr; } }
+    </style>
+</head>
+<body>
+<div class="layout">
+    <aside th:replace="~{fragments/sidebar :: appSidebar('analisis-satelital')}"></aside>
+    <main class="main">
+        <div class="topbar">
+            <header class="header">
+                <h1>Análisis Satelital</h1>
+                <p>El análisis satelital utiliza imágenes Sentinel-2 y procesamiento geoespacial para evaluar la salud del cultivo mediante índices NDVI y NDWI.</p>
+            </header>
+        </div>
+
+        <section class="cards" th:with="u=${resumenSatelital}">
+            <article class="card">
+                <div class="label">Último NDVI</div>
+                <div class="value" th:text="${u.ndviTexto}">0.00</div>
+                <div class="sub" th:text="${u.ndviNivel}">Sin dato</div>
+            </article>
+            <article class="card">
+                <div class="label">Último NDWI</div>
+                <div class="value" th:text="${u.ndwiTexto}">0.00</div>
+            </article>
+            <article class="card">
+                <div class="label">Estado Vegetación</div>
+                <div class="value" style="font-size:18px;">
+                    <span class="chip" th:classappend="' ' + ${u.estadoVegetacionClase}" th:text="${u.estadoVegetacion}">Sin dato</span>
+                </div>
+            </article>
+            <article class="card">
+                <div class="label">Estado Hídrico</div>
+                <div class="value" style="font-size:18px;">
+                    <span class="chip" th:classappend="' ' + ${u.estadoHidricoClase}" th:text="${u.estadoHidrico}">Sin dato</span>
+                </div>
+            </article>
+            <article class="card">
+                <div class="label">Fecha último análisis</div>
+                <div class="value" style="font-size:20px;" th:text="${u.fechaTexto}">N/A</div>
+            </article>
+        </section>
+
+        <section class="table-wrap">
+            <div class="table-head">Historial de Índices Satelitales</div>
+            <div class="table-responsive" th:if="${!#lists.isEmpty(historialIndices)}">
+                <table>
+                    <thead>
+                    <tr><th>ID</th><th>Fecha</th><th>NDVI</th><th>NDWI</th><th>Estado Vegetación</th><th>Estado Hídrico</th></tr>
+                    </thead>
+                    <tbody>
+                    <tr th:each="i : ${historialIndices}">
+                        <td th:text="${i.id}">1</td>
+                        <td th:text="${i.fecha != null ? #temporals.format(i.fecha,'dd/MM/yyyy HH:mm') : 'N/A'}">01/01/2026 09:00</td>
+                        <td><span class="chip" th:classappend="' ' + ${resumenSatelital.claseNdviPorValor(i.ndvi)}" th:text="${i.ndvi != null ? #numbers.formatDecimal(i.ndvi,1,3) : 'N/A'}">0.700</span></td>
+                        <td th:text="${i.ndwi != null ? #numbers.formatDecimal(i.ndwi,1,3) : 'N/A'}">0.450</td>
+                        <td><span class="chip" th:classappend="' ' + ${resumenSatelital.claseEstado(i.estadoVegetacion)}" th:text="${i.estadoVegetacion ?: 'Sin dato'}">Saludable</span></td>
+                        <td><span class="chip" th:classappend="' ' + ${resumenSatelital.claseEstado(i.estadoHidrico)}" th:text="${i.estadoHidrico ?: 'Sin dato'}">Moderado</span></td>
+                    </tr>
+                    </tbody>
+                </table>
+            </div>
+            <div class="empty" th:if="${#lists.isEmpty(historialIndices)}">No hay registros satelitales disponibles todavía.</div>
+        </section>
+    </main>
+</div>
+</body>
+</html>

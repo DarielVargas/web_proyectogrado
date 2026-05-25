@@ -5,8 +5,13 @@ import com.dv.agro_web.entidades.IndiceSatelital;
 import com.dv.agro_web.repositorios.IndiceSatelitalRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.format.DateTimeFormatter;
+import java.util.List;
+
 @Service
 public class SatelitalService {
+
+    private static final DateTimeFormatter FORMATO_FECHA = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private final IndiceSatelitalRepository indiceSatelitalRepository;
 
@@ -22,5 +27,67 @@ public class SatelitalService {
         indiceSatelital.setEstadoVegetacion(request.getEstadoVegetacion());
         indiceSatelital.setEstadoHidrico(request.getEstadoHidrico());
         return indiceSatelitalRepository.save(indiceSatelital);
+    }
+
+    public List<IndiceSatelital> listarHistorial() {
+        return indiceSatelitalRepository.findAllByOrderByFechaDescIdDesc();
+    }
+
+    public ResumenSatelitalDto obtenerResumenActual() {
+        IndiceSatelital ultimo = indiceSatelitalRepository.findTopByOrderByFechaDescIdDesc().orElse(null);
+        if (ultimo == null) {
+            return new ResumenSatelitalDto("N/A", "Sin dato", "N/A", "Sin dato", "warn", "Sin dato", "warn", "N/A");
+        }
+
+        String ndviTexto = ultimo.getNdvi() != null ? String.format("%.3f", ultimo.getNdvi()) : "N/A";
+        String ndwiTexto = ultimo.getNdwi() != null ? String.format("%.3f", ultimo.getNdwi()) : "N/A";
+        String fechaTexto = ultimo.getFecha() != null ? ultimo.getFecha().format(FORMATO_FECHA) : "N/A";
+
+        return new ResumenSatelitalDto(
+                ndviTexto,
+                clasificacionNdvi(ultimo.getNdvi()),
+                ndwiTexto,
+                valorTexto(ultimo.getEstadoVegetacion()),
+                claseEstado(ultimo.getEstadoVegetacion()),
+                valorTexto(ultimo.getEstadoHidrico()),
+                claseEstado(ultimo.getEstadoHidrico()),
+                fechaTexto
+        );
+    }
+
+    private String clasificacionNdvi(Double ndvi) {
+        if (ndvi == null) return "Sin dato";
+        if (ndvi >= 0.6) return "NDVI alto";
+        if (ndvi >= 0.3) return "NDVI medio";
+        return "NDVI bajo";
+    }
+
+    private String valorTexto(String valor) {
+        return (valor == null || valor.isBlank()) ? "Sin dato" : valor;
+    }
+
+    public record ResumenSatelitalDto(String ndviTexto,
+                                      String ndviNivel,
+                                      String ndwiTexto,
+                                      String estadoVegetacion,
+                                      String estadoVegetacionClase,
+                                      String estadoHidrico,
+                                      String estadoHidricoClase,
+                                      String fechaTexto) {
+        public String claseNdviPorValor(Double ndvi) {
+            if (ndvi == null) return "warn";
+            if (ndvi >= 0.6) return "ok";
+            if (ndvi >= 0.3) return "warn";
+            return "bad";
+        }
+
+        public String claseEstado(String estado) {
+            if (estado == null) return "warn";
+            String e = estado.trim().toLowerCase();
+            if (e.contains("saludable")) return "ok";
+            if (e.contains("critic")) return "bad";
+            if (e.contains("moderad")) return "warn";
+            return "warn";
+        }
     }
 }
