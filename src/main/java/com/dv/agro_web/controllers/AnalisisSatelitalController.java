@@ -16,7 +16,7 @@ public class AnalisisSatelitalController {
 
     @GetMapping("/analisis-satelital")
     public String verAnalisisSatelital(Model model) {
-        model.addAttribute("historialIndices", satelitalService.listarHistorial());
+        model.addAttribute("historialIndices", satelitalService.listarHistorialPresentacion());
         model.addAttribute("resumenSatelital", satelitalService.obtenerResumenActual());
         return "analisis-satelital";
     }

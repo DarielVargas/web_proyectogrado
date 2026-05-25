@@ -18,9 +18,10 @@
         .card .value{ margin-top:8px; font-size:28px; font-weight:900; color:#0f172a; }
         .card .sub{ margin-top:6px; font-size:12px; color:#64748b; font-weight:700; }
         .chip{ display:inline-flex; padding:6px 10px; border-radius:999px; font-size:12px; font-weight:800; border:1px solid transparent; }
-        .ok{ color:#166534; background:#dcfce7; border-color:#86efac; }
-        .warn{ color:#9a3412; background:#ffedd5; border-color:#fdba74; }
-        .bad{ color:#991b1b; background:#fee2e2; border-color:#fca5a5; }
+        .estado-bueno{ color:#166534; background:#dcfce7; border-color:#86efac; }
+        .estado-moderado{ color:#9a3412; background:#fef3c7; border-color:#fcd34d; }
+        .estado-critico{ color:#991b1b; background:#fee2e2; border-color:#fca5a5; }
+        .estado-neutral{ color:#0f766e; background:#ccfbf1; border-color:#5eead4; }
         .table-wrap{ background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 12px 28px rgba(15,23,42,.08); overflow:hidden; }
         .table-head{ padding:14px 16px; border-bottom:1px solid #e2e8f0; font-size:18px; font-weight:900; }
         .table-responsive{ overflow:auto; }
@@ -82,11 +83,11 @@
                     <tbody>
                     <tr th:each="i : ${historialIndices}">
                         <td th:text="${i.id}">1</td>
-                        <td th:text="${i.fecha != null ? #temporals.format(i.fecha,'dd/MM/yyyy HH:mm') : 'N/A'}">01/01/2026 09:00</td>
-                        <td><span class="chip" th:classappend="' ' + ${resumenSatelital.claseNdviPorValor(i.ndvi)}" th:text="${i.ndvi != null ? #numbers.formatDecimal(i.ndvi,1,3) : 'N/A'}">0.700</span></td>
+                        <td th:text="${i.fechaTexto}">01/01/2026 09:00</td>
+                        <td><span class="chip" th:classappend="' ' + ${i.ndviClase}" th:text="${i.ndvi != null ? #numbers.formatDecimal(i.ndvi,1,3) : 'N/A'}">0.700</span></td>
                         <td th:text="${i.ndwi != null ? #numbers.formatDecimal(i.ndwi,1,3) : 'N/A'}">0.450</td>
-                        <td><span class="chip" th:classappend="' ' + ${resumenSatelital.claseEstado(i.estadoVegetacion)}" th:text="${i.estadoVegetacion ?: 'Sin dato'}">Saludable</span></td>
-                        <td><span class="chip" th:classappend="' ' + ${resumenSatelital.claseEstado(i.estadoHidrico)}" th:text="${i.estadoHidrico ?: 'Sin dato'}">Moderado</span></td>
+                        <td><span class="chip" th:classappend="' ' + ${i.estadoVegetacionClase}" th:text="${i.estadoVegetacion}">Saludable</span></td>
+                        <td><span class="chip" th:classappend="' ' + ${i.estadoHidricoClase}" th:text="${i.estadoHidrico}">Moderado</span></td>
                     </tr>
                     </tbody>
                 </table>

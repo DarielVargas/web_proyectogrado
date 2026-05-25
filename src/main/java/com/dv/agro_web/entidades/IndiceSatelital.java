@@ -15,7 +15,7 @@ public class IndiceSatelital {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Integer id;
+    private Long id;
 
     @Column(name = "fecha", nullable = false)
     private LocalDateTime fecha;
@@ -32,11 +32,11 @@ public class IndiceSatelital {
     @Column(name = "estado_hidrico")
     private String estadoHidrico;
 
-    public Integer getId() {
+    public Long getId() {
         return id;
     }
 
-    public void setId(Integer id) {
+    public void setId(Long id) {
         this.id = id;
     }
 
