@@ -3,14 +3,16 @@ package com.dv.agro_web.servicios;
 import com.dv.agro_web.controllers.IndiceSatelitalRequest;
 import com.dv.agro_web.entidades.IndiceSatelital;
 import com.dv.agro_web.repositorios.IndiceSatelitalRepository;
-
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
-import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.util.List;
 
 @Service
 public class SatelitalService {
+
+    private static final DateTimeFormatter FORMATO_FECHA =
+            DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm");
 
     private final IndiceSatelitalRepository indiceSatelitalRepository;
 
@@ -31,23 +33,116 @@ public class SatelitalService {
         return indiceSatelitalRepository.save(indiceSatelital);
     }
 
-    @Scheduled(cron = "0 0 8 */5 * *")
-    public void guardarIndicesAutomaticos() {
+    public List<IndiceSatelital> listarHistorial() {
+        return indiceSatelitalRepository.findAllByOrderByFechaDescIdDesc();
+    }
 
-        IndiceSatelital indice = new IndiceSatelital();
+    public ResumenSatelitalDto obtenerResumenActual() {
 
-        indice.setFecha(LocalDateTime.now());
+        IndiceSatelital ultimo =
+                indiceSatelitalRepository
+                        .findTopByOrderByFechaDescIdDesc()
+                        .orElse(null);
 
-        indice.setNdvi(0.75);
+        if (ultimo == null) {
 
-        indice.setNdwi(0.28);
+            return new ResumenSatelitalDto(
+                    "N/A",
+                    "Sin dato",
+                    "N/A",
+                    "Sin dato",
+                    "estado-neutral",
+                    "Sin dato",
+                    "estado-neutral",
+                    "N/A"
+            );
+        }
 
-        indice.setEstadoVegetacion("Saludable");
+        String ndviTexto =
+                ultimo.getNdvi() != null
+                        ? String.format("%.3f", ultimo.getNdvi())
+                        : "N/A";
 
-        indice.setEstadoHidrico("Óptimo");
+        String ndwiTexto =
+                ultimo.getNdwi() != null
+                        ? String.format("%.3f", ultimo.getNdwi())
+                        : "N/A";
 
-        indiceSatelitalRepository.save(indice);
+        String fechaTexto =
+                ultimo.getFecha() != null
+                        ? ultimo.getFecha().format(FORMATO_FECHA)
+                        : "N/A";
 
-        System.out.println("Índices satelitales guardados automáticamente");
+        return new ResumenSatelitalDto(
+                ndviTexto,
+                clasificacionNdvi(ultimo.getNdvi()),
+                ndwiTexto,
+                valorTexto(ultimo.getEstadoVegetacion()),
+                claseEstado(ultimo.getEstadoVegetacion()),
+                valorTexto(ultimo.getEstadoHidrico()),
+                claseEstado(ultimo.getEstadoHidrico()),
+                fechaTexto
+        );
+    }
+
+    private String clasificacionNdvi(Double ndvi) {
+
+        if (ndvi == null) {
+            return "Sin dato";
+        }
+
+        if (ndvi >= 0.6) {
+            return "NDVI alto";
+        }
+
+        if (ndvi >= 0.3) {
+            return "NDVI medio";
+        }
+
+        return "NDVI bajo";
+    }
+
+    private String valorTexto(String valor) {
+
+        if (valor == null || valor.isBlank()) {
+            return "Sin dato";
+        }
+
+        return valor;
+    }
+
+    private String claseEstado(String estado) {
+
+        if (estado == null) {
+            return "estado-neutral";
+        }
+
+        String e = estado.trim().toLowerCase();
+
+        if (e.contains("saludable") || e.contains("óptimo") || e.contains("optimo")) {
+            return "estado-bueno";
+        }
+
+        if (e.contains("critic")) {
+            return "estado-critico";
+        }
+
+        if (e.contains("moderad")) {
+            return "estado-moderado";
+        }
+
+        return "estado-neutral";
+    }
+
+    public record ResumenSatelitalDto(
+            String ndviTexto,
+            String ndviNivel,
+            String ndwiTexto,
+            String estadoVegetacion,
+            String estadoVegetacionClase,
+            String estadoHidrico,
+            String estadoHidricoClase,
+            String fechaTexto
+    ) {
     }
 }
