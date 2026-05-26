@@ -301,7 +301,8 @@ public class MedicionesController {
         model.addAttribute("detalleReportePage", detallePage);
         model.addAttribute("detalleAgrupadoPorSensor", detalleAgrupadoPorSensor);
         model.addAttribute("detalleLimit", limiteNormalizado);
-        model.addAttribute("historialIndicesSatelitales", satelitalService.listarHistorialPresentacion());
+        model.addAttribute("historialIndicesSatelitales",
+                satelitalService.listarHistorialPresentacionPorRango(reporte.getFechaInicio(), reporte.getFechaFin()));
     }
 
 
