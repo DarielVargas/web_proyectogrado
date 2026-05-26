@@ -43,6 +43,7 @@
         .sensor-tab.active{ background:#111827; color:#fff; border-color:#111827; }
         .sensor-panel{ display:none; }
         .sensor-panel.active{ display:block; }
+        .satellite-table-note{ margin-top:6px; color:#64748b; font-size:12px; font-weight:700; }
         .sensor-summary{ margin-top:10px; display:grid; grid-template-columns:repeat(auto-fit,minmax(180px,1fr)); gap:8px; }
         .summary-item{ background:#f8fafc; border:1px solid #e2e8f0; border-radius:10px; padding:10px 12px; }
         .summary-label{ margin:0 0 4px; font-size:11px; font-weight:900; color:#475569; text-transform:uppercase; }
@@ -101,6 +102,9 @@
                             th:classappend="${iter.first} ? ' active' : ''"
                             th:attr="data-tab-target='sensor-panel-' + ${iter.index},data-chart-labels=${grupo.chartLabelsCsv},data-chart-values=${grupo.chartValuesCsv},data-chart-unit=${grupo.chartUnidad},data-chart-sensor=${grupo.tipoSensor}"
                             th:text="${grupo.tipoSensor}">Temperatura ambiental</button>
+                    <button type="button"
+                            class="sensor-tab"
+                            th:attr="data-tab-target='sensor-panel-satelital',data-chart-enabled='false'">🌍 Índices Satelitales</button>
                 </div>
 
                 <section class="sensor-block sensor-panel"
@@ -145,6 +149,30 @@
                             <p class="summary-value" th:text="${grupo.ultimaMedicion}">--</p>
                         </div>
                     </div>
+                </section>
+
+                <section class="sensor-block sensor-panel" id="sensor-panel-satelital">
+                    <h3 class="sensor-title">Índices Satelitales</h3>
+                    <p class="satellite-table-note">Historial integrado de NDVI/NDWI y estados del análisis satelital.</p>
+                    <table class="results-table">
+                        <thead>
+                        <tr>
+                            <th>Fecha análisis</th><th>NDVI</th><th>NDWI</th><th>Estado vegetación</th><th>Estado hídrico</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr th:if="${#lists.isEmpty(historialIndicesSatelitales)}">
+                            <td colspan="5">No hay datos satelitales disponibles.</td>
+                        </tr>
+                        <tr th:each="s : ${historialIndicesSatelitales}">
+                            <td th:text="${s.fechaTexto}">01/01/2026 00:00</td>
+                            <td th:text="${s.ndvi != null ? #numbers.formatDecimal(s.ndvi,1,3) : 'N/A'}">0.000</td>
+                            <td th:text="${s.ndwi != null ? #numbers.formatDecimal(s.ndwi,1,3) : 'N/A'}">0.000</td>
+                            <td th:text="${s.estadoVegetacion}">Sin dato</td>
+                            <td th:text="${s.estadoHidrico}">Sin dato</td>
+                        </tr>
+                        </tbody>
+                    </table>
                 </section>
 
                 <div class="paginacion" th:if="${detalleReportePage.totalPages > 1}">
@@ -246,6 +274,17 @@
 
         const renderChartForTab = (tab) => {
             if (!chartCanvas || !tab) return;
+
+            if (tab.dataset.chartEnabled === 'false') {
+                if (sensorChart) {
+                    sensorChart.destroy();
+                    sensorChart = null;
+                }
+                if (chartSubtitle) {
+                    chartSubtitle.textContent = 'Seleccione una pestaña de sensor para visualizar la gráfica.';
+                }
+                return;
+            }
 
             const labels = parseCsv(tab.dataset.chartLabels);
             const values = parseCsv(tab.dataset.chartValues)

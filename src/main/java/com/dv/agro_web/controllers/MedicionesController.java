@@ -8,6 +8,7 @@ import com.dv.agro_web.repositorios.VwMedicionDetalleRepository;
 import com.dv.agro_web.servicios.DashboardTiempoRealService;
 import com.dv.agro_web.servicios.EstacionService;
 import com.dv.agro_web.servicios.ReporteService;
+import com.dv.agro_web.servicios.SatelitalService;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -55,15 +56,18 @@ public class MedicionesController {
     private final EstacionService estacionService;
     private final ReporteService reporteService;
     private final DashboardTiempoRealService dashboardTiempoRealService;
+    private final SatelitalService satelitalService;
 
     public MedicionesController(VwMedicionDetalleRepository repo,
                                 EstacionService estacionService,
                                 ReporteService reporteService,
-                                DashboardTiempoRealService dashboardTiempoRealService) {
+                                DashboardTiempoRealService dashboardTiempoRealService,
+                                SatelitalService satelitalService) {
         this.repo = repo;
         this.estacionService = estacionService;
         this.reporteService = reporteService;
         this.dashboardTiempoRealService = dashboardTiempoRealService;
+        this.satelitalService = satelitalService;
     }
 
     @GetMapping("/mediciones")
@@ -297,6 +301,7 @@ public class MedicionesController {
         model.addAttribute("detalleReportePage", detallePage);
         model.addAttribute("detalleAgrupadoPorSensor", detalleAgrupadoPorSensor);
         model.addAttribute("detalleLimit", limiteNormalizado);
+        model.addAttribute("historialIndicesSatelitales", satelitalService.listarHistorialPresentacion());
     }
 
 

@@ -297,6 +297,7 @@ body {
 }
 
 .btn-logout {
+    width: 100%;
     background: rgba(255, 255, 255, .14);
     color: #fff;
     border-color: rgba(255, 255, 255, .26);
