@@ -321,3 +321,29 @@ body {
         transition: none;
     }
 }
+
+/* Unificar botón de cierre de sesión en todas las vistas */
+.sidebar-footer form .btn.btn-logout {
+    width: 100%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 10px 14px;
+    border-radius: 12px;
+    text-decoration: none;
+    font-weight: 800;
+    border: 1px solid rgba(255, 255, 255, .26);
+    background: rgba(255, 255, 255, .14);
+    color: #fff;
+    cursor: pointer;
+    white-space: nowrap;
+    backdrop-filter: blur(2px);
+    transition: transform .22s ease, box-shadow .22s ease, background-color .22s ease;
+}
+
+.sidebar-footer form .btn.btn-logout:hover {
+    background: rgba(255, 255, 255, .22);
+    transform: translateY(-1px);
+    box-shadow: 0 8px 16px rgba(9, 40, 24, .22);
+}
+

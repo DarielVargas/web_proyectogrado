@@ -5,6 +5,8 @@ import com.dv.agro_web.entidades.IndiceSatelital;
 import com.dv.agro_web.repositorios.IndiceSatelitalRepository;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
@@ -42,6 +44,34 @@ public class SatelitalService {
         List<HistorialIndiceDto> historial = new ArrayList<>();
 
         for (IndiceSatelital indice : listarHistorial()) {
+            historial.add(new HistorialIndiceDto(
+                    indice.getId(),
+                    indice.getFecha() != null ? indice.getFecha().format(FORMATO_FECHA) : "N/A",
+                    indice.getNdvi(),
+                    indice.getNdwi(),
+                    valorTexto(indice.getEstadoVegetacion()),
+                    valorTexto(indice.getEstadoHidrico()),
+                    claseNdviPorValor(indice.getNdvi()),
+                    claseEstado(indice.getEstadoVegetacion()),
+                    claseEstado(indice.getEstadoHidrico())
+            ));
+        }
+
+        return historial;
+    }
+
+
+    public List<HistorialIndiceDto> listarHistorialPresentacionPorRango(LocalDate fechaInicio, LocalDate fechaFin) {
+        if (fechaInicio == null || fechaFin == null) {
+            return List.of();
+        }
+
+        LocalDateTime desde = fechaInicio.atStartOfDay();
+        LocalDateTime hasta = fechaFin.plusDays(1).atStartOfDay().minusNanos(1);
+
+        List<HistorialIndiceDto> historial = new ArrayList<>();
+
+        for (IndiceSatelital indice : indiceSatelitalRepository.findAllByFechaBetweenOrderByFechaDescIdDesc(desde, hasta)) {
             historial.add(new HistorialIndiceDto(
                     indice.getId(),
                     indice.getFecha() != null ? indice.getFecha().format(FORMATO_FECHA) : "N/A",
