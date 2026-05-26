@@ -14,6 +14,7 @@
         .header p{ margin:8px 0 0; color:#64748b; font-size:14px; font-weight:600; }
         .cards{ display:grid; grid-template-columns:repeat(3,minmax(200px,1fr)); gap:12px; align-items:stretch; }
         .card{ background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 10px 24px rgba(15,23,42,.08); padding:14px 15px; min-height:122px; display:flex; flex-direction:column; justify-content:center; }
+        .card-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
         .card .label{ color:#64748b; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.45px; display:flex; align-items:center; gap:6px; }
         .card .icon{ font-size:13px; line-height:1; }
         .card .value{ margin-top:8px; font-size:30px; font-weight:900; color:#0f172a; line-height:1.1; }
@@ -23,6 +24,22 @@
         .estado-moderado{ color:#9a3412; background:#fef3c7; border-color:#fcd34d; }
         .estado-critico{ color:#991b1b; background:#fee2e2; border-color:#fca5a5; }
         .estado-neutral{ color:#0f766e; background:#ccfbf1; border-color:#5eead4; }
+        .btn-info-rangos{ width:24px; height:24px; border-radius:999px; border:1px solid #dbeafe; background:#f8fbff; color:#2563eb; display:inline-flex; align-items:center; justify-content:center; font-size:12px; font-weight:900; line-height:1; cursor:pointer; box-shadow:0 6px 14px rgba(37,99,235,.10); transition:background-color .2s ease,border-color .2s ease,color .2s ease,transform .2s ease,box-shadow .2s ease; }
+        .btn-info-rangos:hover,.btn-info-rangos:focus-visible,.btn-info-rangos.is-open{ background:#eff6ff; border-color:#bfdbfe; color:#1d4ed8; transform:translateY(-1px); box-shadow:0 10px 20px rgba(37,99,235,.16); outline:none; }
+        .modal-overlay{ position:fixed; inset:0; z-index:1200; display:none; align-items:center; justify-content:center; padding:22px; background:rgba(15,23,42,.54); backdrop-filter:blur(6px); opacity:0; transition:opacity .22s ease; }
+        .modal-overlay.is-open{ display:flex; opacity:1; }
+        .modal-panel{ width:min(560px,100%); max-height:90vh; overflow:auto; border:1px solid rgba(226,232,240,.95); border-radius:22px; background:#fff; box-shadow:0 30px 70px rgba(15,23,42,.28); transform:translateY(14px) scale(.98); transition:transform .22s ease; }
+        .modal-overlay.is-open .modal-panel{ transform:translateY(0) scale(1); }
+        .modal-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:12px; padding:18px 18px 12px; border-bottom:1px solid #eef2f7; background:linear-gradient(135deg,#fff,#f8fbff); }
+        .modal-title{ margin:0; font-size:20px; font-weight:900; color:#0f172a; }
+        .modal-sub{ margin:6px 0 0; color:#64748b; font-size:13px; font-weight:700; line-height:1.5; }
+        .modal-close{ width:30px; height:30px; border-radius:999px; border:1px solid #e2e8f0; background:#fff; color:#64748b; font-size:20px; line-height:1; cursor:pointer; transition:background-color .2s ease,color .2s ease,transform .2s ease; }
+        .modal-close:hover{ background:#f8fafc; color:#0f172a; transform:rotate(90deg); }
+        .modal-body{ padding:14px 18px 18px; }
+        .range-table{ width:100%; min-width:0; border-collapse:separate; border-spacing:0; border:1px solid #e2e8f0; border-radius:14px; overflow:hidden; }
+        .range-table th,.range-table td{ padding:10px 12px; border-bottom:1px solid #eef2f7; font-size:13px; }
+        .range-table th{ background:#f8fafc; font-size:12px; text-transform:uppercase; letter-spacing:.25px; color:#334155; }
+        .range-table tr:last-child td{ border-bottom:none; }
         .table-wrap{ background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 12px 28px rgba(15,23,42,.08); overflow:hidden; }
         .table-head{ padding:12px 16px; border-bottom:1px solid #e2e8f0; font-size:17px; font-weight:900; }
         .table-responsive{ overflow:auto; }
@@ -48,14 +65,20 @@
 
         <section class="cards" th:with="u=${resumenSatelital}">
             <article class="card">
-                <div class="label"><span class="icon" aria-hidden="true">🌿</span>ÚLTIMO NDVI</div>
+                <div class="card-head">
+                    <div class="label"><span class="icon" aria-hidden="true">🌿</span>ÚLTIMO NDVI</div>
+                    <button type="button" class="btn-info-rangos" data-open-satelite-modal="ndvi" aria-label="Ver interpretación de NDVI">i</button>
+                </div>
                 <div class="value" th:text="${u.ndviTexto}">0.00</div>
                 <div class="badge-wrap">
                     <span class="chip" th:classappend="' ' + ${u.estadoVegetacionClase}" th:text="${u.estadoVegetacion}">Sin dato</span>
                 </div>
             </article>
             <article class="card">
-                <div class="label"><span class="icon" aria-hidden="true">💧</span>ÚLTIMO NDWI</div>
+                <div class="card-head">
+                    <div class="label"><span class="icon" aria-hidden="true">💧</span>ÚLTIMO NDWI</div>
+                    <button type="button" class="btn-info-rangos" data-open-satelite-modal="ndwi" aria-label="Ver interpretación de NDWI">i</button>
+                </div>
                 <div class="value" th:text="${u.ndwiTexto}">0.00</div>
                 <div class="badge-wrap">
                     <span class="chip" th:classappend="' ' + ${u.estadoHidricoClase}" th:text="${u.estadoHidrico}">Sin dato</span>
@@ -90,5 +113,81 @@
         </section>
     </main>
 </div>
+
+<div class="modal-overlay" id="sateliteInfoModal" aria-hidden="true">
+    <section class="modal-panel" role="dialog" aria-modal="true" aria-labelledby="satelite-modal-title">
+        <div class="modal-head">
+            <div>
+                <h3 id="satelite-modal-title" class="modal-title">🌱 Interpretación NDVI</h3>
+                <p id="satelite-modal-sub" class="modal-sub">El NDVI (Normalized Difference Vegetation Index) mide la salud y densidad de la vegetación utilizando imágenes satelitales.</p>
+            </div>
+            <button type="button" class="modal-close" data-close-satelite-modal aria-label="Cerrar modal">×</button>
+        </div>
+        <div class="modal-body">
+            <table class="range-table">
+                <thead><tr><th id="satelite-col-a">NDVI</th><th>Estado</th></tr></thead>
+                <tbody id="satelite-modal-body"></tbody>
+            </table>
+        </div>
+    </section>
+</div>
+
+<script>
+    (() => {
+        const contenidoModal = {
+            ndvi: {
+                titulo: '🌱 Interpretación NDVI',
+                descripcion: 'El NDVI (Normalized Difference Vegetation Index) mide la salud y densidad de la vegetación utilizando imágenes satelitales.',
+                columna: 'NDVI',
+                filas: [
+                    { rango: '≥ 0.6', estado: 'Saludable', clase: 'estado-bueno' },
+                    { rango: '0.3 – 0.59', estado: 'Moderado', clase: 'estado-moderado' },
+                    { rango: '< 0.3', estado: 'Crítico', clase: 'estado-critico' }
+                ]
+            },
+            ndwi: {
+                titulo: '💧 Interpretación NDWI',
+                descripcion: 'El NDWI (Normalized Difference Water Index) evalúa el contenido de humedad en vegetación y suelo.',
+                columna: 'NDWI',
+                filas: [
+                    { rango: '≥ 0.2', estado: 'Óptimo', clase: 'estado-bueno' },
+                    { rango: '0 – 0.19', estado: 'Moderado', clase: 'estado-moderado' },
+                    { rango: '< 0', estado: 'Crítico', clase: 'estado-critico' }
+                ]
+            }
+        };
+
+        const modal = document.getElementById('sateliteInfoModal');
+        const modalTitle = document.getElementById('satelite-modal-title');
+        const modalSub = document.getElementById('satelite-modal-sub');
+        const modalColA = document.getElementById('satelite-col-a');
+        const modalBody = document.getElementById('satelite-modal-body');
+        const openButtons = document.querySelectorAll('[data-open-satelite-modal]');
+        const closeButton = document.querySelector('[data-close-satelite-modal]');
+
+        const cerrar = () => { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); };
+        const abrir = (tipo, boton) => {
+            const data = contenidoModal[tipo];
+            if (!data) return;
+            modalTitle.textContent = data.titulo;
+            modalSub.textContent = data.descripcion;
+            modalColA.textContent = data.columna;
+            modalBody.innerHTML = data.filas.map(f => `<tr><td>${f.rango}</td><td><span class="chip ${f.clase}">${f.estado}</span></td></tr>`).join('');
+            modal.classList.add('is-open');
+            modal.setAttribute('aria-hidden', 'false');
+            boton?.classList.add('is-open');
+        };
+
+        openButtons.forEach((btn) => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.btn-info-rangos.is-open').forEach(b => b.classList.remove('is-open'));
+                abrir(btn.dataset.openSateliteModal, btn);
+            });
+        });
+        closeButton?.addEventListener('click', cerrar);
+        modal?.addEventListener('click', (e) => { if (e.target === modal) cerrar(); });
+        document.addEventListener('keydown', (e) => { if (e.key === 'Escape') cerrar(); });
+    })();
+</script>
 </body>
 </html>
