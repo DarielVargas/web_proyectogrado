@@ -12,13 +12,18 @@
         .topbar{ display:flex; align-items:center; justify-content:space-between; gap:20px; flex-wrap:wrap; padding:20px 22px; border-radius:18px; border:1px solid var(--border); background:linear-gradient(135deg,#fff,#f3f8ff); box-shadow:var(--shadow-soft); }
         .header h1{ margin:0; font-size:30px; font-weight:900; color:var(--primary-dark); }
         .header p{ margin:8px 0 0; color:#64748b; font-size:14px; font-weight:600; }
-        .cards{ display:grid; grid-template-columns:repeat(3,minmax(200px,1fr)); gap:12px; align-items:stretch; }
-        .card{ background:#fff; border:1px solid #e2e8f0; border-radius:16px; box-shadow:0 10px 24px rgba(15,23,42,.08); padding:14px 15px; min-height:122px; display:flex; flex-direction:column; justify-content:center; }
-        .card-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:8px; }
-        .card .label{ color:#64748b; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.45px; display:flex; align-items:center; gap:6px; }
-        .card .icon{ font-size:13px; line-height:1; }
-        .card .value{ margin-top:8px; font-size:30px; font-weight:900; color:#0f172a; line-height:1.1; }
-        .card .badge-wrap{ margin-top:8px; }
+        .cards{ display:grid; grid-template-columns:repeat(3,minmax(240px,1fr)); gap:16px; align-items:stretch; }
+        .card{ background:linear-gradient(180deg,#ffffff 0%,#fcfdff 100%); border:1px solid #e8edf6; border-radius:22px; box-shadow:0 16px 34px rgba(15,23,42,.09); padding:20px; min-height:220px; display:flex; flex-direction:column; gap:14px; }
+        .card-head{ display:flex; align-items:flex-start; justify-content:space-between; gap:10px; }
+        .card-head-left{ display:flex; align-items:center; gap:10px; }
+        .card-icon{ width:38px; height:38px; border-radius:12px; display:grid; place-items:center; font-size:18px; background:#eef4ff; color:#1e3a8a; box-shadow:inset 0 0 0 1px #dbeafe; }
+        .card-icon--ndwi{ background:#ecfeff; color:#0f766e; box-shadow:inset 0 0 0 1px #bae6fd; }
+        .card-icon--analysis{ background:#f5f3ff; color:#6d28d9; box-shadow:inset 0 0 0 1px #ddd6fe; }
+        .card .label{ color:#94a3b8; font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:.7px; }
+        .metric-value{ margin:2px 0 0; font-size:44px; font-weight:900; color:#0f172a; line-height:1.04; letter-spacing:-.03em; }
+        .metric-hint{ margin:0; color:#64748b; font-size:13px; font-weight:700; }
+        .card .badge-wrap{ margin-top:auto; display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap; }
+        .provider-tag{ display:inline-flex; align-items:center; gap:6px; padding:6px 10px; border-radius:999px; border:1px solid #dbeafe; background:#eff6ff; color:#1e3a8a; font-size:11px; font-weight:800; letter-spacing:.24px; text-transform:uppercase; }
         .chip{ display:inline-flex; align-items:center; padding:3px 8px; border-radius:999px; font-size:11px; font-weight:800; letter-spacing:.2px; border:1px solid transparent; }
         .estado-bueno{ color:#166534; background:#dcfce7; border-color:#86efac; }
         .estado-moderado{ color:#9a3412; background:#fef3c7; border-color:#fcd34d; }
@@ -47,9 +52,9 @@
         th,td{ padding:12px 14px; border-bottom:1px solid #eef2f7; text-align:left; font-size:13px; }
         th{ background:#f8fafc; color:#334155; font-size:12px; text-transform:uppercase; letter-spacing:.25px; }
         .empty{ margin:14px; border:1px dashed #cbd5e1; background:#f8fafc; color:#64748b; padding:14px; border-radius:12px; font-weight:700; }
-        @media (max-width:1200px){ .cards{ grid-template-columns:repeat(3,minmax(180px,1fr)); } }
-        @media (max-width:900px){ .layout{ grid-template-columns:1fr; } .sidebar{ position:relative; height:auto; } .cards{ grid-template-columns:repeat(2,minmax(180px,1fr)); } }
-        @media (max-width:640px){ .cards{ grid-template-columns:1fr; } }
+        @media (max-width:1200px){ .cards{ grid-template-columns:repeat(3,minmax(210px,1fr)); } .metric-value{ font-size:38px; } }
+        @media (max-width:900px){ .layout{ grid-template-columns:1fr; } .sidebar{ position:relative; height:auto; } .cards{ grid-template-columns:repeat(2,minmax(220px,1fr)); } .card{ min-height:200px; } }
+        @media (max-width:640px){ .cards{ grid-template-columns:1fr; } .card{ padding:18px; min-height:190px; } .metric-value{ font-size:34px; } }
     </style>
 </head>
 <body>
@@ -66,27 +71,44 @@
         <section class="cards" th:with="u=${resumenSatelital}">
             <article class="card">
                 <div class="card-head">
-                    <div class="label"><span class="icon" aria-hidden="true">🌿</span>ÚLTIMO NDVI</div>
+                    <div class="card-head-left">
+                        <span class="card-icon" aria-hidden="true">🌿</span>
+                        <div class="label">NDVI Promedio</div>
+                    </div>
                     <button type="button" class="btn-info-rangos" data-open-satelite-modal="ndvi" aria-label="Ver interpretación de NDVI">i</button>
                 </div>
-                <div class="value" th:text="${u.ndviTexto}">0.00</div>
+                <p class="metric-value" th:text="${u.ndviTexto}">0.793</p>
+                <p class="metric-hint">Rango óptimo: ≥ 0.6</p>
                 <div class="badge-wrap">
-                    <span class="chip" th:classappend="' ' + ${u.estadoVegetacionClase}" th:text="${u.estadoVegetacion}">Sin dato</span>
+                    <span class="chip" th:classappend="' ' + ${u.estadoVegetacionClase}" th:text="${u.estadoVegetacion}">Saludable</span>
                 </div>
             </article>
             <article class="card">
                 <div class="card-head">
-                    <div class="label"><span class="icon" aria-hidden="true">💧</span>ÚLTIMO NDWI</div>
+                    <div class="card-head-left">
+                        <span class="card-icon card-icon--ndwi" aria-hidden="true">💧</span>
+                        <div class="label">NDWI Promedio</div>
+                    </div>
                     <button type="button" class="btn-info-rangos" data-open-satelite-modal="ndwi" aria-label="Ver interpretación de NDWI">i</button>
                 </div>
-                <div class="value" th:text="${u.ndwiTexto}">0.00</div>
+                <p class="metric-value" th:text="${u.ndwiTexto}">0.302</p>
+                <p class="metric-hint">Rango óptimo: ≥ 0.2</p>
                 <div class="badge-wrap">
-                    <span class="chip" th:classappend="' ' + ${u.estadoHidricoClase}" th:text="${u.estadoHidrico}">Sin dato</span>
+                    <span class="chip" th:classappend="' ' + ${u.estadoHidricoClase}" th:text="${u.estadoHidrico}">Óptimo</span>
                 </div>
             </article>
             <article class="card">
-                <div class="label">Fecha último análisis</div>
-                <div class="value" style="font-size:21px;" th:text="${u.fechaTexto}">N/A</div>
+                <div class="card-head">
+                    <div class="card-head-left">
+                        <span class="card-icon card-icon--analysis" aria-hidden="true">🗓️</span>
+                        <div class="label">Último Análisis</div>
+                    </div>
+                </div>
+                <p class="metric-value" style="font-size:36px;" data-last-analysis th:text="${u.fechaTexto}">26/05/2026</p>
+                <p class="metric-hint" data-next-analysis>Próximo: N/A</p>
+                <div class="badge-wrap">
+                    <span class="provider-tag">🛰️ Sentinel-2</span>
+                </div>
             </article>
         </section>
 
@@ -164,6 +186,25 @@
         const modalBody = document.getElementById('satelite-modal-body');
         const openButtons = document.querySelectorAll('[data-open-satelite-modal]');
         const closeButton = document.querySelector('[data-close-satelite-modal]');
+
+        const fechaUltimoAnalisisEl = document.querySelector('[data-last-analysis]');
+        const fechaProximoAnalisisEl = document.querySelector('[data-next-analysis]');
+        if (fechaUltimoAnalisisEl && fechaProximoAnalisisEl) {
+            const textoFecha = (fechaUltimoAnalisisEl.textContent || '').trim();
+            const match = textoFecha.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+            if (match) {
+                fechaUltimoAnalisisEl.textContent = match[0];
+                const [, dd, mm, yyyy] = match;
+                const base = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+                if (!Number.isNaN(base.getTime())) {
+                    base.setDate(base.getDate() + 5);
+                    const dia = String(base.getDate()).padStart(2, '0');
+                    const mes = String(base.getMonth() + 1).padStart(2, '0');
+                    const anio = base.getFullYear();
+                    fechaProximoAnalisisEl.textContent = `Próximo: ${dia}/${mes}/${anio}`;
+                }
+            }
+        }
 
         const cerrar = () => { modal.classList.remove('is-open'); modal.setAttribute('aria-hidden', 'true'); };
         const abrir = (tipo, boton) => {
