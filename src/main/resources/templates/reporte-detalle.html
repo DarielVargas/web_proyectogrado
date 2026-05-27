@@ -73,7 +73,7 @@
                 <div class="meta-item">
                     <p class="meta-label">Estación</p>
                     <p class="meta-value"
-                       th:text="${reporteSeleccionado.estacionCodigo != null ? reporteSeleccionado.estacionCodigo : 'N/A'} + (${reporteSeleccionado.estacionDescripcion != null ? ' - ' + reporteSeleccionado.estacionDescripcion : ''})">EST-001</p>
+                       th:text="${reporteSeleccionado.estacionCodigo != null ? reporteSeleccionado.estacionCodigo : (reporteSoloSatelital ? 'Índices Satelitales' : (reporteCompleto ? 'Reporte Completo' : 'N/A'))} + (${reporteSeleccionado.estacionDescripcion != null ? ' - ' + reporteSeleccionado.estacionDescripcion : ''})">EST-001</p>
                 </div>
                 <div class="meta-item">
                     <p class="meta-label">Rango de fechas</p>

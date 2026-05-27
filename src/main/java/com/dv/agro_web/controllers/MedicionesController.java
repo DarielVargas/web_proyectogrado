@@ -132,20 +132,64 @@ public class MedicionesController {
         return "redirect:/historial";
     }
 
+    private static final String OPCION_SATELITAL = "SATELITAL";
+    private static final String OPCION_COMPLETO = "COMPLETO";
+
     @PostMapping("/historial")
-    public String generarReporte(@RequestParam("estacionId") Long estacionId,
+    public String generarReporte(@RequestParam("estacionId") String estacionSelector,
                                  @RequestParam("fechaSeleccion") String fechaSeleccion,
                                  RedirectAttributes redirectAttributes) {
 
-        Estacion estacion = estacionService.obtenerEstacionActivaPorId(estacionId).orElse(null);
-        if (estacion == null) {
-            redirectAttributes.addFlashAttribute("mensajeReporte", "Seleccione una estación activa válida.");
+        if (estacionSelector == null || estacionSelector.isBlank()) {
+            redirectAttributes.addFlashAttribute("mensajeReporte", "Seleccione una estación u opción de reporte.");
             return "redirect:/historial";
         }
 
         RangoFechaSeleccionado rango = parsearFechaSeleccion(fechaSeleccion);
         if (rango == null) {
             redirectAttributes.addFlashAttribute("mensajeReporte", "Seleccione una fecha válida en el calendario.");
+            return "redirect:/historial";
+        }
+
+        if (OPCION_SATELITAL.equals(estacionSelector)) {
+            List<?> indices = satelitalService.listarHistorialPresentacionPorRango(rango.fechaInicio(), rango.fechaFin());
+            if (indices.isEmpty()) {
+                redirectAttributes.addFlashAttribute("mensajeReporte", "No existen índices satelitales para los filtros seleccionados.");
+                return "redirect:/historial";
+            }
+            Reporte reporte = reporteService.guardarReporteGenerado(null, rango.fechaInicio(), rango.fechaFin(), "SATELITAL");
+            redirectAttributes.addFlashAttribute("mensajeExito", "Reporte satelital generado correctamente.");
+            return "redirect:/reportes/" + reporte.getIdReporte();
+        }
+
+        if (OPCION_COMPLETO.equals(estacionSelector)) {
+            List<Estacion> estacionesActivas = estacionService.obtenerEstacionesActivas();
+            List<VwMedicionDetalle> medicionesCombinadas = estacionesActivas.stream()
+                    .flatMap(est -> repo.findReportePorRangoByEstacionCodigo(est.getCodigo(), rango.fechaInicio(), rango.fechaFin()).stream())
+                    .toList();
+            List<?> indices = satelitalService.listarHistorialPresentacionPorRango(rango.fechaInicio(), rango.fechaFin());
+
+            if (medicionesCombinadas.isEmpty() && indices.isEmpty()) {
+                redirectAttributes.addFlashAttribute("mensajeReporte", "No existen datos IoT ni satelitales para los filtros seleccionados.");
+                return "redirect:/historial";
+            }
+
+            Reporte reporte = reporteService.guardarReporteGenerado(null, rango.fechaInicio(), rango.fechaFin(), "COMPLETO");
+            redirectAttributes.addFlashAttribute("mensajeExito", "Reporte completo generado correctamente.");
+            return "redirect:/reportes/" + reporte.getIdReporte();
+        }
+
+        Long estacionId;
+        try {
+            estacionId = Long.parseLong(estacionSelector);
+        } catch (NumberFormatException ex) {
+            redirectAttributes.addFlashAttribute("mensajeReporte", "Seleccione una estación activa válida.");
+            return "redirect:/historial";
+        }
+
+        Estacion estacion = estacionService.obtenerEstacionActivaPorId(estacionId).orElse(null);
+        if (estacion == null) {
+            redirectAttributes.addFlashAttribute("mensajeReporte", "Seleccione una estación activa válida.");
             return "redirect:/historial";
         }
 
@@ -210,6 +254,10 @@ public class MedicionesController {
 
         List<ReporteRepository.ReporteRecienteView> recientes = reporteService.listarReportesRecientes();
 
+        estacionesReporte = new ArrayList<>(estacionesReporte);
+        estacionesReporte.add(new EstacionOpcionDto(null, OPCION_SATELITAL, "Índices Satelitales"));
+        estacionesReporte.add(new EstacionOpcionDto(null, OPCION_COMPLETO, "Reporte Completo"));
+
         model.addAttribute("estacionesReporte", estacionesReporte);
         model.addAttribute("reportesRecientes", recientes);
     }
@@ -221,19 +269,26 @@ public class MedicionesController {
             return;
         }
 
-        if (reporte.getEstacionCodigo() == null) {
-            model.addAttribute("mensajeReporte", "No se encontró la estación del reporte seleccionado.");
-            return;
-        }
-
         int limiteNormalizado = Math.max(1, Math.min(100, limit));
         int paginaNormalizada = Math.max(0, page);
 
-        List<VwMedicionDetalle> detalleCompleto = repo.findReportePorRangoByEstacionCodigo(
-                reporte.getEstacionCodigo(),
-                reporte.getFechaInicio(),
-                reporte.getFechaFin()
-        );
+        List<VwMedicionDetalle> detalleCompleto;
+        boolean soloSatelital = "SATELITAL".equalsIgnoreCase(reporte.getTipoReporte());
+        boolean reporteCompleto = "COMPLETO".equalsIgnoreCase(reporte.getTipoReporte());
+
+        if (soloSatelital) {
+            detalleCompleto = List.of();
+        } else if (reporteCompleto || reporte.getEstacionCodigo() == null) {
+            detalleCompleto = estacionService.obtenerEstacionesActivas().stream()
+                    .flatMap(est -> repo.findReportePorRangoByEstacionCodigo(est.getCodigo(), reporte.getFechaInicio(), reporte.getFechaFin()).stream())
+                    .toList();
+        } else {
+            detalleCompleto = repo.findReportePorRangoByEstacionCodigo(
+                    reporte.getEstacionCodigo(),
+                    reporte.getFechaInicio(),
+                    reporte.getFechaFin()
+            );
+        }
 
         Map<String, List<VwMedicionDetalle>> agrupadoPorClave = detalleCompleto.stream()
                 .collect(Collectors.groupingBy(
@@ -303,6 +358,8 @@ public class MedicionesController {
         model.addAttribute("detalleLimit", limiteNormalizado);
         model.addAttribute("historialIndicesSatelitales",
                 satelitalService.listarHistorialPresentacionPorRango(reporte.getFechaInicio(), reporte.getFechaFin()));
+        model.addAttribute("reporteSoloSatelital", soloSatelital);
+        model.addAttribute("reporteCompleto", reporteCompleto);
     }
 
 

@@ -104,7 +104,7 @@
                         <select id="estacionId" name="estacionId" required>
                             <option value="">Seleccione...</option>
                             <option th:each="est : ${estacionesReporte}"
-                                    th:value="${est.id}"
+                                    th:value="${est.id != null ? est.id : est.codigo}"
                                     th:text="|${est.codigo} - ${est.descripcion}|">EST-001 - Estación</option>
                         </select>
                     </div>
