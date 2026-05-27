@@ -4,6 +4,7 @@ import com.dv.agro_web.controllers.IndiceSatelitalRequest;
 import com.dv.agro_web.entidades.IndiceSatelital;
 import com.dv.agro_web.repositorios.IndiceSatelitalRepository;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -65,27 +66,33 @@ public class SatelitalService {
     }
 
 
-    public Page<HistorialIndiceDto> listarHistorialPresentacionPaginado(int page, int limit) {
+    public Page<HistorialIndiceDto> listarHistorialPresentacionPaginado(int page, int limit, String filtro, LocalDate fecha, LocalDate fechaInicio, LocalDate fechaFin) {
         int limiteNormalizado = List.of(5, 10, 25, 50).contains(limit) ? limit : 10;
         int paginaNormalizada = Math.max(page, 0);
 
-        Pageable pageable = PageRequest.of(
-                paginaNormalizada,
-                limiteNormalizado,
-                Sort.by(Sort.Order.desc("fecha"), Sort.Order.desc("id"))
-        );
+        List<HistorialIndiceDto> base = switch (filtro != null ? filtro : "todo") {
+            case "fecha" -> fecha != null ? listarHistorialPresentacionPorRango(fecha, fecha) : List.of();
+            case "rango" -> (fechaInicio != null && fechaFin != null) ? listarHistorialPresentacionPorRango(fechaInicio, fechaFin) : List.of();
+            default -> listarHistorialPresentacion();
+        };
 
-        return indiceSatelitalRepository.findAll(pageable).map(indice -> new HistorialIndiceDto(
-                indice.getId(),
-                indice.getFecha() != null ? indice.getFecha().format(FORMATO_FECHA) : "N/A",
-                indice.getNdvi(),
-                indice.getNdwi(),
-                valorTexto(indice.getEstadoVegetacion()),
-                valorTexto(indice.getEstadoHidrico()),
-                claseNdviPorValor(indice.getNdvi()),
-                claseEstado(indice.getEstadoVegetacion()),
-                claseEstado(indice.getEstadoHidrico())
-        ));
+        int desde = Math.min(paginaNormalizada * limiteNormalizado, base.size());
+        int hasta = Math.min(desde + limiteNormalizado, base.size());
+        List<HistorialIndiceDto> pageContent = base.subList(desde, hasta);
+
+        return new PageImpl<>(
+                pageContent,
+                PageRequest.of(paginaNormalizada, limiteNormalizado, Sort.by(Sort.Order.desc("fecha"), Sort.Order.desc("id"))),
+                base.size()
+        );
+    }
+
+    public List<HistorialIndiceDto> listarHistorialFiltradoParaDescarga(String filtro, LocalDate fecha, LocalDate fechaInicio, LocalDate fechaFin) {
+        return switch (filtro != null ? filtro : "todo") {
+            case "fecha" -> fecha != null ? listarHistorialPresentacionPorRango(fecha, fecha) : List.of();
+            case "rango" -> (fechaInicio != null && fechaFin != null) ? listarHistorialPresentacionPorRango(fechaInicio, fechaFin) : List.of();
+            default -> listarHistorialPresentacion();
+        };
     }
 
     public List<HistorialIndiceDto> listarHistorialPresentacionPorRango(LocalDate fechaInicio, LocalDate fechaFin) {
