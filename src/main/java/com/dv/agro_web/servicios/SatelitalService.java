@@ -3,6 +3,10 @@ package com.dv.agro_web.servicios;
 import com.dv.agro_web.controllers.IndiceSatelitalRequest;
 import com.dv.agro_web.entidades.IndiceSatelital;
 import com.dv.agro_web.repositorios.IndiceSatelitalRepository;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -60,6 +64,29 @@ public class SatelitalService {
         return historial;
     }
 
+
+    public Page<HistorialIndiceDto> listarHistorialPresentacionPaginado(int page, int limit) {
+        int limiteNormalizado = List.of(5, 10, 25, 50).contains(limit) ? limit : 10;
+        int paginaNormalizada = Math.max(page, 0);
+
+        Pageable pageable = PageRequest.of(
+                paginaNormalizada,
+                limiteNormalizado,
+                Sort.by(Sort.Order.desc("fecha"), Sort.Order.desc("id"))
+        );
+
+        return indiceSatelitalRepository.findAll(pageable).map(indice -> new HistorialIndiceDto(
+                indice.getId(),
+                indice.getFecha() != null ? indice.getFecha().format(FORMATO_FECHA) : "N/A",
+                indice.getNdvi(),
+                indice.getNdwi(),
+                valorTexto(indice.getEstadoVegetacion()),
+                valorTexto(indice.getEstadoHidrico()),
+                claseNdviPorValor(indice.getNdvi()),
+                claseEstado(indice.getEstadoVegetacion()),
+                claseEstado(indice.getEstadoHidrico())
+        ));
+    }
 
     public List<HistorialIndiceDto> listarHistorialPresentacionPorRango(LocalDate fechaInicio, LocalDate fechaFin) {
         if (fechaInicio == null || fechaFin == null) {

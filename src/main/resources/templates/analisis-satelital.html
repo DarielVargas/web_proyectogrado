@@ -52,6 +52,13 @@
         th,td{ padding:12px 14px; border-bottom:1px solid #eef2f7; text-align:left; font-size:13px; }
         th{ background:#f8fafc; color:#334155; font-size:12px; text-transform:uppercase; letter-spacing:.25px; }
         .empty{ margin:14px; border:1px dashed #cbd5e1; background:#f8fafc; color:#64748b; padding:14px; border-radius:12px; font-weight:700; }
+        .table-controls{ display:flex; justify-content:flex-end; padding:10px 16px 0; }
+        .select{ display:flex; align-items:center; gap:8px; color:var(--text-soft); font-size:13px; font-weight:700; }
+        .select select{ border:1px solid #d1d5db; border-radius:10px; padding:6px 8px; background:#fff; font-weight:700; }
+        .paginacion{ display:flex; gap:8px; align-items:center; justify-content:flex-start; margin: 14px 16px 16px; flex-wrap: wrap; }
+        .btn-page{ background:#ffffff; color:#333; border:1px solid #ddd; border-radius:10px; padding:8px 12px; font-weight:800; text-decoration:none; }
+        .btn-active{ background:#111827; color:white; border-color:#111827; }
+        .btn-disabled{ opacity:0.5; pointer-events:none; }
         @media (max-width:1200px){ .cards{ grid-template-columns:repeat(3,minmax(210px,1fr)); } .metric-value{ font-size:38px; } }
         @media (max-width:900px){ .layout{ grid-template-columns:1fr; } .sidebar{ position:relative; height:auto; } .cards{ grid-template-columns:repeat(2,minmax(220px,1fr)); } .card{ min-height:200px; } }
         @media (max-width:640px){ .cards{ grid-template-columns:1fr; } .card{ padding:18px; min-height:190px; } .metric-value{ font-size:34px; } }
@@ -114,6 +121,17 @@
 
         <section class="table-wrap">
             <div class="table-head">Historial de Índices Satelitales</div>
+            <div class="table-controls" th:if="${!#lists.isEmpty(historialIndices)}">
+                <div class="select">
+                    <label for="historialLimitSelect">Mostrar:</label>
+                    <select id="historialLimitSelect">
+                        <option value="5" th:selected="${historialLimit == 5}">5</option>
+                        <option value="10" th:selected="${historialLimit == 10}">10</option>
+                        <option value="25" th:selected="${historialLimit == 25}">25</option>
+                        <option value="50" th:selected="${historialLimit == 50}">50</option>
+                    </select>
+                </div>
+            </div>
             <div class="table-responsive" th:if="${!#lists.isEmpty(historialIndices)}">
                 <table>
                     <thead>
@@ -130,6 +148,22 @@
                     </tr>
                     </tbody>
                 </table>
+            </div>
+            <div class="paginacion" th:if="${historialPage != null and historialPage.totalPages > 1}">
+                <a class="btn-page"
+                   th:classappend="${historialPage.first} ? ' btn-disabled' : ''"
+                   th:href="@{/analisis-satelital(page=${historialPage.number - 1},limit=${historialLimit})}">Anterior</a>
+
+                <span th:each="i : ${#numbers.sequence(0, historialPage.totalPages - 1)}">
+                    <a class="btn-page"
+                       th:classappend="${i == historialPage.number} ? ' btn-active' : ''"
+                       th:href="@{/analisis-satelital(page=${i},limit=${historialLimit})}"
+                       th:text="${i + 1}">1</a>
+                </span>
+
+                <a class="btn-page"
+                   th:classappend="${historialPage.last} ? ' btn-disabled' : ''"
+                   th:href="@{/analisis-satelital(page=${historialPage.number + 1},limit=${historialLimit})}">Siguiente</a>
             </div>
             <div class="empty" th:if="${#lists.isEmpty(historialIndices)}">No hay registros satelitales disponibles todavía.</div>
         </section>
@@ -156,6 +190,16 @@
 
 <script>
     (() => {
+        const historialLimitSelect = document.getElementById('historialLimitSelect');
+        if (historialLimitSelect) {
+            historialLimitSelect.addEventListener('change', () => {
+                const url = new URL(window.location.href);
+                url.searchParams.set('page', '0');
+                url.searchParams.set('limit', historialLimitSelect.value || '10');
+                window.location.href = url.toString();
+            });
+        }
+
         const contenidoModal = {
             ndvi: {
                 titulo: '🌱 Interpretación NDVI',
