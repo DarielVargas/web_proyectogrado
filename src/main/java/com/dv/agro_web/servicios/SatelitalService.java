@@ -15,6 +15,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Service
 public class SatelitalService {
@@ -43,6 +44,11 @@ public class SatelitalService {
 
     public List<IndiceSatelital> listarHistorial() {
         return indiceSatelitalRepository.findAllByOrderByFechaDescIdDesc();
+    }
+
+    public Optional<LocalDateTime> obtenerFechaUltimoAnalisis() {
+        return indiceSatelitalRepository.findTopByOrderByFechaDescIdDesc()
+                .map(IndiceSatelital::getFecha);
     }
 
     public List<HistorialIndiceDto> listarHistorialPresentacion() {
