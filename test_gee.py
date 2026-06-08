@@ -1,12 +1,12 @@
+import os
+from datetime import datetime, timedelta
+
 import ee
 import requests
-import time
-from datetime import datetime
 
-# ==========================================================
-# INICIALIZAR EARTH ENGINE
-# ==========================================================
-ee.Initialize(project='agro-iot-496315')
+BACKEND_URL = os.getenv("AGRO_BACKEND_URL", "http://localhost:8080")
+INTERVALO_ANALISIS = timedelta(days=5)
+HTTP_TIMEOUT_SEGUNDOS = 30
 
 # ==========================================================
 # ÁREA AGRÍCOLA
@@ -20,6 +20,43 @@ geometry = ee.Geometry.Polygon([
         [-70.996281, 19.550604]
     ]
 ])
+
+# ==========================================================
+# CONSULTAR ÚLTIMO ANÁLISIS AL BACKEND
+# ==========================================================
+def obtener_fecha_ultimo_analisis():
+    respuesta = requests.get(
+        f"{BACKEND_URL}/api/indices-satelitales/ultimo",
+        timeout=HTTP_TIMEOUT_SEGUNDOS
+    )
+
+    if respuesta.status_code == 204:
+        return None
+
+    respuesta.raise_for_status()
+    fecha_texto = respuesta.json().get("fecha")
+    if not fecha_texto:
+        raise ValueError("El backend no devolvió la fecha del último análisis satelital")
+
+    return datetime.fromisoformat(fecha_texto.replace("Z", "+00:00"))
+
+
+def corresponde_ejecutar_analisis(ahora=None):
+    fecha_ultimo_analisis = obtener_fecha_ultimo_analisis()
+    if fecha_ultimo_analisis is None:
+        print("No existe un análisis satelital previo. Se ejecutará el análisis.")
+        return True
+
+    ahora = ahora or datetime.now(fecha_ultimo_analisis.tzinfo)
+    proxima_fecha = fecha_ultimo_analisis + INTERVALO_ANALISIS
+
+    if ahora < proxima_fecha:
+        print(f"Último análisis: {fecha_ultimo_analisis.isoformat()}")
+        print(f"Aún no han pasado 5 días. Próximo análisis permitido: {proxima_fecha.isoformat()}")
+        return False
+
+    print(f"Han pasado al menos 5 días desde el último análisis ({fecha_ultimo_analisis.isoformat()}).")
+    return True
 
 # ==========================================================
 # LIMPIAR NUBES
@@ -53,6 +90,11 @@ def ejecutar_consulta():
     print("\n==============================")
     print("CONSULTANDO EARTH ENGINE...")
     print("==============================")
+
+    # ==========================================================
+    # INICIALIZAR EARTH ENGINE
+    # ==========================================================
+    ee.Initialize(project='agro-iot-496315')
 
     # ------------------------------------------------------
     # COLECCIÓN
@@ -143,24 +185,26 @@ def ejecutar_consulta():
     # ENVIAR A SPRING BOOT
     # ------------------------------------------------------
     respuesta = requests.post(
-        "http://localhost:8080/api/indices-satelitales",
-        json=payload
+        f"{BACKEND_URL}/api/indices-satelitales",
+        json=payload,
+        timeout=HTTP_TIMEOUT_SEGUNDOS
     )
+    respuesta.raise_for_status()
 
     print("STATUS:", respuesta.status_code)
     print(respuesta.text)
 
-# ==========================================================
-# LOOP INFINITO
-# ==========================================================
-while True:
 
+def main():
     try:
-        ejecutar_consulta()
+        if corresponde_ejecutar_analisis():
+            ejecutar_consulta()
+        else:
+            print("El proceso finalizó sin generar un nuevo registro.")
+    except Exception as error:
+        print("ERROR:", error)
+        raise
 
-    except Exception as e:
-        print("ERROR:", e)
 
-    print("\nEsperando 10 segundos...\n")
-
-    time.sleep(10)
+if __name__ == "__main__":
+    main()
