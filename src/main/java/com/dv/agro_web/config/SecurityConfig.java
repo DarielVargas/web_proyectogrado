@@ -25,7 +25,8 @@ public class SecurityConfig {
                                 "/api/indices-satelitales/**",
                                 "/css/**",
                                 "/js/**",
-                                "/images/**"
+                                "/images/**",
+                                "/uploads/**"
                         ).permitAll()
 
                         .anyRequest().authenticated()
