@@ -71,6 +71,15 @@
         .btn-download-history{ display:inline-flex; align-items:center; justify-content:center; padding:10px 14px; border-radius:12px; border:1px solid #bbf7d0; background:#ecfdf3; color:#166534; font-weight:800; text-decoration:none; }
         .btn-download-history:hover{ background:#dcfce7; border-color:#86efac; color:#14532d; transform:translateY(-1px);}
 
+        .satellite-image-card{ background:linear-gradient(180deg,#ffffff 0%,#fcfdff 100%); border:1px solid #e8edf6; border-radius:22px; box-shadow:0 16px 34px rgba(15,23,42,.09); overflow:hidden; }
+        .satellite-image-header{ display:flex; align-items:flex-start; justify-content:space-between; gap:14px; flex-wrap:wrap; padding:18px 20px; border-bottom:1px solid #eef2f7; background:linear-gradient(135deg,#fff,#f8fbff); }
+        .satellite-image-title{ margin:0; color:#0f172a; font-size:20px; font-weight:900; letter-spacing:-.02em; }
+        .satellite-image-subtitle{ margin:6px 0 0; color:#64748b; font-size:13px; font-weight:700; }
+        .satellite-image-date{ display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border-radius:999px; border:1px solid #dbeafe; background:#eff6ff; color:#1e3a8a; font-size:12px; font-weight:900; }
+        .satellite-image-frame{ margin:18px; border:1px solid #e2e8f0; border-radius:18px; overflow:hidden; background:#f8fafc; min-height:320px; display:grid; place-items:center; }
+        .satellite-image-frame img{ display:block; width:100%; height:min(520px,58vh); object-fit:contain; }
+        .satellite-image-empty{ margin:18px; border:1px dashed #cbd5e1; border-radius:18px; background:#f8fafc; color:#64748b; padding:28px; text-align:center; font-weight:800; }
+
         @media (max-width:1200px){ .cards{ grid-template-columns:repeat(3,minmax(210px,1fr)); } .metric-value{ font-size:38px; } }
         @media (max-width:900px){ .layout{ grid-template-columns:1fr; } .sidebar{ position:relative; height:auto; } .cards{ grid-template-columns:repeat(2,minmax(220px,1fr)); } .card{ min-height:200px; } }
         @media (max-width:640px){ .cards{ grid-template-columns:1fr; } .card{ padding:18px; min-height:190px; } .metric-value{ font-size:34px; } }
@@ -131,6 +140,23 @@
                 </div>
             </article>
         </section>
+
+        <section class="satellite-image-card">
+            <div class="satellite-image-header">
+                <div>
+                    <h2 class="satellite-image-title">Imagen Satelital Más Reciente</h2>
+                    <p class="satellite-image-subtitle">Vista de referencia cargada desde el repositorio externo de imágenes satelitales.</p>
+                </div>
+                <span class="satellite-image-date" th:if="${imagenSatelitalReciente != null}" th:text="|📅 Subida: ${imagenSatelitalReciente.fechaSubidaTexto}|">📅 Subida: 01/06/2026 08:30</span>
+            </div>
+            <div class="satellite-image-frame" th:if="${imagenSatelitalReciente != null}">
+                <img th:src="@{${imagenSatelitalReciente.urlImagen}}" src="/uploads/satelital/imagen-demo.jpg" alt="Imagen satelital más reciente">
+            </div>
+            <div class="satellite-image-empty" th:if="${imagenSatelitalReciente == null}">
+                No hay imágenes satelitales cargadas todavía.
+            </div>
+        </section>
+
 
     </main>
 </div>

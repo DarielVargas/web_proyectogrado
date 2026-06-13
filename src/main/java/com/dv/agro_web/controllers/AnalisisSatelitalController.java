@@ -1,5 +1,6 @@
 package com.dv.agro_web.controllers;
 
+import com.dv.agro_web.servicios.ImagenSatelitalService;
 import com.dv.agro_web.servicios.SatelitalService;
 import org.springframework.data.domain.Page;
 import org.springframework.http.HttpHeaders;
@@ -18,9 +19,12 @@ import java.util.List;
 public class AnalisisSatelitalController {
 
     private final SatelitalService satelitalService;
+    private final ImagenSatelitalService imagenSatelitalService;
 
-    public AnalisisSatelitalController(SatelitalService satelitalService) {
+    public AnalisisSatelitalController(SatelitalService satelitalService,
+                                      ImagenSatelitalService imagenSatelitalService) {
         this.satelitalService = satelitalService;
+        this.imagenSatelitalService = imagenSatelitalService;
     }
 
     @GetMapping("/analisis-satelital")
@@ -41,6 +45,7 @@ public class AnalisisSatelitalController {
         model.addAttribute("fechaInicioFiltro", fechaInicio);
         model.addAttribute("fechaFinFiltro", fechaFin);
         model.addAttribute("resumenSatelital", satelitalService.obtenerResumenActual());
+        model.addAttribute("imagenSatelitalReciente", imagenSatelitalService.obtenerImagenMasReciente().orElse(null));
         return "analisis-satelital";
     }
 
