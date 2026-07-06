@@ -346,3 +346,132 @@ body {
     transform: translateY(-1px);
     box-shadow: 0 8px 16px rgba(9, 40, 24, .22);
 }
+
+/* Microinteracciones globales: tarjetas, tablas, botones, formularios y contenido */
+:root {
+    --motion-fast: 220ms;
+    --motion-medium: 300ms;
+    --motion-content: 380ms;
+    --hover-lift: -4px;
+    --hover-lift-soft: -2px;
+    --shadow-hover: 0 22px 42px rgba(15, 23, 42, 0.14);
+    --shadow-hover-soft: 0 16px 30px rgba(15, 23, 42, 0.11);
+    --focus-ring: 0 0 0 4px rgba(10, 165, 58, 0.14);
+    --row-hover: rgba(10, 165, 58, 0.045);
+}
+
+.main,
+.login-page {
+    animation: pageContentIn var(--motion-content) ease-out both;
+    will-change: opacity, transform;
+}
+
+@keyframes pageContentIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.layout .main :is(.card, .estacion-card, .estacion-fila, .task-card, .cultivo-card, .satellite-image-card),
+.login-card {
+    transition: transform var(--motion-medium) ease, box-shadow var(--motion-medium) ease, border-color var(--motion-medium) ease;
+    will-change: transform;
+}
+
+.layout .main :is(.card, .estacion-card, .estacion-fila, .task-card, .cultivo-card, .satellite-image-card):hover,
+.login-card:hover {
+    transform: translateY(var(--hover-lift));
+    box-shadow: var(--shadow-hover);
+}
+
+.layout .main :is(.card, .estacion-card, .task-card, .cultivo-card, .satellite-image-card):hover :is(.card-icon, .nav-icon, .stat-icon, .metric-icon, .alert-icon, .sensor-icon, .btn-icon),
+.layout .main .btn:hover :is(.card-icon, .nav-icon, .stat-icon, .metric-icon, .alert-icon, .sensor-icon, .btn-icon),
+.layout .main button:hover :is(.card-icon, .nav-icon, .stat-icon, .metric-icon, .alert-icon, .sensor-icon, .btn-icon) {
+    transform: scale(1.06);
+}
+
+.layout .main :is(.card-icon, .stat-icon, .metric-icon, .alert-icon, .sensor-icon, .btn-icon),
+.nav a .nav-icon,
+.sidebar-toggle-icon {
+    display: inline-block;
+    transition: transform var(--motion-fast) ease;
+}
+
+.layout .main :is(.table-wrap, .table-responsive, .dataTables_wrapper, .results-table, .range-table) {
+    transition: transform var(--motion-medium) ease, box-shadow var(--motion-medium) ease, border-color var(--motion-medium) ease;
+    will-change: transform;
+}
+
+.layout .main :is(.table-wrap, .table-responsive, .dataTables_wrapper, .results-table, .range-table):hover {
+    transform: translateY(var(--hover-lift-soft));
+    box-shadow: var(--shadow-hover-soft);
+}
+
+.layout .main table tbody tr,
+.layout .main .dataTable tbody tr {
+    transition: background-color var(--motion-fast) ease;
+}
+
+.layout .main table tbody tr:hover,
+.layout .main .dataTable tbody tr:hover {
+    background-color: var(--row-hover);
+}
+
+.layout .main :is(.btn, button, input[type="button"], input[type="submit"], input[type="reset"], .btn-history, .btn-download-history, .btn-page),
+.login-page button,
+.sidebar-footer form .btn.btn-logout {
+    transition: transform var(--motion-fast) ease, box-shadow var(--motion-fast) ease, background-color var(--motion-fast) ease, border-color var(--motion-fast) ease, color var(--motion-fast) ease, filter var(--motion-fast) ease;
+    will-change: transform;
+}
+
+.layout .main :is(.btn, button, input[type="button"], input[type="submit"], input[type="reset"], .btn-history, .btn-download-history, .btn-page):not(:disabled):hover,
+.login-page button:not(:disabled):hover,
+.sidebar-footer form .btn.btn-logout:hover {
+    transform: translateY(var(--hover-lift-soft));
+}
+
+.layout .main :is(.btn, button, input[type="button"], input[type="submit"], input[type="reset"], .btn-history, .btn-download-history, .btn-page):not(:disabled):active,
+.login-page button:not(:disabled):active,
+.sidebar-footer form .btn.btn-logout:active {
+    transform: translateY(0) scale(0.98);
+}
+
+.nav a:hover .nav-icon {
+    transform: translateX(2px) scale(1.04);
+}
+
+.nav a.active:hover {
+    background: rgba(255, 255, 255, .2);
+}
+
+:is(input:not([type="hidden"]), select, textarea) {
+    transition: border-color var(--motion-fast) ease, box-shadow var(--motion-fast) ease, background-color var(--motion-fast) ease;
+}
+
+:is(input:not([type="hidden"]), select, textarea):focus,
+:is(input:not([type="hidden"]), select, textarea):focus-visible {
+    border-color: var(--primary);
+    box-shadow: var(--focus-ring);
+    outline: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .main,
+    .login-page {
+        animation: none;
+    }
+
+    *,
+    *::before,
+    *::after {
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+    }
+}
