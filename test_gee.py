@@ -9,7 +9,7 @@ import requests
 # ==========================================================
 ee.Initialize(project='agro-iot-496315')
 
-BACKEND_URL = os.getenv("AGRO_BACKEND_URL", "http://localhost:8080")
+BACKEND_URL = os.getenv("AGRO_BACKEND_URL", "http://localhost:8081")
 INTERVALO_ANALISIS = timedelta(days=5)
 HTTP_TIMEOUT_SEGUNDOS = 30
 
