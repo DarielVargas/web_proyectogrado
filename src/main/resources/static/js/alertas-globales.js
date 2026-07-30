@@ -387,6 +387,125 @@
       }
     });
   }
+  function esPaginaAnalisisSatelital() {
+    return Boolean(document.querySelector('[data-satelital-cards]'));
+  }
+
+  function actualizarProximoAnalisisSatelital(root = document) {
+    const fechaUltimoAnalisisEl = root.querySelector('[data-last-analysis]');
+    const fechaProximoAnalisisEl = root.querySelector('[data-next-analysis]');
+    if (!fechaUltimoAnalisisEl || !fechaProximoAnalisisEl) return;
+
+    const textoFecha = (fechaUltimoAnalisisEl.textContent || '').trim();
+    const match = textoFecha.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if (!match) {
+      fechaProximoAnalisisEl.textContent = 'Próximo: N/A';
+      return;
+    }
+
+    fechaUltimoAnalisisEl.textContent = match[0];
+    const [, dd, mm, yyyy] = match;
+    const base = new Date(Number(yyyy), Number(mm) - 1, Number(dd));
+    if (Number.isNaN(base.getTime())) {
+      fechaProximoAnalisisEl.textContent = 'Próximo: N/A';
+      return;
+    }
+
+    base.setDate(base.getDate() + 5);
+    const dia = String(base.getDate()).padStart(2, '0');
+    const mes = String(base.getMonth() + 1).padStart(2, '0');
+    const anio = base.getFullYear();
+    fechaProximoAnalisisEl.textContent = `Próximo: ${dia}/${mes}/${anio}`;
+  }
+
+  function refrescarCamposFiltroSatelital() {
+    const filtroSelect = document.getElementById('filtroHistorial');
+    const mode = filtroSelect?.value || 'todo';
+    document.querySelectorAll('[data-filter-mode]').forEach((el) => {
+      const target = el.getAttribute('data-filter-mode');
+      el.style.display = target === mode ? 'flex' : 'none';
+    });
+  }
+
+  function reemplazarElementoSatelital(documento, selector) {
+    const actual = document.querySelector(selector);
+    const nuevo = documento.querySelector(selector);
+    if (actual && nuevo) {
+      actual.replaceWith(nuevo);
+      return nuevo;
+    }
+    return null;
+  }
+  function abrirModalInfoSatelital(tipo, boton) {
+    const contenidoModal = {
+      ndvi: {
+        titulo: '🌱 Interpretación NDVI',
+        descripcion: 'El NDVI (Normalized Difference Vegetation Index) mide la salud y densidad de la vegetación utilizando imágenes satelitales.',
+        columna: 'NDVI',
+        filas: [
+          { rango: '≥ 0.6', estado: 'Saludable', clase: 'estado-bueno' },
+          { rango: '0.3 – 0.59', estado: 'Moderado', clase: 'estado-moderado' },
+          { rango: '< 0.3', estado: 'Crítico', clase: 'estado-critico' }
+        ]
+      },
+      ndwi: {
+        titulo: '💧 Interpretación NDWI',
+        descripcion: 'El NDWI (Normalized Difference Water Index) evalúa el contenido de humedad en vegetación y suelo.',
+        columna: 'NDWI',
+        filas: [
+          { rango: '≥ 0.2', estado: 'Óptimo', clase: 'estado-bueno' },
+          { rango: '0 – 0.19', estado: 'Moderado', clase: 'estado-moderado' },
+          { rango: '< 0', estado: 'Crítico', clase: 'estado-critico' }
+        ]
+      }
+    };
+
+    const data = contenidoModal[tipo];
+    const modal = document.getElementById('sateliteInfoModal');
+    const modalTitle = document.getElementById('satelite-modal-title');
+    const modalSub = document.getElementById('satelite-modal-sub');
+    const modalColA = document.getElementById('satelite-col-a');
+    const modalBody = document.getElementById('satelite-modal-body');
+    if (!data || !modal || !modalTitle || !modalSub || !modalColA || !modalBody) return;
+
+    document.querySelectorAll('.btn-info-rangos.is-open').forEach((btn) => btn.classList.remove('is-open'));
+    modalTitle.textContent = data.titulo;
+    modalSub.textContent = data.descripcion;
+    modalColA.textContent = data.columna;
+    modalBody.innerHTML = data.filas.map((fila) => `<tr><td>${fila.rango}</td><td><span class="chip ${fila.clase}">${fila.estado}</span></td></tr>`).join('');
+    modal.classList.add('is-open');
+    modal.setAttribute('aria-hidden', 'false');
+    boton?.classList.add('is-open');
+  }
+
+
+  async function cargarAnalisisSatelital() {
+    if (!esPaginaAnalisisSatelital()) return;
+
+    try {
+      const res = await fetch(window.location.href, { headers: { 'Accept': 'text/html' } });
+      if (!res.ok) return;
+
+      const html = await res.text();
+      const documento = new DOMParser().parseFromString(html, 'text/html');
+      const historialAbierto = document.getElementById('historialSatelitalModal')?.classList.contains('is-open');
+
+      reemplazarElementoSatelital(documento, '[data-satelital-cards]');
+      reemplazarElementoSatelital(documento, '[data-satelital-image]');
+      reemplazarElementoSatelital(documento, '[data-satelital-historial-body]');
+
+      actualizarProximoAnalisisSatelital();
+      refrescarCamposFiltroSatelital();
+      if (historialAbierto) {
+        const historialModal = document.getElementById('historialSatelitalModal');
+        historialModal?.classList.add('is-open');
+        historialModal?.setAttribute('aria-hidden', 'false');
+      }
+    } catch (_) {
+      // Ignorar errores intermitentes para mantener la página operativa.
+    }
+  }
+
 
   async function cargarAlertas() {
     try {
@@ -588,6 +707,7 @@
       }
 
       cargarDashboard();
+      cargarAnalisisSatelital();
       cargarEstadosEstacion();
       cargarAlertas();
     });
@@ -598,6 +718,10 @@
         switch (data.type) {
           case 'dashboard-update':
             actualizarDashboard(data.payload);
+            cargarAlertas();
+            break;
+          case 'satellite-update':
+            cargarAnalisisSatelital();
             cargarAlertas();
             break;
           case 'station-status-changed':
@@ -637,8 +761,35 @@
     cargarEstadosEstacion();
     cargarDashboard();
     conectarWebSocket();
+    document.addEventListener('click', (event) => {
+      const botonInfoSatelital = event.target?.closest?.('[data-open-satelite-modal]');
+      if (botonInfoSatelital && esPaginaAnalisisSatelital()) {
+        abrirModalInfoSatelital(botonInfoSatelital.dataset.openSateliteModal, botonInfoSatelital);
+      }
+    });
+
+    document.addEventListener('change', (event) => {
+      if (event.target?.id === 'historialLimitSelect' && esPaginaAnalisisSatelital()) {
+        const url = new URL(window.location.href);
+        url.searchParams.set('page', '0');
+        url.searchParams.set('limit', event.target.value || '10');
+        url.searchParams.set('filtro', document.getElementById('filtroHistorial')?.value || 'todo');
+        url.searchParams.set('fecha', document.getElementById('fechaFiltro')?.value || '');
+        url.searchParams.set('fechaInicio', document.getElementById('fechaInicioFiltro')?.value || '');
+        url.searchParams.set('fechaFin', document.getElementById('fechaFinFiltro')?.value || '');
+        url.searchParams.set('openHistorial', 'true');
+        window.location.href = url.toString();
+      }
+
+      if (event.target?.id === 'filtroHistorial' && esPaginaAnalisisSatelital()) {
+        refrescarCamposFiltroSatelital();
+      }
+    });
+    actualizarProximoAnalisisSatelital();
+    refrescarCamposFiltroSatelital();
     setInterval(cargarAlertas, POLL_MS);
     setInterval(cargarEstadosEstacion, POLL_MS);
     setInterval(cargarDashboard, POLL_MS);
+    setInterval(cargarAnalisisSatelital, POLL_MS);
   });
 })();

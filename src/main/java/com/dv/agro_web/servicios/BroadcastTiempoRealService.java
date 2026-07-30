@@ -13,14 +13,21 @@ import java.util.StringJoiner;
 public class BroadcastTiempoRealService {
 
     private final DashboardTiempoRealService dashboardTiempoRealService;
+    private final SatelitalService satelitalService;
+    private final ImagenSatelitalService imagenSatelitalService;
     private final TiempoRealWebSocketHandler tiempoRealWebSocketHandler;
 
     private String ultimoSnapshotFingerprint;
+    private String ultimoSatelitalFingerprint;
     private Map<String, Boolean> ultimosEstados = Map.of();
 
     public BroadcastTiempoRealService(DashboardTiempoRealService dashboardTiempoRealService,
+                                      SatelitalService satelitalService,
+                                      ImagenSatelitalService imagenSatelitalService,
                                       TiempoRealWebSocketHandler tiempoRealWebSocketHandler) {
         this.dashboardTiempoRealService = dashboardTiempoRealService;
+        this.satelitalService = satelitalService;
+        this.imagenSatelitalService = imagenSatelitalService;
         this.tiempoRealWebSocketHandler = tiempoRealWebSocketHandler;
     }
 
@@ -29,9 +36,11 @@ public class BroadcastTiempoRealService {
         DashboardTiempoRealService.DashboardSnapshotDto snapshot = dashboardTiempoRealService.obtenerSnapshot();
         String snapshotFingerprint = construirFingerprint(snapshot);
         Map<String, Boolean> estadosActuales = extraerEstados(snapshot);
+        String satelitalFingerprint = construirFingerprintSatelital();
 
         if (ultimoSnapshotFingerprint == null) {
             ultimoSnapshotFingerprint = snapshotFingerprint;
+            ultimoSatelitalFingerprint = satelitalFingerprint;
             ultimosEstados = estadosActuales;
             return;
         }
@@ -72,7 +81,20 @@ public class BroadcastTiempoRealService {
             ));
         }
 
+        boolean satelitalCambio = !Objects.equals(ultimoSatelitalFingerprint, satelitalFingerprint);
+        if (satelitalCambio) {
+            tiempoRealWebSocketHandler.broadcast(new TiempoRealWebSocketHandler.EventoTiempoRealDto(
+                    "satellite-update",
+                    null
+            ));
+            tiempoRealWebSocketHandler.broadcast(new TiempoRealWebSocketHandler.EventoTiempoRealDto(
+                    "alerts-refresh",
+                    null
+            ));
+        }
+
         ultimoSnapshotFingerprint = snapshotFingerprint;
+        ultimoSatelitalFingerprint = satelitalFingerprint;
         ultimosEstados = estadosActuales;
     }
 
@@ -102,6 +124,34 @@ public class BroadcastTiempoRealService {
             });
         });
 
+        return joiner.toString();
+    }
+
+    private String construirFingerprintSatelital() {
+        SatelitalService.ResumenSatelitalDto resumen = satelitalService.obtenerResumenActual();
+        StringJoiner joiner = new StringJoiner("|");
+        joiner.add(resumen.ndviTexto());
+        joiner.add(resumen.ndviNivel());
+        joiner.add(resumen.ndwiTexto());
+        joiner.add(resumen.estadoVegetacion());
+        joiner.add(resumen.estadoVegetacionClase());
+        joiner.add(resumen.estadoHidrico());
+        joiner.add(resumen.estadoHidricoClase());
+        joiner.add(resumen.fechaTexto());
+        imagenSatelitalService.obtenerImagenMasReciente().ifPresentOrElse(imagen -> {
+            joiner.add(String.valueOf(imagen.id()));
+            joiner.add(imagen.urlImagen());
+            joiner.add(imagen.fechaSubidaTexto());
+        }, () -> joiner.add("sin-imagen"));
+        satelitalService.listarHistorialPresentacionPaginado(0, 50, "todo", null, null, null)
+                .forEach(indice -> {
+                    joiner.add(String.valueOf(indice.id()));
+                    joiner.add(indice.fechaTexto());
+                    joiner.add(String.valueOf(indice.ndvi()));
+                    joiner.add(String.valueOf(indice.ndwi()));
+                    joiner.add(indice.estadoVegetacion());
+                    joiner.add(indice.estadoHidrico());
+                });
         return joiner.toString();
     }
 

@@ -97,7 +97,7 @@
             <button type="button" class="btn-history" data-open-historial-modal>🕘 Ver Historial</button>
         </div>
 
-        <section class="cards" th:with="u=${resumenSatelital}">
+        <section class="cards" data-satelital-cards th:with="u=${resumenSatelital}">
             <article class="card">
                 <div class="card-head">
                     <div class="card-head-left">
@@ -141,7 +141,7 @@
             </article>
         </section>
 
-        <section class="satellite-image-card">
+        <section class="satellite-image-card" data-satelital-image>
             <div class="satellite-image-header">
                 <div>
                     <h2 class="satellite-image-title">Imagen Satelital Más Reciente</h2>
@@ -171,7 +171,7 @@
             </div>
             <button type="button" class="modal-close" data-close-historial-modal aria-label="Cerrar modal">×</button>
         </div>
-        <div class="historial-modal-body">
+        <div class="historial-modal-body" data-satelital-historial-body>
             <form class="historial-toolbar" method="get" th:action="@{/analisis-satelital}">
                 <div class="filter-group">
                     <div class="field">
@@ -409,5 +409,6 @@
         }
     })();
 </script>
+<script th:src="@{/js/alertas-globales.js}" src="/js/alertas-globales.js"></script>
 </body>
 </html>
