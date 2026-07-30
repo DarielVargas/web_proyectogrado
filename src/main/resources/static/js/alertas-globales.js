@@ -214,6 +214,25 @@
       </div>`;
   }
 
+  function claseBateria(bateria) {
+    if (bateria === null || bateria === undefined || Number.isNaN(Number(bateria))) {
+      return 'bateria-sin-dato';
+    }
+
+    const nivel = Number(bateria);
+    if (nivel >= 75) return 'bateria-alta';
+    if (nivel >= 40) return 'bateria-media';
+    return 'bateria-baja';
+  }
+
+  function textoBateria(bateria) {
+    if (bateria === null || bateria === undefined || Number.isNaN(Number(bateria))) {
+      return '🔋 --';
+    }
+
+    return `🔋 ${Math.round(Number(bateria))}%`;
+  }
+
   function renderEstacionDashboard(estacion) {
     return `
       <article class="estacion-card animate-item is-visible">
@@ -223,6 +242,7 @@
             <p class="estacion-sub">${escapeHtml(estacion.estacionDescripcion)}</p>
           </div>
           <div class="estacion-status-wrap">
+            <span class="bateria-chip ${claseBateria(estacion.bateria)}" title="Nivel de batería de la estación">${textoBateria(estacion.bateria)}</span>
             <span class="estado-tag ${estacion.activa ? 'estado-ok' : 'estado-off'}">${estacion.activa ? 'Operativa' : 'Inactiva'}</span>
             <button type="button" class="btn-info-rangos" data-rangos-toggle aria-label="Ver guía de colores y rangos de sensores" aria-controls="rangos-sensores-popover" aria-expanded="false">i</button>
           </div>
