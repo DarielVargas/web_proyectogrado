@@ -7,6 +7,7 @@ import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
+import java.math.BigDecimal;
 import java.time.LocalDate;
 
 @Entity
@@ -32,6 +33,9 @@ public class Estacion {
 
     @Column(name = "activa")
     private Boolean activa = true;
+
+    @Column(name = "bateria")
+    private BigDecimal bateria;
 
     public Long getId() {
         return id;
@@ -79,5 +83,13 @@ public class Estacion {
 
     public void setActiva(Boolean activa) {
         this.activa = activa;
+    }
+
+    public BigDecimal getBateria() {
+        return bateria;
+    }
+
+    public void setBateria(BigDecimal bateria) {
+        this.bateria = bateria;
     }
 }

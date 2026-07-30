@@ -438,6 +438,7 @@ public class MedicionesController {
                 .map(estacion -> new EstacionDashboardDto(
                         estacion.estacionCodigo(),
                         estacion.estacionDescripcion(),
+                        estacion.bateria(),
                         estacion.activa(),
                         estacion.sensores().stream()
                                 .map(sensor -> new SensorValorDto(sensor.tipoSensor(), sensor.valor(), sensor.activo()))
@@ -461,6 +462,7 @@ public class MedicionesController {
     public record EstacionDashboardDto(
             String estacionCodigo,
             String estacionDescripcion,
+            Double bateria,
             Boolean activa,
             List<SensorValorDto> sensores
     ) {}
