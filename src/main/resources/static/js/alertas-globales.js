@@ -242,7 +242,7 @@
             <p class="estacion-sub">${escapeHtml(estacion.estacionDescripcion)}</p>
           </div>
           <div class="estacion-status-wrap">
-            <span class="bateria-chip ${claseBateria(estacion.bateria)}" title="Nivel de batería de la estación">${textoBateria(estacion.bateria)}</span>
+            <span class="estado-tag bateria-chip ${claseBateria(estacion.bateria)}" title="Nivel de batería de la estación">${textoBateria(estacion.bateria)}</span>
             <span class="estado-tag ${estacion.activa ? 'estado-ok' : 'estado-off'}">${estacion.activa ? 'Operativa' : 'Inactiva'}</span>
             <button type="button" class="btn-info-rangos" data-rangos-toggle aria-label="Ver guía de colores y rangos de sensores" aria-controls="rangos-sensores-popover" aria-expanded="false">i</button>
           </div>

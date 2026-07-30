@@ -184,15 +184,11 @@
             display:inline-flex;
             align-items:center;
             gap:4px;
-            font-size:12px;
-            font-weight:900;
-            line-height:1;
-            white-space:nowrap;
         }
-        .bateria-alta{ color:#22c55e; }
-        .bateria-media{ color:#f59e0b; }
-        .bateria-baja{ color:#ef4444; }
-        .bateria-sin-dato{ color:#64748b; }
+        .bateria-alta{ color:#22c55e; background:#dcfce7; border-color:#bbf7d0; }
+        .bateria-media{ color:#f59e0b; background:#fef9c3; border-color:#fde68a; }
+        .bateria-baja{ color:#ef4444; background:#fee2e2; border-color:#fecaca; }
+        .bateria-sin-dato{ color:#64748b; background:#f1f5f9; border-color:#e2e8f0; }
         .estacion-status-wrap{
             display:inline-flex;
             align-items:center;
@@ -549,7 +545,7 @@
                         <p class="estacion-sub" th:text="${estacion.estacionDescripcion}">Nombre estación</p>
                     </div>
                     <div class="estacion-status-wrap">
-                        <span class="bateria-chip"
+                        <span class="estado-tag bateria-chip"
                               th:classappend="${estacion.bateria == null ? ' bateria-sin-dato' : (estacion.bateria >= 75 ? ' bateria-alta' : (estacion.bateria >= 40 ? ' bateria-media' : ' bateria-baja'))}"
                               title="Nivel de batería de la estación"
                               th:text="${estacion.bateria == null ? '🔋 --' : '🔋 ' + #numbers.formatDecimal(estacion.bateria, 1, 0) + '%'}">🔋 --</span>
