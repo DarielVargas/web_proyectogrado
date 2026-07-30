@@ -2,6 +2,7 @@
   const DURACION_MS = 10000;
   const POLL_MS = 12000;
   const STORAGE_KEY_ESTADOS = 'alertas-globales-estados-estacion';
+  const STORAGE_KEY_BATERIAS = 'alertas-globales-baterias-estacion';
   const vistos = new Set();
   const ultimoEstadoNotificado = new Map();
   let websocket = null;
@@ -84,6 +85,94 @@
       : `La estación ${codigo} pasó a estado inactiva`;
   }
 
+
+  function obtenerBateriasGuardadas() {
+    try {
+      const raw = window.sessionStorage.getItem(STORAGE_KEY_BATERIAS);
+      if (!raw) return null;
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === 'object' ? parsed : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function guardarBaterias(baterias) {
+    try {
+      window.sessionStorage.setItem(STORAGE_KEY_BATERIAS, JSON.stringify(baterias));
+    } catch (_) {
+      // Ignorar si el storage no está disponible.
+    }
+  }
+
+  function obtenerNivelBateria(bateria) {
+    if (bateria === null || bateria === undefined || Number.isNaN(Number(bateria))) {
+      return null;
+    }
+
+    const porcentaje = Math.round(Number(bateria));
+    if (porcentaje <= 10) return 'critica';
+    if (porcentaje <= 20) return 'baja';
+    if (porcentaje <= 50) return 'advertencia';
+    return 'normal';
+  }
+
+  function construirMensajeBateria(codigo, porcentaje, nivel) {
+    switch (nivel) {
+      case 'critica':
+        return `Crítico: la batería de la estación ${codigo} está por agotarse (${porcentaje}%).`;
+      case 'baja':
+        return `Atención: la batería de la estación ${codigo} está baja (${porcentaje}%).`;
+      case 'advertencia':
+        return `Advertencia: la batería de la estación ${codigo} bajó al ${porcentaje}%.`;
+      default:
+        return '';
+    }
+  }
+
+  function notificarCrucesBateria(estaciones) {
+    if (!Array.isArray(estaciones)) return;
+
+    const bateriasPrevias = obtenerBateriasGuardadas();
+    const bateriasActuales = {};
+
+    estaciones.forEach((estacion) => {
+      const codigo = estacion?.estacionCodigo;
+      if (!codigo) {
+        return;
+      }
+
+      const bateriaNumero = Number(estacion?.bateria);
+      if (!Number.isFinite(bateriaNumero)) {
+        bateriasActuales[codigo] = { porcentaje: null, nivel: null };
+        return;
+      }
+
+      const porcentaje = Math.round(bateriaNumero);
+      const nivelActual = obtenerNivelBateria(porcentaje);
+      bateriasActuales[codigo] = { porcentaje, nivel: nivelActual };
+
+      if (!bateriasPrevias || !bateriasPrevias[codigo]) {
+        return;
+      }
+
+      const bateriaPrevia = bateriasPrevias[codigo];
+      const porcentajePrevio = Number(bateriaPrevia.porcentaje);
+      const nivelPrevio = bateriaPrevia.nivel;
+      const estaBajando = Number.isFinite(porcentajePrevio) && porcentaje < porcentajePrevio;
+
+      if (!estaBajando || nivelActual === 'normal' || nivelActual === nivelPrevio) {
+        return;
+      }
+
+      mostrarToast({
+        mensaje: construirMensajeBateria(codigo, porcentaje, nivelActual),
+        idUnico: `bateria-${codigo}-${nivelActual}-${Date.now()}`
+      });
+    });
+
+    guardarBaterias(bateriasActuales);
+  }
 
 
   function notificarCambioEstado(codigo, activa, mensaje) {
@@ -266,6 +355,10 @@
     if (tempEl) tempEl.textContent = snapshot.tempPromedioTxt || '--';
     if (humEl) humEl.textContent = snapshot.humPromedioTxt || '--';
     if (alertasEl) alertasEl.textContent = String(snapshot.totalAlertasConfiguradas ?? 0);
+    if (Array.isArray(snapshot.estaciones)) {
+      notificarCrucesBateria(snapshot.estaciones);
+    }
+
     if (estacionesEl && Array.isArray(snapshot.estaciones)) {
       estacionesEl.innerHTML = snapshot.estaciones.map(renderEstacionDashboard).join('');
     }
