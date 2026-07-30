@@ -120,6 +120,7 @@ public class DashboardTiempoRealService {
             cards.add(new EstacionDashboardDto(
                     codigoEstacion,
                     descripcion,
+                    estacion.getBateria() != null ? estacion.getBateria().doubleValue() : null,
                     estadosUi.getOrDefault(codigoEstacion, true),
                     sensores
             ));
@@ -159,6 +160,7 @@ public class DashboardTiempoRealService {
     public record EstacionDashboardDto(
             String estacionCodigo,
             String estacionDescripcion,
+            Double bateria,
             Boolean activa,
             List<SensorValorDto> sensores
     ) {}

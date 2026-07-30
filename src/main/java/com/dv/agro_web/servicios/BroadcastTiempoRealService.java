@@ -93,6 +93,7 @@ public class BroadcastTiempoRealService {
         snapshot.estaciones().forEach(estacion -> {
             joiner.add(estacion.estacionCodigo());
             joiner.add(estacion.estacionDescripcion());
+            joiner.add(String.valueOf(estacion.bateria()));
             joiner.add(String.valueOf(Boolean.TRUE.equals(estacion.activa())));
             estacion.sensores().forEach(sensor -> {
                 joiner.add(sensor.tipoSensor());
